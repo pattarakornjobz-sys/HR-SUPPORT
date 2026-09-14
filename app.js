@@ -14,8 +14,27 @@ let ACTIVE_FILTER = 'all';
 
 // ---------------- auth guard ----------------
 (async function init() {
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) { window.location.replace('login.html'); return; }
+  // ถ้า Supabase ส่ง error กลับมาทาง query string (เช่น account ไม่ผ่าน consent screen)
+  // ให้ส่งต่อไปแสดงที่หน้า login แทนที่จะเด้งแบบเงียบๆ
+  const qp = new URLSearchParams(window.location.search);
+  if (qp.get('error') || qp.get('error_description')) {
+    console.error('[auth callback error]', qp.get('error'), qp.get('error_description'));
+    window.location.replace('login.html?error=' + encodeURIComponent(qp.get('error') || qp.get('error_description')));
+    return;
+  }
+
+  let { data: { session } } = await sb.auth.getSession();
+  if (!session) {
+    // เผื่อกรณี race condition: หลัง redirect กลับจาก Google การแลก code เป็น session
+    // อาจยังไม่เสร็จตอน getSession() ครั้งแรก ลองรออีกครั้งสั้นๆ ก่อนสรุปว่าไม่มี session จริง
+    await new Promise(r => setTimeout(r, 400));
+    ({ data: { session } } = await sb.auth.getSession());
+  }
+  if (!session) {
+    console.warn('[auth guard] no session after retry — redirecting to login');
+    window.location.replace('login.html');
+    return;
+  }
   CURRENT_SESSION = session;
 
   // ครั้งแรกที่ login ด้วย Gmail นี้: ลอง "จับคู่" กับแถวที่หัวหน้าแผนกเตรียมไว้ล่วงหน้าด้วยอีเมล

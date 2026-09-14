@@ -46,7 +46,8 @@
   const errBox = document.getElementById('login-error');
   const params = new URLSearchParams(window.location.search);
   if (params.get('error')) {
-    errBox.textContent = 'เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง';
+    console.error('[login error]', params.get('error'));
+    errBox.textContent = 'เข้าสู่ระบบไม่สำเร็จ: ' + params.get('error');
     errBox.classList.add('show');
   }
 
