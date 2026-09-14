@@ -20,9 +20,17 @@ let ACTIVE_FILTER = 'all';
 
   // ครั้งแรกที่ login ด้วย Gmail นี้: ลอง "จับคู่" กับแถวที่หัวหน้าแผนกเตรียมไว้ล่วงหน้าด้วยอีเมล
   // (ถ้าแถวนั้นถูกจับคู่ไปแล้ว หรือยังไม่มีแถวเลย คำสั่งนี้จะไม่เปลี่ยนอะไร ไม่ error)
-  await sb.from('hr_staff').update({ auth_uid: session.user.id }).is('auth_uid', null).ilike('email', session.user.email);
+  const { data: claimData, error: claimErr } = await sb
+    .from('hr_staff')
+    .update({ auth_uid: session.user.id })
+    .is('auth_uid', null)
+    .ilike('email', session.user.email)
+    .select();
+  if (claimErr) console.error('[claim] update error:', claimErr);
+  console.log('[claim] rows updated:', claimData);
 
-  const { data: staffRow } = await sb.from('hr_staff').select('*').eq('auth_uid', session.user.id).maybeSingle();
+  const { data: staffRow, error: fetchErr } = await sb.from('hr_staff').select('*').eq('auth_uid', session.user.id).maybeSingle();
+  if (fetchErr) console.error('[fetch staffRow] error:', fetchErr);
   if (!staffRow) {
     document.getElementById('pending-email').textContent = session.user.email || '–';
     document.getElementById('pending-uid').textContent = session.user.id;
