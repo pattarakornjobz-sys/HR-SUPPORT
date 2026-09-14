@@ -30,7 +30,7 @@ module.exports = async (req, res) => {
     let uploaderMap = {};
     if (ids.length) {
       const { data: rows } = await admin
-        .from('drive_files')
+        .from('hr_drive_files')
         .select('drive_file_id, uploaded_by, staff:uploaded_by(nickname)')
         .in('drive_file_id', ids);
       (rows || []).forEach(r => { uploaderMap[r.drive_file_id] = r.staff?.nickname; });

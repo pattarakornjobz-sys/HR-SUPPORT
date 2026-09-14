@@ -21,7 +21,7 @@ async function getAuthedStaff(req) {
   const { data: userData, error: userErr } = await admin.auth.getUser(token);
   if (userErr || !userData?.user) return null;
 
-  const { data: staff } = await admin.from('staff').select('*').eq('auth_uid', userData.user.id).maybeSingle();
+  const { data: staff } = await admin.from('hr_staff').select('*').eq('auth_uid', userData.user.id).maybeSingle();
   return { user: userData.user, staff };
 }
 

@@ -20,9 +20,9 @@ let ACTIVE_FILTER = 'all';
 
   // ครั้งแรกที่ login ด้วย Gmail นี้: ลอง "จับคู่" กับแถวที่หัวหน้าแผนกเตรียมไว้ล่วงหน้าด้วยอีเมล
   // (ถ้าแถวนั้นถูกจับคู่ไปแล้ว หรือยังไม่มีแถวเลย คำสั่งนี้จะไม่เปลี่ยนอะไร ไม่ error)
-  await sb.from('staff').update({ auth_uid: session.user.id }).is('auth_uid', null).ilike('email', session.user.email);
+  await sb.from('hr_staff').update({ auth_uid: session.user.id }).is('auth_uid', null).ilike('email', session.user.email);
 
-  const { data: staffRow } = await sb.from('staff').select('*').eq('auth_uid', session.user.id).maybeSingle();
+  const { data: staffRow } = await sb.from('hr_staff').select('*').eq('auth_uid', session.user.id).maybeSingle();
   if (!staffRow) {
     document.getElementById('pending-email').textContent = session.user.email || '–';
     document.getElementById('pending-uid').textContent = session.user.id;
@@ -64,12 +64,12 @@ function startClock() {
 
 // ---------------- data load ----------------
 async function loadStaffAndTasks() {
-  const { data: staff, error: staffErr } = await sb.from('staff').select('*').order('sort_order');
-  const { data: tasks, error: taskErr } = await sb.from('tasks').select('*').order('updated_at', { ascending: false });
+  const { data: staff, error: staffErr } = await sb.from('hr_staff').select('*').order('sort_order');
+  const { data: tasks, error: taskErr } = await sb.from('hr_tasks').select('*').order('updated_at', { ascending: false });
 
   if (staffErr || taskErr) {
     document.getElementById('board').innerHTML =
-      `<div class="empty-note">โหลดข้อมูลไม่สำเร็จ: ${(staffErr || taskErr).message}<br>ตรวจสอบว่ารัน sql/schema.sql และเพิ่มแถว staff ของทุกคนแล้ว</div>`;
+      `<div class="empty-note">โหลดข้อมูลไม่สำเร็จ: ${(staffErr || taskErr).message}<br>ตรวจสอบว่ารัน sql/schema.sql และเพิ่มแถว hr_staff ของทุกคนแล้ว</div>`;
     return;
   }
 
@@ -127,7 +127,7 @@ function wireProfileMenu() {
     e.preventDefault();
     const phone = document.getElementById('f-phone').value.trim();
     const note = document.getElementById('profile-save-note');
-    const { error } = await sb.from('staff').update({ phone }).eq('id', CURRENT_STAFF.id);
+    const { error } = await sb.from('hr_staff').update({ phone }).eq('id', CURRENT_STAFF.id);
     if (error) { note.style.color = 'var(--gold)'; note.textContent = 'บันทึกไม่สำเร็จ: ' + error.message; return; }
     CURRENT_STAFF.phone = phone;
     const idx = ALL_STAFF.findIndex(s => s.id === CURRENT_STAFF.id);
@@ -160,7 +160,7 @@ function fmtDueDate(d) {
 function renderBoard() {
   const board = document.getElementById('board');
   if (!ALL_STAFF.length) {
-    board.innerHTML = `<div class="empty-note">ยังไม่มีรายชื่อเจ้าหน้าที่ในตาราง staff — เพิ่มได้จาก sql/schema.sql</div>`;
+    board.innerHTML = `<div class="empty-note">ยังไม่มีรายชื่อเจ้าหน้าที่ในตาราง hr_staff — เพิ่มได้จาก sql/schema.sql</div>`;
     return;
   }
   const head = ALL_STAFF.find(s => s.role === 'head');
@@ -315,7 +315,7 @@ document.addEventListener('change', async (e) => {
   if (e.target.matches('.status-select')) {
     const id = e.target.dataset.id;
     const status = e.target.value;
-    const { error } = await sb.from('tasks').update({ status }).eq('id', id);
+    const { error } = await sb.from('hr_tasks').update({ status }).eq('id', id);
     if (error) alert('อัปเดตสถานะไม่สำเร็จ: ' + error.message);
   }
 });
@@ -323,7 +323,7 @@ document.addEventListener('click', async (e) => {
   const del = e.target.closest('.del-task');
   if (del) {
     if (!confirm('ลบงานนี้ใช่หรือไม่?')) return;
-    const { error } = await sb.from('tasks').delete().eq('id', del.dataset.id);
+    const { error } = await sb.from('hr_tasks').delete().eq('id', del.dataset.id);
     if (error) alert('ลบไม่สำเร็จ: ' + error.message);
   }
 });
@@ -377,7 +377,7 @@ function wireModal() {
     const status = document.getElementById('f-status').value;
     if (!title) return;
 
-    const { error } = await sb.from('tasks').insert({
+    const { error } = await sb.from('hr_tasks').insert({
       assigned_to, title, category, due_date, status, created_by: CURRENT_STAFF?.id ?? null,
     });
     if (error) { alert('เพิ่มงานไม่สำเร็จ: ' + error.message); return; }
@@ -390,8 +390,8 @@ function wireModal() {
 // ---------------- realtime ----------------
 function subscribeRealtime() {
   sb.channel('tasks-realtime')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, async () => {
-      const { data } = await sb.from('tasks').select('*').order('updated_at', { ascending: false });
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'hr_tasks' }, async () => {
+      const { data } = await sb.from('hr_tasks').select('*').order('updated_at', { ascending: false });
       ALL_TASKS = data || [];
       renderBoard();
       renderActivity();

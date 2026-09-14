@@ -42,7 +42,7 @@ module.exports = async (req, res) => {
 
     // เก็บ log ผู้อัปโหลดไว้ในตาราง drive_files (bypass RLS ด้วย service role)
     const admin = supabaseAdmin();
-    await admin.from('drive_files').insert({
+    await admin.from('hr_drive_files').insert({
       drive_file_id: driveRes.data.id,
       file_name: driveRes.data.name,
       mime_type: driveRes.data.mimeType,
