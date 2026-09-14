@@ -45,14 +45,40 @@
   </div>
 
   <div class="top-right">
-    <div class="who-bar" id="who-bar" style="display:none;">
-      <div class="who-avatar" id="who-avatar">–</div>
-    </div>
     <div class="clock-box">
       <div class="date" id="thai-date">–</div>
       <div class="time" id="thai-time">–</div>
     </div>
-    <button class="logout-btn" id="logout-btn">ออกจากระบบ</button>
+
+    <div class="profile-wrap" id="profile-wrap" hidden>
+      <button type="button" class="profile-trigger" id="profile-trigger">
+        <div class="who-avatar" id="who-avatar">–</div>
+        <div class="profile-trigger-text">
+          <div class="profile-name" id="who-name">–</div>
+          <div class="profile-role" id="who-role">–</div>
+        </div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;flex:none;"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+
+      <div class="profile-menu" id="profile-menu" hidden>
+        <div class="profile-menu-head">
+          <div class="who-avatar" id="menu-avatar" style="width:40px;height:40px;">–</div>
+          <div>
+            <div class="profile-name" id="menu-name">–</div>
+            <div class="profile-role" id="menu-email">–</div>
+          </div>
+        </div>
+        <form id="profile-form">
+          <div class="field">
+            <label for="f-phone">เบอร์ติดต่อ</label>
+            <input type="tel" id="f-phone" placeholder="เช่น 08x-xxx-xxxx">
+          </div>
+          <button type="submit" class="modal-save" style="width:100%;">บันทึก</button>
+          <div class="profile-save-note" id="profile-save-note"></div>
+        </form>
+        <button type="button" class="logout-btn" id="logout-btn" style="width:100%;margin-top:10px;">ออกจากระบบ</button>
+      </div>
+    </div>
   </div>
 </div>
 

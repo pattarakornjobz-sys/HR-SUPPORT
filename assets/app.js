@@ -18,8 +18,11 @@ let ACTIVE_FILTER = 'all';
   if (!session) { window.location.replace('login.html'); return; }
   CURRENT_SESSION = session;
 
-  // เช็คว่าบัญชี Gmail นี้ถูกเพิ่มในตาราง staff แล้วหรือยัง (หัวหน้าแผนกเป็นคนเพิ่มให้)
-  const { data: staffRow } = await sb.from('staff').select('*').eq('id', session.user.id).maybeSingle();
+  // ครั้งแรกที่ login ด้วย Gmail นี้: ลอง "จับคู่" กับแถวที่หัวหน้าแผนกเตรียมไว้ล่วงหน้าด้วยอีเมล
+  // (ถ้าแถวนั้นถูกจับคู่ไปแล้ว หรือยังไม่มีแถวเลย คำสั่งนี้จะไม่เปลี่ยนอะไร ไม่ error)
+  await sb.from('staff').update({ auth_uid: session.user.id }).is('auth_uid', null).ilike('email', session.user.email);
+
+  const { data: staffRow } = await sb.from('staff').select('*').eq('auth_uid', session.user.id).maybeSingle();
   if (!staffRow) {
     document.getElementById('pending-email').textContent = session.user.email || '–';
     document.getElementById('pending-uid').textContent = session.user.id;
@@ -33,16 +36,12 @@ let ACTIVE_FILTER = 'all';
 
   document.getElementById('app-shell').hidden = false;
 
-  document.getElementById('logout-btn').addEventListener('click', async () => {
-    await sb.auth.signOut();
-    window.location.replace('login.html');
-  });
-
   startClock();
   await loadStaffAndTasks();
   wireToolbar();
   wireModal();
   wireDropzone();
+  wireProfileMenu();
   subscribeRealtime();
   loadDriveList();
 })();
@@ -76,7 +75,7 @@ async function loadStaffAndTasks() {
 
   ALL_STAFF = staff || [];
   ALL_TASKS = tasks || [];
-  CURRENT_STAFF = ALL_STAFF.find(s => s.id === CURRENT_SESSION.user.id) || null;
+  CURRENT_STAFF = ALL_STAFF.find(s => s.auth_uid === CURRENT_SESSION.user.id) || null;
 
   renderWhoBar();
   renderBoard();
@@ -85,14 +84,58 @@ async function loadStaffAndTasks() {
 }
 
 function renderWhoBar() {
-  const bar = document.getElementById('who-bar');
-  const av = document.getElementById('who-avatar');
   if (!CURRENT_STAFF) return;
-  bar.style.display = 'flex';
-  av.style.background = CURRENT_STAFF.avatar_color;
-  av.innerHTML = CURRENT_STAFF.avatar_url
-    ? `<img src="${CURRENT_STAFF.avatar_url}" alt="${CURRENT_STAFF.nickname}">`
+  document.getElementById('profile-wrap').hidden = false;
+
+  const avatarInner = CURRENT_STAFF.avatar_url
+    ? `<img src="${CURRENT_STAFF.avatar_url}" alt="${escapeHtml(CURRENT_STAFF.nickname)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
     : initials(CURRENT_STAFF.nickname);
+
+  const av = document.getElementById('who-avatar');
+  av.style.background = CURRENT_STAFF.avatar_color;
+  av.innerHTML = avatarInner;
+
+  const menuAv = document.getElementById('menu-avatar');
+  menuAv.style.background = CURRENT_STAFF.avatar_color;
+  menuAv.innerHTML = avatarInner;
+
+  document.getElementById('who-name').textContent = CURRENT_STAFF.nickname;
+  document.getElementById('who-role').textContent = CURRENT_STAFF.role === 'head' ? 'หัวหน้าแผนก' : 'เจ้าหน้าที่';
+  document.getElementById('menu-name').textContent = CURRENT_STAFF.nickname;
+  document.getElementById('menu-email').textContent = CURRENT_STAFF.email || CURRENT_SESSION.user.email || '';
+  document.getElementById('f-phone').value = CURRENT_STAFF.phone || '';
+}
+
+function wireProfileMenu() {
+  const trigger = document.getElementById('profile-trigger');
+  const menu = document.getElementById('profile-menu');
+
+  trigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    menu.hidden = !menu.hidden;
+  });
+  document.addEventListener('click', (e) => {
+    if (!menu.hidden && !menu.contains(e.target) && e.target !== trigger) menu.hidden = true;
+  });
+
+  document.getElementById('logout-btn').addEventListener('click', async () => {
+    await sb.auth.signOut();
+    window.location.replace('login.html');
+  });
+
+  document.getElementById('profile-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const phone = document.getElementById('f-phone').value.trim();
+    const note = document.getElementById('profile-save-note');
+    const { error } = await sb.from('staff').update({ phone }).eq('id', CURRENT_STAFF.id);
+    if (error) { note.style.color = 'var(--gold)'; note.textContent = 'บันทึกไม่สำเร็จ: ' + error.message; return; }
+    CURRENT_STAFF.phone = phone;
+    const idx = ALL_STAFF.findIndex(s => s.id === CURRENT_STAFF.id);
+    if (idx >= 0) ALL_STAFF[idx].phone = phone;
+    note.style.color = 'var(--sage)';
+    note.textContent = 'บันทึกแล้ว';
+    setTimeout(() => { note.textContent = ''; }, 2000);
+  });
 }
 
 function initials(name) { return (name || '?').slice(0, 2); }
@@ -187,6 +230,7 @@ function renderHeadColumn(head) {
       <div class="who">
         <div class="name">${escapeHtml(head.nickname)} <svg class="crown" viewBox="0 0 24 24" fill="#c99a3f"><path d="M3 17l2-9 5 4 2-6 2 6 5-4 2 9z"/></svg></div>
         <div class="role">${escapeHtml(head.scope)}</div>
+        ${head.phone ? `<div class="role" style="margin-top:2px;">☎ ${escapeHtml(head.phone)}</div>` : ''}
       </div>
     </div>
     <div class="stat-row">
@@ -230,6 +274,7 @@ function renderMemberColumn(member) {
       <div class="who">
         <div class="name">${escapeHtml(member.nickname)}</div>
         <div class="role">${escapeHtml(member.scope)}</div>
+        ${member.phone ? `<div class="role" style="margin-top:2px;">☎ ${escapeHtml(member.phone)}</div>` : ''}
       </div>
     </div>
     ${groups || '<div class="empty-note">ไม่มีงานตามตัวกรองนี้</div>'}
