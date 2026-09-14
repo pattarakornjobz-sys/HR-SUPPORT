@@ -6,5 +6,5 @@
 // ============================================================
 window.HR_CONFIG = {
   SUPABASE_URL: "https://uhefxwccuqagnbrbidbh.supabase.co",
-  SUPABASE_ANON_KEY: "ใส่-anon-public-key-ที่นี่",
+  SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
 };
