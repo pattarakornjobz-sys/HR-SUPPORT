@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>บอร์ดงานแผนกบุคคลและสวัสดิการ</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Sarabun:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/supabase/2.45.4/umd/supabase.min.js"></script>
+<script src="assets/config.js"></script>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 9h18M8 2v4M16 2v4"/><circle cx="8" cy="14" r="1.2" fill="#fff" stroke="none"/><circle cx="12" cy="14" r="1.2" fill="#fff" stroke="none"/><circle cx="16" cy="14" r="1.2" fill="#fff" stroke="none"/></svg>
+    </div>
+    <div class="brand-text">
+      <div class="eyebrow">แผนกบุคคลและสวัสดิการ · มูลนิธิส่งเสริมศิลปาชีพฯ</div>
+      <h1>บอร์ดงานประจำวัน</h1>
+    </div>
+  </div>
+
+  <div class="stack-pills">
+    <span class="pill"><i></i>ระบบออนไลน์</span>
+    <a class="pill link" href="https://hr-support-snowy.vercel.app/" target="_blank" rel="noopener">▲ Vercel</a>
+    <a class="pill link" href="https://uhefxwccuqagnbrbidbh.supabase.co" target="_blank" rel="noopener">⚡ Supabase</a>
+    <span class="pill">📁 Google Drive กลาง</span>
+  </div>
+
+  <div class="top-right">
+    <div class="who-bar" id="who-bar" style="display:none;">
+      <div class="who-avatar" id="who-avatar">–</div>
+    </div>
+    <div class="clock-box">
+      <div class="date" id="thai-date">–</div>
+      <div class="time" id="thai-time">–</div>
+    </div>
+    <button class="logout-btn" id="logout-btn">ออกจากระบบ</button>
+  </div>
+</div>
+
+<div class="toolbar">
+  <div class="toolbar-left">
+    <h2>งานของทีมทั้งหมด</h2>
+    <span class="sub" id="task-summary">กำลังโหลด…</span>
+  </div>
+
+  <div class="filter-toggle" id="filter-toggle">
+    <button class="active" data-filter="all">ทั้งหมด</button>
+    <button data-filter="doing">กำลังทำ</button>
+    <button data-filter="todo">ต้องทำ</button>
+    <button data-filter="done">เสร็จแล้ว</button>
+  </div>
+
+  <button class="add-task" id="open-add-task">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+    เพิ่มงาน
+  </button>
+</div>
+
+<div class="legend">
+  <span class="legend-item"><i style="background:var(--sky)"></i>กำลังทำ</span>
+  <span class="legend-item"><i style="background:var(--gold)"></i>ต้องทำ</span>
+  <span class="legend-item"><i style="background:var(--sage)"></i>เสร็จแล้ว</span>
+</div>
+
+<div class="board-wrap">
+  <div class="board" id="board">
+    <div class="loading-note">กำลังโหลดข้อมูลทีม…</div>
+  </div>
+</div>
+
+<div class="lower">
+  <div class="panel">
+    <h3>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6Z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
+      กิจกรรมล่าสุด
+    </h3>
+    <div id="activity-feed"><div class="loading-note">กำลังโหลด…</div></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head-row">
+      <h3>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l3-3h6l2 2h7v13H3z"/></svg>
+        ไดรฟ์กลางแผนก
+      </h3>
+      <a class="drive-open-btn" id="drive-open-btn" href="#" target="_blank" rel="noopener">
+        เปิดใน Google Drive
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg>
+      </a>
+    </div>
+
+    <label class="dropzone" id="dropzone" for="drive-file-input">
+      <div class="dz-ico">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+      </div>
+      <div class="dz-text">
+        <div class="dz-t">ลากไฟล์มาวาง หรือคลิกเพื่ออัปโหลดเข้า Google Drive กลาง</div>
+        <div class="dz-s" id="dz-sub">ไฟล์จะถูกเก็บในโฟลเดอร์ของแผนกบุคคลและสวัสดิการ</div>
+      </div>
+      <input type="file" id="drive-file-input" multiple>
+    </label>
+
+    <div id="drive-list"><div class="loading-note">กำลังโหลดรายการไฟล์…</div></div>
+  </div>
+</div>
+
+<div class="note">เชื่อมต่อ Vercel + Supabase + Google Drive กลาง (Service Account)</div>
+
+<!-- Add / edit task modal -->
+<div class="modal-overlay" id="task-modal">
+  <div class="modal-card">
+    <h3>เพิ่มงานใหม่</h3>
+    <form id="task-form">
+      <div class="field">
+        <label for="f-assignee">มอบหมายให้</label>
+        <select id="f-assignee" required></select>
+      </div>
+      <div class="field">
+        <label for="f-title">ชื่องาน</label>
+        <input type="text" id="f-title" required placeholder="เช่น คำนวณเงินเดือนประจำเดือน">
+      </div>
+      <div class="field">
+        <label for="f-category">หมวดงาน</label>
+        <input type="text" id="f-category" placeholder="เช่น เงินเดือน / ประกันสังคม / บรรจุ">
+      </div>
+      <div class="field">
+        <label for="f-due">กำหนดส่ง (ถ้ามี)</label>
+        <input type="date" id="f-due">
+      </div>
+      <div class="field">
+        <label for="f-status">สถานะ</label>
+        <select id="f-status">
+          <option value="todo">ต้องทำ</option>
+          <option value="doing">กำลังทำ</option>
+          <option value="done">เสร็จแล้ว</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="modal-cancel" id="cancel-task">ยกเลิก</button>
+        <button type="submit" class="modal-save">บันทึกงาน</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="assets/app.js"></script>
+</body>
+</html>

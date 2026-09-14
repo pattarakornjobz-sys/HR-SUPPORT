@@ -1,0 +1,14 @@
+{
+  "name": "hr-support-board",
+  "version": "1.0.0",
+  "private": true,
+  "description": "บอร์ดงานแผนกบุคคลและสวัสดิการ มูลนิธิส่งเสริมศิลปาชีพฯ — Vercel + Supabase + Google Drive",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "googleapis": "^140.0.1",
+    "formidable": "^3.5.1",
+    "@supabase/supabase-js": "^2.45.4"
+  }
+}
