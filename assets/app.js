@@ -18,6 +18,21 @@ let ACTIVE_FILTER = 'all';
   if (!session) { window.location.replace('login.html'); return; }
   CURRENT_SESSION = session;
 
+  // เช็คว่าบัญชี Gmail นี้ถูกเพิ่มในตาราง staff แล้วหรือยัง (หัวหน้าแผนกเป็นคนเพิ่มให้)
+  const { data: staffRow } = await sb.from('staff').select('*').eq('id', session.user.id).maybeSingle();
+  if (!staffRow) {
+    document.getElementById('pending-email').textContent = session.user.email || '–';
+    document.getElementById('pending-uid').textContent = session.user.id;
+    document.getElementById('pending-shell').hidden = false;
+    document.getElementById('pending-logout').addEventListener('click', async () => {
+      await sb.auth.signOut();
+      window.location.replace('login.html');
+    });
+    return;
+  }
+
+  document.getElementById('app-shell').hidden = false;
+
   document.getElementById('logout-btn').addEventListener('click', async () => {
     await sb.auth.signOut();
     window.location.replace('login.html');

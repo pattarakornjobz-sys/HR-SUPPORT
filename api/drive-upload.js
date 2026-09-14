@@ -13,6 +13,7 @@ module.exports = async (req, res) => {
 
   const authed = await getAuthedStaff(req);
   if (!authed) { res.status(401).send('กรุณาเข้าสู่ระบบใหม่'); return; }
+  if (!authed.staff) { res.status(403).send('บัญชีนี้ยังไม่ได้รับสิทธิ์เข้าใช้งาน'); return; }
 
   try {
     const form = formidable({ maxFileSize: 25 * 1024 * 1024 }); // 25MB ต่อไฟล์

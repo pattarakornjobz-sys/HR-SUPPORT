@@ -11,6 +11,21 @@
 </head>
 <body>
 
+<div class="pending-wrap" id="pending-shell" hidden>
+  <div class="pending-card">
+    <div class="ico">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+    </div>
+    <h1>บัญชีนี้ยังไม่ได้รับสิทธิ์เข้าใช้งาน</h1>
+    <p>เข้าสู่ระบบด้วย Gmail สำเร็จแล้ว แต่บัญชีนี้ยังไม่ถูกเพิ่มในทีมแผนกบุคคลและสวัสดิการ<br>ส่งข้อมูลด้านล่างให้หัวหน้าแผนกเพื่อเพิ่มสิทธิ์การใช้งาน</p>
+    <div class="pending-id"><b>อีเมล</b><span id="pending-email">–</span></div>
+    <div class="pending-id"><b>รหัสผู้ใช้ (UID)</b><span id="pending-uid">–</span></div>
+    <button type="button" class="logout-btn" id="pending-logout">ออกจากระบบ</button>
+  </div>
+</div>
+
+<div id="app-shell" hidden>
+
 <div class="topbar">
   <div class="brand">
     <div class="brand-mark">
@@ -146,6 +161,8 @@
     </form>
   </div>
 </div>
+
+</div><!-- /app-shell -->
 
 <script src="assets/app.js"></script>
 </body>
