@@ -75,16 +75,18 @@ function debugLog(step, extra) {
     return;
   }
 
+  document.getElementById('pending-shell').hidden = true;
   document.getElementById('app-shell').hidden = false;
 
   startClock();
   await loadStaffAndTasks();
   wireToolbar();
   wireModal();
-  wireDropzone();
   wireProfileMenu();
   subscribeRealtime();
-  loadDriveList();
+  // Google Drive กลางถูกปิดไว้ชั่วคราว (ยังไม่ได้ตั้งค่า Service Account)
+  // wireDropzone();
+  // loadDriveList();
 })();
 
 // ---------------- clock (Thai, 24h, พ.ศ.) ----------------
