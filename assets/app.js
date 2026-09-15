@@ -163,6 +163,46 @@ function wireProfileMenu() {
     note.textContent = 'บันทึกแล้ว';
     setTimeout(() => { note.textContent = ''; }, 2000);
   });
+
+  // ---- อัปโหลดรูปโปรไฟล์ (คลิกที่วงกลมรูปตัวเองในเมนู) ----
+  document.getElementById('avatar-file-input').addEventListener('change', async (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file || !CURRENT_STAFF) return;
+
+    const note = document.getElementById('avatar-save-note');
+    if (!file.type.startsWith('image/')) {
+      note.style.color = 'var(--gold)'; note.textContent = 'ต้องเป็นไฟล์รูปภาพเท่านั้น';
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      note.style.color = 'var(--gold)'; note.textContent = 'ไฟล์รูปใหญ่เกิน 5MB';
+      return;
+    }
+
+    note.style.color = 'var(--ink-soft)'; note.textContent = 'กำลังอัปโหลด…';
+
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    const path = `${CURRENT_SESSION.user.id}/avatar-${Date.now()}.${ext}`;
+
+    const { error: upErr } = await sb.storage.from('hr-staff-avatars').upload(path, file, { upsert: true });
+    if (upErr) { note.style.color = 'var(--gold)'; note.textContent = 'อัปโหลดไม่สำเร็จ: ' + upErr.message; return; }
+
+    const { data: urlData } = sb.storage.from('hr-staff-avatars').getPublicUrl(path);
+    const avatarUrl = urlData.publicUrl;
+
+    const { error: updErr } = await sb.from('hr_staff').update({ avatar_url: avatarUrl }).eq('id', CURRENT_STAFF.id);
+    if (updErr) { note.style.color = 'var(--gold)'; note.textContent = 'บันทึกไม่สำเร็จ: ' + updErr.message; return; }
+
+    CURRENT_STAFF.avatar_url = avatarUrl;
+    const idx = ALL_STAFF.findIndex(s => s.id === CURRENT_STAFF.id);
+    if (idx >= 0) ALL_STAFF[idx].avatar_url = avatarUrl;
+
+    renderWhoBar();
+    renderBoard();
+    note.style.color = 'var(--sage)'; note.textContent = 'เปลี่ยนรูปแล้ว';
+    setTimeout(() => { note.textContent = ''; }, 2000);
+  });
 }
 
 function initials(name) { return (name || '?').slice(0, 2); }

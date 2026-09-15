@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>บอร์ดงานแผนกบุคคลและสวัสดิการ</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Sarabun:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/style.css?v=1789442843">
+<link rel="stylesheet" href="assets/style.css?v=1789444482">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="assets/config.js?v=1789442843"></script>
+<script src="assets/config.js?v=1789444482"></script>
 </head>
 <body>
 
@@ -37,12 +37,6 @@
     </div>
   </div>
 
-  <div class="stack-pills">
-    <span class="pill"><i></i>ระบบออนไลน์</span>
-    <a class="pill link" href="https://hr-support-snowy.vercel.app/" target="_blank" rel="noopener">▲ Vercel</a>
-    <a class="pill link" href="https://uhefxwccuqagnbrbidbh.supabase.co" target="_blank" rel="noopener">⚡ Supabase</a>
-  </div>
-
   <div class="top-right">
     <div class="clock-box">
       <div class="date" id="thai-date">–</div>
@@ -61,10 +55,17 @@
 
       <div class="profile-menu" id="profile-menu" hidden>
         <div class="profile-menu-head">
-          <div class="who-avatar" id="menu-avatar" style="width:40px;height:40px;">–</div>
+          <label class="avatar-upload" id="avatar-upload-trigger" title="เปลี่ยนรูปโปรไฟล์">
+            <div class="who-avatar" id="menu-avatar" style="width:40px;height:40px;">–</div>
+            <div class="avatar-upload-hint">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z"/><circle cx="12" cy="13" r="4"/></svg>
+            </div>
+            <input type="file" id="avatar-file-input" accept="image/*" hidden>
+          </label>
           <div>
             <div class="profile-name" id="menu-name">–</div>
             <div class="profile-role" id="menu-email">–</div>
+            <div class="avatar-save-note" id="avatar-save-note"></div>
           </div>
         </div>
         <form id="profile-form">
@@ -122,7 +123,6 @@
   </div>
 </div>
 
-<div class="note">เชื่อมต่อ Vercel + Supabase</div>
 
 <!-- Add / edit task modal -->
 <div class="modal-overlay" id="task-modal">
@@ -163,6 +163,6 @@
 
 </div><!-- /app-shell -->
 
-<script src="assets/app.js?v=1789442843"></script>
+<script src="assets/app.js?v=1789444482"></script>
 </body>
 </html>
