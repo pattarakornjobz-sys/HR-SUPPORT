@@ -1,5 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Sarabun:wght@400;500;600;700&display=swap');
 
+/* บังคับ [hidden] ให้ชนะ display ของ class อื่นๆ เสมอ (กันการ์ด/หน้าจอค้างโชว์ซ้อนกัน) */
+[hidden]{ display:none !important; }
+
   :root{
     --pink-50:#fdf3f6;
     --pink-100:#faeaf0;
