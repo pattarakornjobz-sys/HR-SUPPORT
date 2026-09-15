@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>เข้าสู่ระบบ · บอร์ดงานแผนกบุคคลและสวัสดิการ</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Sarabun:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="assets/style.css?v=1789440786">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="assets/config.js"></script>
+<script src="assets/config.js?v=1789440786"></script>
 </head>
 <body>
 
@@ -20,7 +20,6 @@
     <div class="sub">มูลนิธิส่งเสริมศิลปาชีพฯ</div>
 
     <div class="login-error" id="login-error"></div>
-    <pre id="debug-trail" style="display:none;text-align:left;font-size:11px;background:#00000010;border-radius:8px;padding:10px;margin-top:10px;max-height:220px;overflow:auto;white-space:pre-wrap;"></pre>
 
     <button type="button" class="google-btn" id="google-btn">
       <svg viewBox="0 0 48 48" width="18" height="18">
@@ -51,16 +50,6 @@
     errBox.textContent = 'เข้าสู่ระบบไม่สำเร็จ: ' + params.get('error');
     errBox.classList.add('show');
   }
-
-  // แสดง debug trail ที่ index.html บันทึกไว้ (ถ้ามี) เพื่อดูว่าติดขั้นตอนไหน
-  try {
-    const trail = JSON.parse(sessionStorage.getItem('hr_debug') || '[]');
-    if (trail.length) {
-      const box = document.getElementById('debug-trail');
-      box.style.display = 'block';
-      box.textContent = trail.map(e => `${e.t.slice(11,19)}  ${e.step}  ${e.extra ? JSON.stringify(e.extra) : ''}`).join('\n');
-    }
-  } catch (e) { /* ignore */ }
 
   document.getElementById('google-btn').addEventListener('click', async () => {
     await sb.auth.signInWithOAuth({

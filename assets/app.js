@@ -12,58 +12,42 @@ let ALL_STAFF = [];
 let ALL_TASKS = [];
 let ACTIVE_FILTER = 'all';
 
-// ---------------- debug trail (เก็บไว้ใน sessionStorage เพราะ console หายตอนเปลี่ยนหน้า) ----------------
-function debugLog(step, extra) {
-  try {
-    const log = JSON.parse(sessionStorage.getItem('hr_debug') || '[]');
-    log.push({ t: new Date().toISOString(), step, extra: extra || null });
-    sessionStorage.setItem('hr_debug', JSON.stringify(log.slice(-20)));
-  } catch (e) { /* ignore */ }
-  console.log('[hr-debug]', step, extra || '');
-}
-
 // ---------------- auth guard ----------------
 (async function init() {
-  debugLog('index.html loaded', { href: window.location.href });
+  // ซ่อนทั้งสองหน้าจอไว้ก่อนเสมอตอนเริ่ม กันโชว์ผิดจังหวะระหว่างเช็ค session
+  document.getElementById('pending-shell').hidden = true;
+  document.getElementById('app-shell').hidden = true;
 
   // ถ้า Supabase ส่ง error กลับมาทาง query string (เช่น account ไม่ผ่าน consent screen)
   // ให้ส่งต่อไปแสดงที่หน้า login แทนที่จะเด้งแบบเงียบๆ
   const qp = new URLSearchParams(window.location.search);
   if (qp.get('error') || qp.get('error_description')) {
-    debugLog('auth callback error', { error: qp.get('error'), desc: qp.get('error_description') });
     window.location.replace('login.html?error=' + encodeURIComponent(qp.get('error') || qp.get('error_description')));
     return;
   }
 
-  let { data: { session }, error: sessErr } = await sb.auth.getSession();
-  debugLog('first getSession()', { hasSession: !!session, error: sessErr?.message });
-  if (!session) {
-    // เผื่อกรณี race condition: หลัง redirect กลับจาก Google การแลก code เป็น session
-    // อาจยังไม่เสร็จตอน getSession() ครั้งแรก ลองรออีกครั้งสั้นๆ ก่อนสรุปว่าไม่มี session จริง
-    await new Promise(r => setTimeout(r, 400));
-    ({ data: { session }, error: sessErr } = await sb.auth.getSession());
-    debugLog('retry getSession()', { hasSession: !!session, error: sessErr?.message });
+  // เผื่อกรณี race condition: หลัง redirect กลับจาก Google การแลก code เป็น session
+  // อาจยังไม่เสร็จตอน getSession() ครั้งแรก ลองใหม่สั้นๆ สูงสุด 3 ครั้งก่อนสรุปว่าไม่มี session จริง
+  let session = null;
+  for (let attempt = 0; attempt < 3 && !session; attempt++) {
+    if (attempt > 0) await new Promise(r => setTimeout(r, 350));
+    ({ data: { session } } = await sb.auth.getSession());
   }
   if (!session) {
-    debugLog('no session after retry -> redirect to login');
     window.location.replace('login.html');
     return;
   }
-  debugLog('session found', { email: session.user.email, uid: session.user.id });
   CURRENT_SESSION = session;
 
   // ครั้งแรกที่ login ด้วย Gmail นี้: ลอง "จับคู่" กับแถวที่หัวหน้าแผนกเตรียมไว้ล่วงหน้าด้วยอีเมล
   // (ถ้าแถวนั้นถูกจับคู่ไปแล้ว หรือยังไม่มีแถวเลย คำสั่งนี้จะไม่เปลี่ยนอะไร ไม่ error)
-  const { data: claimData, error: claimErr } = await sb
+  await sb
     .from('hr_staff')
     .update({ auth_uid: session.user.id })
     .is('auth_uid', null)
-    .ilike('email', session.user.email)
-    .select();
-  debugLog('claim update', { rows: claimData, error: claimErr?.message });
+    .ilike('email', session.user.email);
 
-  const { data: staffRow, error: fetchErr } = await sb.from('hr_staff').select('*').eq('auth_uid', session.user.id).maybeSingle();
-  debugLog('fetch staffRow', { found: !!staffRow, error: fetchErr?.message });
+  const { data: staffRow } = await sb.from('hr_staff').select('*').eq('auth_uid', session.user.id).maybeSingle();
   if (!staffRow) {
     document.getElementById('pending-email').textContent = session.user.email || '–';
     document.getElementById('pending-uid').textContent = session.user.id;
