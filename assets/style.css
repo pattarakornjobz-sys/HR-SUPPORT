@@ -346,9 +346,22 @@
 .card-menu svg{ width:11px; height:11px; }
 
 .status-select{
-  margin-top:7px; font-family:inherit; font-size:11px; font-weight:700; color:var(--ink-soft);
+  font-family:inherit; font-size:11px; font-weight:700; color:var(--ink-soft);
   border:1px solid var(--line); border-radius:999px; padding:3px 8px; background:var(--paper-soft); cursor:pointer;
 }
+
+/* ---------- การ์ดงาน: กำหนดส่งเลยกำหนด / สถิติงานเสร็จ / ปุ่มเสร็จด่วน ---------- */
+.card .due.overdue{ color:var(--rose-600,#e0507a); }
+.card .due.done-stat{ color:var(--sage); }
+
+.card-actions{
+  margin-top:7px; display:flex; align-items:center; gap:6px; flex-wrap:wrap;
+}
+.quick-done{
+  font-family:inherit; font-size:11px; font-weight:700; color:#fff;
+  background:var(--sage); border:none; border-radius:999px; padding:4px 10px; cursor:pointer;
+}
+.quick-done:hover{ filter:brightness(1.06); }
 
 .loading-note, .empty-note{ text-align:center; font-size:12.5px; color:var(--ink-soft); padding:20px; }
 

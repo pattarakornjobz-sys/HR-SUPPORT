@@ -223,6 +223,20 @@ function fmtDueDate(d) {
   return `${dt.getDate()} ${months[dt.getMonth()]} ${dt.getFullYear() + 543}`;
 }
 
+// เหมือน fmtDueDate แต่รับ timestamp (ISO string ที่มีเวลาด้วย) — ใช้กับ started_at/completed_at
+function fmtDate(iso) {
+  if (!iso) return '';
+  const dt = new Date(iso);
+  const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  return `${dt.getDate()} ${months[dt.getMonth()]} ${dt.getFullYear() + 543}`;
+}
+
+function daysBetween(a, b) {
+  if (!a || !b) return null;
+  const ms = new Date(b) - new Date(a);
+  return Math.max(0, Math.round(ms / 86400000));
+}
+
 // ---------------- board render ----------------
 function renderBoard() {
   const board = document.getElementById('board');
@@ -353,6 +367,25 @@ function matchesFilter(status) { return ACTIVE_FILTER === 'all' || ACTIVE_FILTER
 
 function taskCardHtml(t) {
   const canEdit = CURRENT_STAFF && (CURRENT_STAFF.role === 'head' || t.assigned_to === CURRENT_STAFF.id);
+
+  let metaHtml = '';
+  if (t.status === 'todo') {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const due = t.due_date ? new Date(t.due_date + 'T00:00:00') : null;
+    const overdue = due && due < today;
+    metaHtml = t.due_date
+      ? `<div class="due ${overdue ? 'overdue' : ''}">ต้องเสร็จภายในวันที่ ${fmtDueDate(t.due_date)}${overdue ? ' (เลยกำหนด)' : ''}</div>`
+      : `<div class="due">ไม่ระบุกำหนดส่ง</div>`;
+  } else if (t.status === 'doing') {
+    metaHtml = t.due_date
+      ? `<div class="due">กำหนดส่ง ${fmtDueDate(t.due_date)}</div>`
+      : `<div class="due">เริ่มทำเมื่อ ${relTime(t.started_at || t.created_at)}</div>`;
+  } else { // done
+    const start = t.started_at || t.created_at;
+    const days = t.completed_at ? daysBetween(start, t.completed_at) : null;
+    metaHtml = `<div class="due done-stat">${fmtDate(start)} → ${fmtDate(t.completed_at)}${days !== null ? ` · ใช้เวลา ${days} วัน` : ''}</div>`;
+  }
+
   return `
     <div class="card ${t.status === 'done' ? 'done' : ''}" data-task-id="${t.id}">
       ${canEdit ? `
@@ -362,14 +395,17 @@ function taskCardHtml(t) {
           </button>
         </div>` : ''}
       <div class="title">${escapeHtml(t.title)}</div>
-      ${t.due_date ? `<div class="due">กำหนดส่ง ${fmtDueDate(t.due_date)}</div>` : `<div class="due">${t.status === 'done' ? 'เสร็จเมื่อ ' + relTime(t.completed_at) : 'ไม่ระบุกำหนด'}</div>`}
+      ${metaHtml}
       <span class="cat-tag">${escapeHtml(t.category || 'ทั่วไป')}</span>
       ${canEdit ? `
-        <select class="status-select" data-id="${t.id}">
-          <option value="todo" ${t.status === 'todo' ? 'selected' : ''}>ต้องทำ</option>
-          <option value="doing" ${t.status === 'doing' ? 'selected' : ''}>กำลังทำ</option>
-          <option value="done" ${t.status === 'done' ? 'selected' : ''}>เสร็จแล้ว</option>
-        </select>` : ''}
+        <div class="card-actions">
+          ${t.status === 'doing' ? `<button type="button" class="quick-done" data-id="${t.id}">✓ เสร็จแล้ว</button>` : ''}
+          <select class="status-select" data-id="${t.id}">
+            <option value="todo" ${t.status === 'todo' ? 'selected' : ''}>ต้องทำ</option>
+            <option value="doing" ${t.status === 'doing' ? 'selected' : ''}>กำลังทำ</option>
+            <option value="done" ${t.status === 'done' ? 'selected' : ''}>เสร็จแล้ว</option>
+          </select>
+        </div>` : ''}
     </div>`;
 }
 
@@ -392,6 +428,11 @@ document.addEventListener('click', async (e) => {
     if (!confirm('ลบงานนี้ใช่หรือไม่?')) return;
     const { error } = await sb.from('hr_tasks').delete().eq('id', del.dataset.id);
     if (error) alert('ลบไม่สำเร็จ: ' + error.message);
+  }
+  const qd = e.target.closest('.quick-done');
+  if (qd) {
+    const { error } = await sb.from('hr_tasks').update({ status: 'done' }).eq('id', qd.dataset.id);
+    if (error) alert('อัปเดตไม่สำเร็จ: ' + error.message);
   }
 });
 
