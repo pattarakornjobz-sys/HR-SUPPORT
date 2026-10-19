@@ -393,7 +393,8 @@ H.D.task = () => { const t = S.d.tasks.find(x => x.id === S.dlg.data); if (!t) r
   H.render = () => { if (!S.me) return; const ae = document.activeElement, id = ae && ae.id, pos = ae && ae.selectionStart; if (S.dlg) Object.assign(S.dlg.vals, H.form());
     document.getElementById('app').innerHTML = H.shell(); if (id) { const n = document.getElementById(id); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) { } } } };
   // ---------- เหตุการณ์ ----------
-  document.addEventListener('click', ev => { const el = ev.target.closest('[data-act]'); if (!el) { if (ev.target.id === 'dlg') A.close(); return; } if (el.tagName === 'A') ev.preventDefault(); const fn = A[el.dataset.act]; if (fn) fn(el.dataset.a, el, ev); });
+  document.addEventListener('mousedown', ev => { S._md = ev.target; }, true);
+  document.addEventListener('click', ev => { const el = ev.target.closest('[data-act]'); if (!el) { if (ev.target.id === 'dlg' && S._md && S._md.id === 'dlg') A.close(); return; } if (el.tagName === 'A') ev.preventDefault(); const fn = A[el.dataset.act]; if (fn) fn(el.dataset.a, el, ev); });
   document.addEventListener('input', ev => { const el = ev.target.closest('[data-in]'); if (el && A[el.dataset.in]) A[el.dataset.in](el.value, el, ev); });
   document.addEventListener('change', ev => { const el = ev.target.closest('[data-ch]'); if (el && A[el.dataset.ch]) { A[el.dataset.ch](el.type === 'file' ? Array.from(el.files) : el.value, el, ev); if (el.type === 'file') el.value = ''; } });
   // ---------- เริ่มระบบ ----------
