@@ -76,7 +76,7 @@ input.sm{width:100%;font:inherit;font-size:13px;padding:6px 8px;border-radius:8p
 .content{flex:1;min-width:0;padding:0 28px 48px;max-width:1500px}
 .top2{display:flex;align-items:center;gap:12px;padding:18px 0 0}.ck.card{padding:6px 14px;border-radius:14px}
 .hamb{display:none;width:44px;height:44px;border-radius:12px;font-size:18px}.scrim{display:none}
-.pop.up{top:auto;right:auto;bottom:76px;left:12px}
+.pop.pup{top:auto;right:auto;bottom:76px;left:12px}
 .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:18px}
 .pc{position:relative;padding:22px 18px 16px;text-align:center;border-top:6px solid;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:.15s}.pc:hover{box-shadow:var(--lift);transform:translateY(-2px)}
 .pn{font:600 20px Kanit,sans-serif;color:var(--plum-900)}.ps{min-height:34px}
@@ -97,8 +97,14 @@ input.sm{width:100%;font:inherit;font-size:13px;padding:6px 8px;border-radius:8p
 .pav2{margin-top:-52px;position:relative;z-index:1}.pav2 .av{border:5px solid #fff;box-shadow:0 0 0 3px var(--c),0 10px 22px rgba(58,31,48,.2)}
 .stack{display:inline-flex;padding:4px 0}.stack .av{margin-left:-14px;border-width:3px}.stack .av:first-child{margin-left:0}
 .pcx .pcnt{gap:4px}.pcx .pcnt span{font-size:10px}.pcx .ps{min-height:34px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.pop{z-index:70;background:#fff}.pop.up{left:268px;bottom:16px;width:300px}
-@media (max-width:900px){.pop.up{left:12px;bottom:12px}}
+.pop{z-index:70;background:#fff}.pop.pup{left:268px;bottom:16px;width:300px}
+@media (max-width:900px){.pop.pup{left:12px;bottom:12px}}
+
+.ck,.ck.card{white-space:nowrap}
+.pgrid{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+@media (min-width:1180px){.pgrid{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}}
+.tiles{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}
+.pcx{padding:0 10px 14px}.pban{width:calc(100% + 20px);margin:0 -10px}
 
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -375,7 +381,7 @@ H.D.task = () => { const t = S.d.tasks.find(x => x.id === S.dlg.data); if (!t) r
     const acts = (H.ACTS[S.view] ? H.ACTS[S.view]() : '') + (H.isHead() && (S.view === 'tasks' || S.view === 'board') ? '<button class="btn primary" data-act="openAdd">+ มอบหมายงาน</button>' : '');
     return '<div class="app"><div class="scrim noprint' + (S.menu ? ' show' : '') + '" data-act="menu"></div><aside class="side noprint' + (S.menu ? ' open' : '') + '"><div class="brand"><div class="logo">HR</div><div><div class="bt">HR Desk</div><div class="mu">แผนกบุคคลและสวัสดิการ</div></div></div><div class="sg">งานทีม</div>' + nav1.map(nb).join('') + '<div class="sg">ข้อมูลบุคลากร</div>' + nav2.map(nb).join('') + '<div class="sp"></div><button class="who2" data-act="prof">' + H.avatar(me, 40) + '<span class="g1"><b>' + esc(me.nickname) + '</b><span class="mu">' + (me.role === 'head' ? 'หัวหน้าแผนก' : 'เจ้าหน้าที่') + '</span></span><span class="mu">⋯</span></button></aside>' +
       '<div class="content"><header class="noprint top2"><button class="hamb card" data-act="menu">☰</button><div class="g1"><div class="eyebrow">' + dateT + '</div></div><div class="ck card">' + clock + ' น.</div><button class="round card" data-act="bell" title="แจ้งเตือน">♪<span class="badge">' + al.length + '</span></button></header>' +
-      (S.prof ? '<div class="pop up noprint"><div class="ph"><label class="avl" title="อัปโหลดรูปโปรไฟล์">' + H.avatar(me, 54) + '<span class="plus">+</span><input type="file" accept="image/*" style="display:none" data-ch="avatar"></label><span><b>' + esc(me.nickname) + '</b><br><span class="mu">' + esc(me.email || S.session.user.email) + '</span></span></div><div class="mu" style="margin:6px 0">คลิกที่รูปเพื่ออัปโหลด (ครอบเป็นวงกลมอัตโนมัติ)</div><label class="fld">เบอร์ติดต่อ<input value="' + esc(me.phone || '') + '" placeholder="08x-xxx-xxxx" data-ch="savePhone"></label>' + (me.avatar_url ? '<button class="btn ghost" data-act="rmAvatar" style="margin-bottom:8px">ลบรูปโปรไฟล์</button>' : '') + '<button class="btn ghost" data-act="logout">ออกจากระบบ</button></div>' : '') +
+      (S.prof ? '<div class="pop pup noprint"><div class="ph"><label class="avl" title="อัปโหลดรูปโปรไฟล์">' + H.avatar(me, 54) + '<span class="plus">+</span><input type="file" accept="image/*" style="display:none" data-ch="avatar"></label><span><b>' + esc(me.nickname) + '</b><br><span class="mu">' + esc(me.email || S.session.user.email) + '</span></span></div><div class="mu" style="margin:6px 0">คลิกที่รูปเพื่ออัปโหลด (ครอบเป็นวงกลมอัตโนมัติ)</div><label class="fld">เบอร์ติดต่อ<input value="' + esc(me.phone || '') + '" placeholder="08x-xxx-xxxx" data-ch="savePhone"></label>' + (me.avatar_url ? '<button class="btn ghost" data-act="rmAvatar" style="margin-bottom:8px">ลบรูปโปรไฟล์</button>' : '') + '<button class="btn ghost" data-act="logout">ออกจากระบบ</button></div>' : '') +
       (S.bell ? '<div class="pop wide noprint"><div class="ph"><b>ต้องติดตาม · เกินกำหนด / ภายใน 7 วัน</b></div>' + (al.map(t => '<div class="li" data-act="task" data-a="' + t.id + '"><i class="dot" style="background:' + dueInfo(t).d + '"></i><div><b>' + esc(t.title) + '</b><div class="mu">' + esc(H.ownerName(H.ownerKey(t))) + ' · <b style="color:' + dueInfo(t).c + '">' + dueInfo(t).t + '</b></div></div></div>').join('') || '<div class="empty">ไม่มีงานที่ต้องติดตาม</div>') + '</div>' : '') +
       '<div class="prhead">แผนกบุคคลและสวัสดิการ มูลนิธิ — พิมพ์เมื่อ ' + dateT + '</div><div class="card ph2"><div class="g1"><h2>' + esc(m[0]) + '</h2><div class="mu">' + esc(m[1]) + '</div></div><div class="noprint hacts">' + (['dash', 'board'].includes(S.view) ? '' : '<button class="btn ghost" onclick="window.print()">พิมพ์รายงาน</button>') + acts + '</div></div><main>' + (H.V[S.view] ? H.V[S.view]() : '') + '</main></div></div>' + (S.dlg && H.D[S.dlg.type] ? H.D[S.dlg.type]() : ''); };
   
