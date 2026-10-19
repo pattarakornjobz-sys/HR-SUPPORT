@@ -1,511 +1,121 @@
-// ============================================================
-// บอร์ดงานแผนกบุคคลและสวัสดิการ — client logic
-// ============================================================
-const sb = window.supabase.createClient(window.HR_CONFIG.SUPABASE_URL, window.HR_CONFIG.SUPABASE_ANON_KEY);
-
-const STATUS_LABEL = { doing: 'กำลังทำ', todo: 'ต้องทำ', done: 'เสร็จแล้ว' };
-const STATUS_DOT = { doing: 'var(--sky)', todo: 'var(--gold)', done: 'var(--sage)' };
-
-let CURRENT_SESSION = null;
-let CURRENT_STAFF = null;   // แถวของผู้ใช้ปัจจุบันในตาราง staff
-let ALL_STAFF = [];
-let ALL_TASKS = [];
-let ACTIVE_FILTER = 'all';
-
-// ---------------- debug trail (เก็บไว้ใน sessionStorage เพราะ console หายตอนเปลี่ยนหน้า) ----------------
-function debugLog(step, extra) {
-  try {
-    const log = JSON.parse(sessionStorage.getItem('hr_debug') || '[]');
-    log.push({ t: new Date().toISOString(), step, extra: extra || null });
-    sessionStorage.setItem('hr_debug', JSON.stringify(log.slice(-20)));
-  } catch (e) { /* ignore */ }
-  console.log('[hr-debug]', step, extra || '');
-}
-
-// ---------------- auth guard ----------------
-(async function init() {
-  debugLog('index.html loaded', { href: window.location.href });
-
-  // ถ้า Supabase ส่ง error กลับมาทาง query string (เช่น account ไม่ผ่าน consent screen)
-  // ให้ส่งต่อไปแสดงที่หน้า login แทนที่จะเด้งแบบเงียบๆ
-  const qp = new URLSearchParams(window.location.search);
-  if (qp.get('error') || qp.get('error_description')) {
-    debugLog('auth callback error', { error: qp.get('error'), desc: qp.get('error_description') });
-    window.location.replace('login.html?error=' + encodeURIComponent(qp.get('error') || qp.get('error_description')));
-    return;
+/* HR Desk — แกนหลัก: auth · โหลดข้อมูล · เชลล์ · เหตุการณ์ · มุมมองงาน (board/dash/tasks/cal/meet) */
+(function () {
+  const H = window.HR, esc = H.esc, num = H.num, TONE = H.TONE;
+  const sb = (H.sb = supabase.createClient(window.HR_CONFIG.SUPABASE_URL, window.HR_CONFIG.SUPABASE_ANON_KEY));
+  const S = (H.S = { view: 'board', f: 'all', ownerF: 'all', typeF: 'all', q: '', eq: '', empF: 'all', rollP: null, payF: 'all', payP: 'all', dlg: null, bell: false, prof: false, msg: {}, d: {}, me: null, now: new Date() });
+  H.A = {}; H.V = {}; H.D = {}; H.NAVX = [];
+  const T = { staff: 'hr_staff', tasks: 'hr_tasks', emps: 'hr_employees', moves: 'hr_moves', roll: 'hr_payroll', pays: 'hr_disbursements', ins: 'hr_group_insurance', ben: 'hr_beneficiaries', meets: 'hr_meetings', files: 'hr_task_files' };
+  const ORD = { staff: ['sort_order', 1], tasks: ['updated_at', 0], emps: ['employee_id', 1], moves: ['effective_date', 0], roll: ['period', 1], pays: ['paid_date', 0], ins: ['employee_id', 1], ben: ['seq', 1], meets: ['meeting_date', 0], files: ['created_at', 1] };
+  H.load = async k => { const { data, error } = await sb.from(T[k]).select('*').order(ORD[k][0], { ascending: !!ORD[k][1] }).range(0, 9999); if (error) H.toast('โหลด ' + T[k] + ' ไม่สำเร็จ: ' + error.message, true); S.d[k] = data || []; };
+  H.loadAll = () => Promise.all(Object.keys(T).map(H.load));
+  H.save = async (p, ok, reload) => { const { error, data } = await p; if (error) { H.toast(error.message, true); return null; } if (ok) H.toast(ok); if (reload) { await Promise.all(reload.map(H.load)); H.render(); } return data || true; };
+  H.P = k => TONE[H.OT[k] || 'gray'];
+  H.staffBy = id => S.d.staff.find(s => s.id === id);
+  H.ownerKey = t => { const s = H.staffBy(t.assigned_to); return s ? (s.owner_key || 'head') : 'all'; };
+  H.ownerName = k => k === 'head' ? 'หัวหน้า' : (S.d.staff.find(s => s.owner_key === k) || {}).nickname || H.OWN[k];
+  H.isHead = () => S.me.role === 'head';
+  H.has = k => H.isHead() || S.me.owner_key === k;
+  H.canReg = () => H.isHead() || S.me.can_registry;
+  H.canTask = t => H.isHead() || t.assigned_to == null || t.assigned_to === S.me.id;
+  H.ini = n => Array.from(n || '?').slice(0, 2).join('');
+  H.avatar = (s, size) => { const st = 'width:' + size + 'px;height:' + size + 'px;font-size:' + Math.round(size / 3) + 'px'; return s && s.avatar_url ? '<span class="av" style="' + st + ';background:url(\'' + esc(s.avatar_url) + '\') center/cover"></span>' : '<span class="av" style="' + st + ';background:' + (s ? s.avatar_color || H.P(s.owner_key || 'head').m : '#7a6570') + '">' + esc(H.ini(s && s.nickname)) + '</span>'; };
+  // ---------- ตัวช่วยสร้าง UI ----------
+  H.chip = (label, on, act, arg, tone) => '<button class="chip' + (on ? ' on' : '') + '" data-act="' + act + '" data-a="' + esc(arg) + '"' + (on && tone ? ' style="background:' + tone.m + ';border-color:' + tone.m + '"' : '') + '>' + (tone ? '<i style="background:' + (on ? '#fff' : tone.m) + '"></i>' : '') + esc(label) + '</button>';
+  H.seg = (items, cur, act) => '<div class="seg">' + items.map(i => '<button class="' + (cur === i[0] ? 'on' : '') + '" data-act="' + act + '" data-a="' + i[0] + '">' + esc(i[1]) + '</button>').join('') + '</div>';
+  H.tiles = list => '<div class="tiles">' + list.map(s => '<div class="card tile" style="border-top-color:' + s.m + '"><div class="tl" style="color:' + s.d + '">' + esc(s.label) + '</div><div class="tv" style="font-size:' + (s.fs || 28) + 'px">' + esc(s.value) + '</div><div class="ts">' + esc(s.sub || '') + '</div></div>').join('') + '</div>';
+  H.tbl = (cols, rows, foot) => '<div class="card scroll"><table class="tbl"><thead><tr>' + cols.map(c => '<th' + (c.r ? ' class="r"' : '') + '>' + c.h + '</th>').join('') + '</tr></thead><tbody>' + rows + '</tbody>' + (foot || '') + '</table></div>';
+  H.msg = k => S.msg[k] ? '<div class="msg noprint"><span>' + esc(S.msg[k]) + '</span><button data-act="clrMsg" data-a="' + k + '">✕</button></div>' : '';
+  H.fv = (f, d) => (S.dlg && S.dlg.vals && f in S.dlg.vals) ? S.dlg.vals[f] : d;
+  H.inp = (f, label, d, type, ex) => '<label class="fld">' + esc(label) + '<input data-f="' + f + '" type="' + (type || 'text') + '" value="' + esc(H.fv(f, d == null ? '' : d)) + '" ' + (ex || '') + '></label>';
+  H.sel = (f, label, opts, d) => { const v = H.fv(f, d); return '<label class="fld">' + esc(label) + '<select data-f="' + f + '">' + opts.map(o => '<option value="' + esc(o[0]) + '"' + (String(o[0]) === String(v) ? ' selected' : '') + '>' + esc(o[1]) + '</option>').join('') + '</select></label>'; };
+  H.form = () => { const o = {}; document.querySelectorAll('#dlg [data-f]').forEach(e => { o[e.dataset.f] = e.type === 'checkbox' ? e.checked : e.value; }); return o; };
+  H.open = (type, data) => { S.dlg = { type, data, vals: {} }; H.render(); };
+  H.close = () => { S.dlg = null; H.render(); };
+  H.dlgBox = (title, sub, body, actions, w) => '<div id="dlg" class="ov"><div class="dlg" style="max-width:' + (w || 520) + 'px"><h3>' + title + '</h3>' + (sub ? '<div class="sub">' + sub + '</div>' : '') + body + '<div class="acts noprint">' + actions + '</div></div></div>';
+  H.printOne = () => { document.body.setAttribute('data-print', 'one'); window.print(); document.body.removeAttribute('data-print'); };
+  // ---------- งาน ----------
+  const dueInfo = t => { if (!t.due_date) return { c: '#7a6570', d: '#c99a3f', t: '—' }; const d = H.days(t.due_date), done = t.status === 'done'; return { c: done ? '#7a6570' : d < 0 ? '#b3261e' : d <= 7 ? '#a8446a' : '#3a2a33', d: d < 0 ? '#b3261e' : '#c99a3f', t: done ? '—' : d < 0 ? 'เกิน ' + (-d) + ' วัน' : d === 0 ? 'วันนี้' : 'อีก ' + d + ' วัน' }; };
+  const ttype = t => t.task_type || H.typeOf(t.category);
+  const stChip = t => { const s = H.ST[t.status]; return '<span class="pill" style="background:' + s[1] + ';color:' + s[2] + '">' + s[0] + '</span>'; };
+  const alerts = () => S.d.tasks.filter(t => t.status !== 'done' && t.due_date && H.days(t.due_date) <= 7).sort((a, b) => a.due_date.localeCompare(b.due_date));
+  const tcard = t => { const k = H.ownerKey(t), p = H.P(k), di = dueInfo(t), ce = H.canTask(t), nf = S.d.files.filter(f => f.task_id === t.id).length;
+    return '<div class="tc" data-act="task" data-a="' + t.id + '" style="opacity:' + (t.status === 'done' ? .7 : 1) + '"><div class="tt">' + esc(t.title) + '</div><div class="tm" style="color:' + di.c + '">' + H.fd(t.due_date) + (nf ? ' <span class="mu">▤ ' + nf + '</span>' : '') + '</div><span class="pill" style="background:' + p.t + ';color:' + p.d + '">' + esc(t.category || '') + '</span>' +
+      (ce ? '<div class="mini noprint">' + ['todo', 'doing', 'done'].map(k => '<button data-act="setSt" data-a="' + t.id + '|' + k + '" style="' + (t.status === k ? 'background:' + H.ST[k][1] + ';color:' + H.ST[k][2] : '') + '">' + H.ST[k][0] + '</button>').join('') + '</div>' : '') + '</div>'; };
+  const trow = t => { const k = H.ownerKey(t), p = H.P(k), di = dueInfo(t), nf = S.d.files.filter(f => f.task_id === t.id).length;
+    return '<div class="tr" data-act="task" data-a="' + t.id + '" style="border-left-color:' + p.m + ';opacity:' + (t.status === 'done' ? .7 : 1) + '"><div class="g1"><div class="tt">' + esc(t.title) + '</div><div class="mu">' + esc(t.freq || '') + (nf ? ' · ▤ ' + nf + ' ไฟล์' : '') + '</div></div><span class="pill" style="background:' + p.t + ';color:' + p.d + '">' + esc(H.ownerName(k)) + ' · ' + esc(t.category || '') + '</span><span class="due" style="color:' + di.c + '">' + H.fd(t.due_date) + '</span><button class="pill noprint" data-act="cycle" data-a="' + t.id + '" style="background:' + H.ST[t.status][1] + ';color:' + H.ST[t.status][2] + '">' + H.ST[t.status][0] + '</button></div>'; };
+  const stSeg = arr => H.seg([['all', 'ทั้งหมด ' + arr.length], ...['todo', 'doing', 'done'].map(k => [k, H.ST[k][0] + ' ' + arr.filter(t => t.status === k).length])], S.f, 'f');
+  H.V.board = () => { const cols = ['ney', 'jom', 'bb', 'pan', 'all'];
+    return '<div class="noprint" style="margin-bottom:14px">' + stSeg(S.d.tasks) + '</div><div class="cols">' + cols.map(k => { const a = S.d.tasks.filter(t => H.ownerKey(t) === k), p = H.P(k), st = S.d.staff.find(s => s.owner_key === k);
+      return '<div class="col"><div class="card colh">' + (st ? H.avatar(st, 44) : '<span class="av" style="width:44px;height:44px;background:' + p.m + '">' + H.ini(H.ownerName(k)) + '</span>') + '<span><b>' + esc(H.ownerName(k)) + '</b><span class="mu">' + esc(st ? st.scope : 'งานร่วมกัน') + '</span></span><span class="pill" style="margin-left:auto;background:' + p.t + ';color:' + p.d + '">' + a.length + '</span></div>' +
+        ['doing', 'todo', 'done'].filter(s => S.f === 'all' || S.f === s).map(s => { const it = a.filter(t => t.status === s).sort((x, y) => String(x.due_date).localeCompare(String(y.due_date))); return '<div class="grp"><div class="gl"><i style="background:' + H.ST[s][3] + '"></i>' + H.ST[s][0] + '<span class="cnt">' + it.length + '</span></div>' + (it.map(tcard).join('') || '<div class="empty">ไม่มีงาน</div>') + '</div>'; }).join('') + '</div>'; }).join('') + '</div>'; };
+  H.V.dash = () => { const ts = S.d.tasks, al = alerts();
+    const tl = H.tiles([{ label: 'งานทั้งหมด', value: ts.length, m: '#c65d82', d: '#8a3357' }, { label: 'กำลังดำเนินการ', value: ts.filter(t => t.status === 'doing').length, m: H.ST.doing[3], d: H.ST.doing[2] }, { label: 'เกินกำหนด / ใน 7 วัน', value: al.length, m: '#b3261e', d: '#8a1a14' }, { label: 'เสร็จแล้ว', value: ts.filter(t => t.status === 'done').length, m: H.ST.done[3], d: H.ST.done[2] }]);
+    const soon = ts.filter(t => t.status !== 'done' && t.due_date).sort((a, b) => a.due_date.localeCompare(b.due_date)).slice(0, 7).map(t => { const di = dueInfo(t); return '<div class="li" data-act="task" data-a="' + t.id + '"><i class="bar" style="background:' + H.P(H.ownerKey(t)).m + '"></i><div class="g1"><b>' + esc(t.title) + '</b><div class="mu">' + esc(H.ownerName(H.ownerKey(t))) + ' · <b style="color:' + di.c + '">' + di.t + '</b></div></div>' + stChip(t) + '</div>'; }).join('');
+    const prog = ['ney', 'jom', 'bb', 'pan', 'all'].map(k => { const a = ts.filter(t => H.ownerKey(t) === k), c = s => a.filter(t => t.status === s).length, n = Math.max(1, a.length), st = S.d.staff.find(s => s.owner_key === k);
+      return '<div class="pr"><span>' + (st ? H.avatar(st, 28) : '<span class="av" style="width:28px;height:28px;background:' + H.P(k).m + '">' + H.ini(H.ownerName(k)) + '</span>') + '</span><div class="g1"><b>' + esc(H.ownerName(k)) + '</b><div class="pb"><span style="width:' + 100 * c('done') / n + '%;background:#5c8a6d"></span><span style="width:' + 100 * c('doing') / n + '%;background:#4b7fa6"></span><span style="width:' + 100 * c('todo') / n + '%;background:#c99a3f"></span></div><div class="mu">เสร็จ ' + c('done') + ' · กำลังทำ ' + c('doing') + ' · ต้องทำ ' + c('todo') + '</div></div></div>'; }).join('');
+    const act = [...ts].sort((a, b) => b.updated_at.localeCompare(a.updated_at)).slice(0, 7).map(t => '<div class="li"><i class="dot" style="background:' + H.ST[t.status][3] + '"></i><div><b style="color:' + H.P(H.ownerKey(t)).d + '">' + esc(H.ownerName(H.ownerKey(t))) + '</b> ' + (t.status === 'done' ? 'ทำงานเสร็จ' : t.status === 'doing' ? 'กำลังดำเนินการ' : 'รอดำเนินการ') + ': ' + esc(t.title) + '<div class="mu">' + H.rel(t.updated_at) + '</div></div></div>').join('');
+    return tl + '<div class="grid3"><section class="card pad"><h3>งานใกล้ครบกำหนด</h3>' + soon + '</section><section class="card pad"><h3>ความคืบหน้าตามผู้รับผิดชอบ</h3>' + prog + '</section><section class="card pad"><h3>กิจกรรมล่าสุด</h3>' + act + '</section></div>'; };
+  H.V.tasks = () => { const ts = S.d.tasks.filter(t => (S.ownerF === 'all' || H.ownerKey(t) === S.ownerF) && (S.typeF === 'all' || ttype(t) === S.typeF)); const rows = ts.filter(t => (S.f === 'all' || t.status === S.f) && (!S.q || (t.title + (t.category || '')).includes(S.q))).sort((a, b) => String(a.due_date).localeCompare(String(b.due_date)));
+    return '<div class="noprint filters"><div class="frow"><span>ผู้รับผิดชอบ</span>' + H.chip('ทุกคน', S.ownerF === 'all', 'ownerF', 'all') + ['ney', 'jom', 'bb', 'pan', 'all'].map(k => H.chip(H.ownerName(k), S.ownerF === k, 'ownerF', k, H.P(k))).join('') + '</div><div class="frow"><span>ประเภทงาน</span>' + H.chip('ทุกประเภท', S.typeF === 'all', 'typeF', 'all') + H.TYPES.map(t => H.chip(t[1], S.typeF === t[0], 'typeF', t[0], TONE[t[3]])).join('') + '</div><div class="frow">' + stSeg(ts) + '<input id="q" class="search" placeholder="ค้นหางาน…" value="' + esc(S.q) + '" data-in="q"></div></div><div class="list">' + (rows.map(trow).join('') || '<div class="empty big">ไม่พบงาน</div>') + '</div>'; };
+  H.V.cal = () => { const mm = {}; [...S.d.tasks].filter(t => t.due_date && (!S.gov || ttype(t) === 'gov')).sort((a, b) => a.due_date.localeCompare(b.due_date)).forEach(t => (mm[t.due_date.slice(0, 7)] = mm[t.due_date.slice(0, 7)] || []).push(t));
+    return '<div class="noprint" style="margin-bottom:14px"><button class="chk" data-act="gov"><span class="box' + (S.gov ? ' on' : '') + '">' + (S.gov ? '✓' : '') + '</span>เฉพาะงานยื่นหน่วยงานรัฐ / ภาษี</button></div><div class="grid3">' + Object.keys(mm).map(k => '<section class="card"><h3 class="mh">' + H.fd(k + '-01', { month: 'long', year: 'numeric' }) + '</h3>' + mm[k].map(t => '<div class="li" data-act="task" data-a="' + t.id + '" style="border-left:6px solid ' + H.P(H.ownerKey(t)).m + '"><span class="day" style="color:' + dueInfo(t).c + '">' + H.d0(t.due_date).getDate() + '</span><div class="g1"><b>' + esc(t.title) + '</b><div class="mu">' + esc(H.ownerName(H.ownerKey(t))) + ' · ' + H.ST[t.status][0] + '</div></div></div>').join('') + '</section>').join('') + '</div>'; };
+  H.V.meet = () => '<div class="grid3">' + S.d.meets.map(m => { const tn = TONE[m.tone] || TONE.plum, dn = m.items.filter(i => i.d).length, dd = m.meeting_date ? H.days(m.meeting_date) : 0;
+    return '<section class="card pad" style="border-top:5px solid ' + tn.m + '"><div class="mu" style="color:' + tn.d + ';font-weight:700">' + esc(m.committee) + '</div><h3>ครั้งที่ ' + esc(m.meeting_no || '') + ' · ' + H.fd(m.meeting_date, { day: 'numeric', month: 'long', year: 'numeric' }) + '</h3><div class="mu">' + (dd >= 0 ? 'อีก ' + dd + ' วัน' : 'ประชุมแล้ว') + ' · เสร็จ ' + dn + '/' + m.items.length + '</div><div class="pb" style="margin:8px 0"><span style="width:' + 100 * dn / Math.max(1, m.items.length) + '%;background:#5c8a6d"></span></div>' +
+      m.items.map((i, ix) => '<div class="li" data-act="meetTog" data-a="' + m.id + '|' + ix + '"><span class="box' + (i.d ? ' on' : '') + '">' + (i.d ? '✓' : '') + '</span><span style="' + (i.d ? 'text-decoration:line-through;opacity:.6' : '') + '">' + esc(i.l) + '</span></div>').join('') + '</section>'; }).join('') + '</div>';
+  // ---------- ไดอะล็อกงาน ----------
+  H.D.task = () => { const t = S.d.tasks.find(x => x.id === S.dlg.data); if (!t) return ''; const ce = H.canTask(t), k = H.ownerKey(t), p = H.P(k), files = S.d.files.filter(f => f.task_id === t.id);
+    const body = '<span class="pill" style="background:' + p.t + ';color:' + p.d + '">' + esc(H.ownerName(k)) + ' · ' + esc(t.freq || '') + ' · ' + esc(t.category || '') + '</span><div class="mu" style="margin:6px 0 10px">กำหนดส่ง ' + H.fd(t.due_date) + ' · สถานะ ' + H.ST[t.status][0] + '</div>' + (ce ? '<div class="seg noprint" style="margin-bottom:12px">' + ['todo', 'doing', 'done'].map(s => '<button class="' + (t.status === s ? 'on' : '') + '" style="' + (t.status === s ? 'background:' + H.ST[s][3] : '') + '" data-act="setSt" data-a="' + t.id + '|' + s + '">' + H.ST[s][0] + '</button>').join('') + '</div>' + H.inp('due', 'กำหนดส่ง', t.due_date || '', 'date') + '<label class="fld">บันทึก / หมายเหตุ<textarea data-f="note" rows="3">' + esc(H.fv('note', t.note || '')) + '</textarea></label>' : '<div class="warn">ดูได้อย่างเดียว — แก้ไขได้เฉพาะเจ้าของงานและหัวหน้าแผนก</div>') +
+      '<div class="fl">ไฟล์แนบ (' + files.length + ')</div>' + files.map(f => '<div class="file"><span class="ext">' + esc((f.name.split('.').pop() || '').slice(0, 4).toUpperCase()) + '</span><a href="#" data-act="dlFile" data-a="' + f.id + '">' + esc(f.name) + '</a><span class="mu">' + (f.size_bytes ? Math.round(f.size_bytes / 1024) + ' KB' : '') + '</span>' + (ce ? '<button class="lk noprint" data-act="rmFile" data-a="' + f.id + '">ลบ</button>' : '') + '</div>').join('') + (ce ? '<label class="drop noprint">+ แนบไฟล์ (PDF, Word, Excel, รูปภาพ)<input type="file" multiple style="display:none" data-ch="upFile"></label>' : '');
+    return H.dlgBox(esc(t.title), '', body, (ce ? '<button class="btn ghost danger" data-act="delTask">ลบงาน</button>' : '') + '<button class="btn ghost" data-act="printOne">พิมพ์ใบงาน</button><button class="btn primary grow" data-act="saveTask">' + (ce ? 'บันทึก' : 'ปิด') + '</button>'); };
+  H.D.newTask = () => { const opts = [['', 'งานร่วมกัน (ทุกคน)'], ...S.d.staff.filter(s => H.isHead() || s.id === S.me.id).map(s => [s.id, s.nickname])]; const cats = ['ทั่วไป', ...H.TYPES.flatMap(t => t[2])];
+    return H.dlgBox('เพิ่มงานใหม่', '', H.inp('title', 'ชื่องาน', '') + H.sel('assigned_to', 'มอบหมายให้', opts, S.me.id) + H.sel('category', 'หมวดงาน', cats.map(c => [c, c]), 'ทั่วไป') + H.inp('due', 'กำหนดส่ง', '', 'date'), '<button class="btn ghost grow" data-act="close">ยกเลิก</button><button class="btn primary grow" data-act="addTask">บันทึกงาน</button>', 440); };
+  const A = H.A;
+  A.f = v => { S.f = v; H.render(); }; A.ownerF = v => { S.ownerF = v; H.render(); }; A.typeF = v => { S.typeF = v; H.render(); }; A.gov = () => { S.gov = !S.gov; H.render(); };
+  A.q = v => { S.q = v; H.render(); }; A.close = () => H.close(); A.clrMsg = k => { delete S.msg[k]; H.render(); }; A.printOne = () => H.printOne();
+  A.view = v => { S.view = v; S.f = 'all'; S.bell = S.prof = false; H.render(); };
+  A.task = id => H.open('task', id);
+  A.setSt = async v => { const [id, st] = v.split('|'); await H.save(sb.from('hr_tasks').update({ status: st }).eq('id', id), null, ['tasks']); };
+  A.cycle = async id => { const t = S.d.tasks.find(x => x.id === id); if (t && H.canTask(t)) await H.save(sb.from('hr_tasks').update({ status: H.NEXT[t.status] }).eq('id', id), null, ['tasks']); };
+  A.saveTask = async () => { const t = S.d.tasks.find(x => x.id === S.dlg.data), f = H.form(); if (t && H.canTask(t)) await H.save(sb.from('hr_tasks').update({ due_date: f.due || null, note: f.note || '' }).eq('id', t.id), 'บันทึกแล้ว', ['tasks']); S.dlg = null; H.render(); };
+  A.delTask = async () => { if (!confirm('ลบงานนี้ใช่หรือไม่?')) return; const id = S.dlg.data; S.dlg = null; await H.save(sb.from('hr_tasks').delete().eq('id', id), 'ลบแล้ว', ['tasks', 'files']); };
+  A.openAdd = () => H.open('newTask');
+  A.addTask = async () => { const f = H.form(); if (!f.title.trim()) return; const ok = await H.save(sb.from('hr_tasks').insert({ title: f.title.trim(), assigned_to: f.assigned_to || null, category: f.category, task_type: H.typeOf(f.category) || null, due_date: f.due || null, created_by: S.me.id }), 'เพิ่มงานแล้ว', ['tasks']); if (ok) { S.dlg = null; H.render(); } };
+  A.upFile = async files => { const id = S.dlg.data; for (const file of files) { const path = id + '/' + Date.now() + '_' + file.name.replace(/[^\w.\-]+/g, '_'); const up = await sb.storage.from('task-files').upload(path, file); if (up.error) { H.toast(up.error.message, true); continue; } await sb.from('hr_task_files').insert({ task_id: id, name: file.name, path, size_bytes: file.size, uploaded_by: S.me.id }); } await H.load('files'); H.render(); };
+  A.dlFile = async id => { const f = S.d.files.find(x => x.id === id), { data, error } = await sb.storage.from('task-files').createSignedUrl(f.path, 3600); if (error) return H.toast(error.message, true); window.open(data.signedUrl, '_blank'); };
+  A.rmFile = async id => { const f = S.d.files.find(x => x.id === id); await sb.storage.from('task-files').remove([f.path]); await H.save(sb.from('hr_task_files').delete().eq('id', id), null, ['files']); };
+  A.meetTog = async v => { const [id, ix] = v.split('|'), m = S.d.meets.find(x => x.id === id), items = m.items.map((i, j) => j === +ix ? { ...i, d: !i.d } : i); await H.save(sb.from('hr_meetings').update({ items }).eq('id', id), null, ['meets']); };
+  A.bell = () => { S.bell = !S.bell; S.prof = false; H.render(); }; A.prof = () => { S.prof = !S.prof; S.bell = false; H.render(); };
+  A.logout = async () => { await sb.auth.signOut(); location.replace('login.html'); };
+  A.savePhone = async v => { await H.save(sb.rpc('hr_update_profile', { p_phone: v, p_avatar: null }), 'บันทึกเบอร์แล้ว'); S.me.phone = v; };
+  A.avatar = files => { const file = files[0]; if (!file) return; H.resizeImage(file, 220, async blob => { const path = S.session.user.id + '/avatar.jpg', up = await sb.storage.from('avatars').upload(path, blob, { upsert: true, contentType: 'image/jpeg' }); if (up.error) return H.toast(up.error.message, true);
+    const url = sb.storage.from('avatars').getPublicUrl(path).data.publicUrl + '?v=' + Date.now(); await H.save(sb.rpc('hr_update_profile', { p_phone: null, p_avatar: url }), 'อัปโหลดรูปแล้ว'); S.me.avatar_url = url; await H.load('staff'); H.render(); }); };
+  A.rmAvatar = async () => { await sb.storage.from('avatars').remove([S.session.user.id + '/avatar.jpg']); await H.save(sb.from('hr_staff').update({ avatar_url: null }).eq('id', S.me.id), 'ลบรูปแล้ว'); S.me.avatar_url = null; await H.load('staff'); H.render(); };
+  // ---------- เชลล์ ----------
+  H.shell = () => { const me = S.me, al = alerts(), clock = S.now.toLocaleTimeString('th-TH', { hour12: false }), dateT = S.now.toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    const nav = [['board', 'บอร์ดทีม', S.d.tasks.length], ['dash', 'ภาพรวม', ''], ['tasks', 'งานทั้งหมด', S.d.tasks.length], ...H.NAVX.map(n => [n[0], n[1], n[2] ? n[2]() : '']), ['meet', 'การประชุม', S.d.meets.length], ['cal', 'ปฏิทินงาน', '']];
+    const meta = { board: ['บอร์ดงานทีม', 'งานของทุกคนแยกตามผู้รับผิดชอบและสถานะ — ปรับสถานะได้เฉพาะงานของตัวเองและหัวหน้าแผนก'], dash: ['ภาพรวมแผนก', 'สถานะงานทั้งหมดของแผนกบุคคลและสวัสดิการในที่เดียว'], tasks: ['งานทั้งหมด', 'กรองตามผู้รับผิดชอบ ประเภทงาน และสถานะ'], meet: ['การประชุม', 'เตรียมเอกสาร วาระ slide และรายงานการประชุม'], cal: ['ปฏิทินงาน', 'กำหนดส่งเรียงตามเดือน'] };
+    H.NAVX.forEach(n => { meta[n[0]] = n[3]; }); const m = meta[S.view] || ['', ''];
+    const acts = (H.ACTS[S.view] ? H.ACTS[S.view]() : '') + (S.view === 'tasks' || S.view === 'board' ? '<button class="btn primary" data-act="openAdd">+ เพิ่มงาน</button>' : '');
+    return '<div class="wrap"><header class="noprint top"><div class="brand"><div class="logo">HR</div><div><div class="eyebrow">แผนกบุคคลและสวัสดิการ · มูลนิธิ</div><div class="bt">บอร์ดงานประจำวัน</div></div></div><div class="tr2"><div class="clock card"><div class="mu" style="font-weight:600">' + dateT + '</div><div class="ck">' + clock + ' น.</div></div>' +
+      '<button class="round card" data-act="bell" title="แจ้งเตือน">♪<span class="badge">' + al.length + '</span></button><button class="who card" data-act="prof">' + H.avatar(me, 34) + '<span class="wn"><b>' + esc(me.nickname) + '</b><span class="mu">' + (me.role === 'head' ? 'หัวหน้าแผนก' : 'เจ้าหน้าที่') + '</span></span></button></div></header>' +
+      (S.prof ? '<div class="pop noprint"><div class="ph"><label class="avl" title="อัปโหลดรูปโปรไฟล์">' + H.avatar(me, 54) + '<span class="plus">+</span><input type="file" accept="image/*" style="display:none" data-ch="avatar"></label><span><b>' + esc(me.nickname) + '</b><br><span class="mu">' + esc(me.email || S.session.user.email) + '</span></span></div><div class="mu" style="margin:6px 0">คลิกที่รูปเพื่ออัปโหลด (ครอบเป็นวงกลมอัตโนมัติ)</div><label class="fld">เบอร์ติดต่อ<input value="' + esc(me.phone || '') + '" placeholder="08x-xxx-xxxx" data-ch="savePhone"></label>' + (me.avatar_url ? '<button class="btn ghost" data-act="rmAvatar" style="margin-bottom:8px">ลบรูปโปรไฟล์</button>' : '') + '<button class="btn ghost" data-act="logout">ออกจากระบบ</button></div>' : '') +
+      (S.bell ? '<div class="pop wide noprint"><div class="ph"><b>ต้องติดตาม · เกินกำหนด / ภายใน 7 วัน</b></div>' + (al.map(t => '<div class="li" data-act="task" data-a="' + t.id + '"><i class="dot" style="background:' + dueInfo(t).d + '"></i><div><b>' + esc(t.title) + '</b><div class="mu">' + esc(H.ownerName(H.ownerKey(t))) + ' · <b style="color:' + dueInfo(t).c + '">' + dueInfo(t).t + '</b></div></div></div>').join('') || '<div class="empty">ไม่มีงานที่ต้องติดตาม</div>') + '</div>' : '') +
+      '<nav class="noprint tabs card">' + nav.map(n => '<button class="tab' + (S.view === n[0] ? ' on' : '') + '" data-act="view" data-a="' + n[0] + '">' + n[1] + (n[2] !== '' ? '<span class="cn">' + n[2] + '</span>' : '') + '</button>').join('') + '</nav>' +
+      '<div class="prhead">แผนกบุคคลและสวัสดิการ มูลนิธิ — พิมพ์เมื่อ ' + dateT + '</div><div class="card ph2"><div class="g1"><h2>' + esc(m[0]) + '</h2><div class="mu">' + esc(m[1]) + '</div></div><div class="noprint hacts">' + (['dash', 'board'].includes(S.view) ? '' : '<button class="btn ghost" onclick="window.print()">พิมพ์รายงาน</button>') + acts + '</div></div><main>' + (H.V[S.view] ? H.V[S.view]() : '') + '</main></div>' + (S.dlg && H.D[S.dlg.type] ? H.D[S.dlg.type]() : ''); };
+  H.ACTS = {};
+  H.render = () => { if (!S.me) return; const ae = document.activeElement, id = ae && ae.id, pos = ae && ae.selectionStart; if (S.dlg) Object.assign(S.dlg.vals, H.form());
+    document.getElementById('app').innerHTML = H.shell(); if (id) { const n = document.getElementById(id); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) { } } } };
+  // ---------- เหตุการณ์ ----------
+  document.addEventListener('click', ev => { const el = ev.target.closest('[data-act]'); if (!el) { if (ev.target.id === 'dlg') H.close(); return; } if (el.tagName === 'A') ev.preventDefault(); const fn = A[el.dataset.act]; if (fn) fn(el.dataset.a, el, ev); });
+  document.addEventListener('input', ev => { const el = ev.target.closest('[data-in]'); if (el && A[el.dataset.in]) A[el.dataset.in](el.value, el, ev); });
+  document.addEventListener('change', ev => { const el = ev.target.closest('[data-ch]'); if (el && A[el.dataset.ch]) { A[el.dataset.ch](el.type === 'file' ? Array.from(el.files) : el.value, el, ev); if (el.type === 'file') el.value = ''; } });
+  // ---------- เริ่มระบบ ----------
+  async function init() {
+    const { data: { session } } = await sb.auth.getSession(); if (!session) { location.replace('login.html'); return; } S.session = session;
+    const { data: me } = await sb.rpc('hr_claim');
+    if (!me || !me.id) { document.getElementById('app').innerHTML = '<div class="gate"><div class="card pad" style="max-width:440px;text-align:center"><h2>บัญชีนี้ยังไม่ได้รับสิทธิ์เข้าใช้งาน</h2><p class="mu">เข้าสู่ระบบด้วย Gmail สำเร็จแล้ว แต่ยังไม่ถูกเพิ่มในทีมแผนก ส่งข้อมูลด้านล่างให้หัวหน้าแผนกเพื่อเพิ่มสิทธิ์</p><div class="idb"><b>อีเมล</b>' + esc(session.user.email) + '</div><div class="idb"><b>รหัสผู้ใช้ (UID)</b>' + esc(session.user.id) + '</div><button class="btn ghost" onclick="HR.A.logout()">ออกจากระบบ</button></div></div>'; return; }
+    S.me = me; await H.loadAll(); H.render(); setInterval(() => { S.now = new Date(); const c = document.querySelector('.ck'); if (c) c.textContent = S.now.toLocaleTimeString('th-TH', { hour12: false }) + ' น.'; }, 1000);
+    const rev = Object.fromEntries(Object.entries(T).map(([k, v]) => [v, k])); let tm = {}; sb.channel('hr-all').on('postgres_changes', { event: '*', schema: 'public' }, p => { const k = rev[p.table]; if (!k) return; clearTimeout(tm[k]); tm[k] = setTimeout(async () => { await H.load(k); if (!(S.dlg && S.dlg.type !== 'task')) H.render(); }, 300); }).subscribe();
   }
-
-  let { data: { session }, error: sessErr } = await sb.auth.getSession();
-  debugLog('first getSession()', { hasSession: !!session, error: sessErr?.message });
-  if (!session) {
-    // เผื่อกรณี race condition: หลัง redirect กลับจาก Google การแลก code เป็น session
-    // อาจยังไม่เสร็จตอน getSession() ครั้งแรก ลองรออีกครั้งสั้นๆ ก่อนสรุปว่าไม่มี session จริง
-    await new Promise(r => setTimeout(r, 400));
-    ({ data: { session }, error: sessErr } = await sb.auth.getSession());
-    debugLog('retry getSession()', { hasSession: !!session, error: sessErr?.message });
-  }
-  if (!session) {
-    debugLog('no session after retry -> redirect to login');
-    window.location.replace('login.html');
-    return;
-  }
-  debugLog('session found', { email: session.user.email, uid: session.user.id });
-  CURRENT_SESSION = session;
-
-  // ครั้งแรกที่ login ด้วย Gmail นี้: ลอง "จับคู่" กับแถวที่หัวหน้าแผนกเตรียมไว้ล่วงหน้าด้วยอีเมล
-  // (ถ้าแถวนั้นถูกจับคู่ไปแล้ว หรือยังไม่มีแถวเลย คำสั่งนี้จะไม่เปลี่ยนอะไร ไม่ error)
-  const { data: claimData, error: claimErr } = await sb
-    .from('hr_staff')
-    .update({ auth_uid: session.user.id })
-    .is('auth_uid', null)
-    .ilike('email', session.user.email)
-    .select();
-  debugLog('claim update', { rows: claimData, error: claimErr?.message });
-
-  const { data: staffRow, error: fetchErr } = await sb.from('hr_staff').select('*').eq('auth_uid', session.user.id).maybeSingle();
-  debugLog('fetch staffRow', { found: !!staffRow, error: fetchErr?.message });
-  if (!staffRow) {
-    document.getElementById('pending-email').textContent = session.user.email || '–';
-    document.getElementById('pending-uid').textContent = session.user.id;
-    document.getElementById('pending-shell').hidden = false;
-    document.getElementById('pending-logout').addEventListener('click', async () => {
-      await sb.auth.signOut();
-      window.location.replace('login.html');
-    });
-    return;
-  }
-
-  document.getElementById('pending-shell').hidden = true;
-  document.getElementById('app-shell').hidden = false;
-
-  startClock();
-  await loadStaffAndTasks();
-  wireToolbar();
-  wireModal();
-  wireProfileMenu();
-  subscribeRealtime();
-  // Google Drive กลางถูกปิดไว้ชั่วคราว (ยังไม่ได้ตั้งค่า Service Account)
-  // wireDropzone();
-  // loadDriveList();
+  window.addEventListener('load', init);
 })();
-
-// ---------------- clock (Thai, 24h, พ.ศ.) ----------------
-function startClock() {
-  const days = ['วันอาทิตย์','วันจันทร์','วันอังคาร','วันพุธ','วันพฤหัสบดี','วันศุกร์','วันเสาร์'];
-  const months = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
-  const pad = n => String(n).padStart(2, '0');
-  function tick() {
-    const now = new Date();
-    document.getElementById('thai-date').textContent =
-      `${days[now.getDay()]}ที่ ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear() + 543}`;
-    document.getElementById('thai-time').textContent =
-      `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())} น.`;
-  }
-  tick();
-  setInterval(tick, 1000);
-}
-
-// ---------------- data load ----------------
-async function loadStaffAndTasks() {
-  const { data: staff, error: staffErr } = await sb.from('hr_staff').select('*').order('sort_order');
-  const { data: tasks, error: taskErr } = await sb.from('hr_tasks').select('*').order('updated_at', { ascending: false });
-
-  if (staffErr || taskErr) {
-    document.getElementById('board').innerHTML =
-      `<div class="empty-note">โหลดข้อมูลไม่สำเร็จ: ${(staffErr || taskErr).message}<br>ตรวจสอบว่ารัน sql/schema.sql และเพิ่มแถว hr_staff ของทุกคนแล้ว</div>`;
-    return;
-  }
-
-  ALL_STAFF = staff || [];
-  ALL_TASKS = tasks || [];
-  CURRENT_STAFF = ALL_STAFF.find(s => s.auth_uid === CURRENT_SESSION.user.id) || null;
-
-  renderWhoBar();
-  renderBoard();
-  renderActivity();
-  populateAssigneeSelect();
-}
-
-function renderWhoBar() {
-  if (!CURRENT_STAFF) return;
-  document.getElementById('profile-wrap').hidden = false;
-
-  const avatarInner = CURRENT_STAFF.avatar_url
-    ? `<img src="${CURRENT_STAFF.avatar_url}" alt="${escapeHtml(CURRENT_STAFF.nickname)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
-    : initials(CURRENT_STAFF.nickname);
-
-  const av = document.getElementById('who-avatar');
-  av.style.background = CURRENT_STAFF.avatar_color;
-  av.innerHTML = avatarInner;
-
-  const menuAv = document.getElementById('menu-avatar');
-  menuAv.style.background = CURRENT_STAFF.avatar_color;
-  menuAv.innerHTML = avatarInner;
-
-  document.getElementById('who-name').textContent = CURRENT_STAFF.nickname;
-  document.getElementById('who-role').textContent = CURRENT_STAFF.role === 'head' ? 'หัวหน้าแผนก' : 'เจ้าหน้าที่';
-  document.getElementById('menu-name').textContent = CURRENT_STAFF.nickname;
-  document.getElementById('menu-email').textContent = CURRENT_STAFF.email || CURRENT_SESSION.user.email || '';
-  document.getElementById('f-phone').value = CURRENT_STAFF.phone || '';
-}
-
-function wireProfileMenu() {
-  const trigger = document.getElementById('profile-trigger');
-  const menu = document.getElementById('profile-menu');
-
-  trigger.addEventListener('click', (e) => {
-    e.stopPropagation();
-    menu.hidden = !menu.hidden;
-  });
-  document.addEventListener('click', (e) => {
-    if (!menu.hidden && !menu.contains(e.target) && e.target !== trigger) menu.hidden = true;
-  });
-
-  document.getElementById('logout-btn').addEventListener('click', async () => {
-    await sb.auth.signOut();
-    window.location.replace('login.html');
-  });
-
-  document.getElementById('profile-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const phone = document.getElementById('f-phone').value.trim();
-    const note = document.getElementById('profile-save-note');
-    const { error } = await sb.from('hr_staff').update({ phone }).eq('id', CURRENT_STAFF.id);
-    if (error) { note.style.color = 'var(--gold)'; note.textContent = 'บันทึกไม่สำเร็จ: ' + error.message; return; }
-    CURRENT_STAFF.phone = phone;
-    const idx = ALL_STAFF.findIndex(s => s.id === CURRENT_STAFF.id);
-    if (idx >= 0) ALL_STAFF[idx].phone = phone;
-    note.style.color = 'var(--sage)';
-    note.textContent = 'บันทึกแล้ว';
-    setTimeout(() => { note.textContent = ''; }, 2000);
-  });
-}
-
-function initials(name) { return (name || '?').slice(0, 2); }
-
-function relTime(iso) {
-  if (!iso) return '';
-  const diff = (Date.now() - new Date(iso).getTime()) / 1000;
-  if (diff < 60) return 'เมื่อครู่นี้';
-  if (diff < 3600) return `${Math.floor(diff / 60)} นาทีที่แล้ว`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)} ชม. ที่แล้ว`;
-  return `${Math.floor(diff / 86400)} วันที่แล้ว`;
-}
-
-function fmtDueDate(d) {
-  if (!d) return '';
-  const dt = new Date(d + 'T00:00:00');
-  const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
-  return `${dt.getDate()} ${months[dt.getMonth()]} ${dt.getFullYear() + 543}`;
-}
-
-// ---------------- board render ----------------
-function renderBoard() {
-  const board = document.getElementById('board');
-  if (!ALL_STAFF.length) {
-    board.innerHTML = `<div class="empty-note">ยังไม่มีรายชื่อเจ้าหน้าที่ในตาราง hr_staff — เพิ่มได้จาก sql/schema.sql</div>`;
-    return;
-  }
-  const head = ALL_STAFF.find(s => s.role === 'head');
-  const members = ALL_STAFF.filter(s => s.role !== 'head');
-
-  board.innerHTML = '';
-  if (head) board.appendChild(renderHeadColumn(head));
-  members.forEach(m => board.appendChild(renderMemberColumn(m)));
-
-  const total = ALL_TASKS.length;
-  const doing = ALL_TASKS.filter(t => t.status === 'doing').length;
-  const todo = ALL_TASKS.filter(t => t.status === 'todo').length;
-  const done = ALL_TASKS.filter(t => t.status === 'done').length;
-  document.getElementById('task-summary').textContent =
-    `${total} รายการ · กำลังทำ ${doing} · ต้องทำ ${todo} · เสร็จแล้ว ${done}`;
-}
-
-function avatarHtml(staff, cls) {
-  if (staff.avatar_url) return `<div class="avatar ${cls || ''}"><img src="${staff.avatar_url}" alt="${staff.nickname}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"></div>`;
-  return `<div class="avatar ${cls || ''}" style="background:${staff.avatar_color}">${initials(staff.nickname)}</div>`;
-}
-
-function renderHeadColumn(head) {
-  const col = document.createElement('div');
-  col.className = 'col lead';
-
-  const members = ALL_STAFF.filter(s => s.role !== 'head');
-  const totalDoing = ALL_TASKS.filter(t => t.status === 'doing').length;
-  const totalTodo = ALL_TASKS.filter(t => t.status === 'todo').length;
-  const totalDone = ALL_TASKS.filter(t => t.status === 'done').length;
-
-  const teamLines = members.map(m => {
-    const mine = ALL_TASKS.filter(t => t.assigned_to === m.id);
-    const d = mine.filter(t => t.status === 'doing').length;
-    const t = mine.filter(t => t.status === 'todo').length;
-    const done = mine.filter(t => t.status === 'done').length;
-    const sum = Math.max(mine.length, 1);
-    return `
-      <div class="team-line">
-        ${avatarHtml(m, 'ov-avatar')}
-        <div class="ov-info">
-          <div class="ov-name">${escapeHtml(m.nickname)} · ${escapeHtml(m.scope.split(' ').slice(0,3).join(' '))}</div>
-          <div class="bar-track">
-            <span style="width:${d/sum*100}%;background:var(--sky)"></span>
-            <span style="width:${t/sum*100}%;background:var(--gold)"></span>
-            <span style="width:${done/sum*100}%;background:var(--sage)"></span>
-          </div>
-          <div class="ov-nums"><span>ทำอยู่ ${d}</span><span>ต้องทำ ${t}</span><span>เสร็จ ${done}</span></div>
-        </div>
-      </div>`;
-  }).join('');
-
-  const recent = [...ALL_TASKS].sort((a,b) => new Date(b.updated_at) - new Date(a.updated_at)).slice(0, 4);
-  const recentHtml = recent.length ? recent.map(t => {
-    const staff = ALL_STAFF.find(s => s.id === t.assigned_to);
-    return `
-      <div class="card">
-        <div class="title">${escapeHtml(t.title)}</div>
-        <div class="due">${staff ? escapeHtml(staff.nickname) : ''} · ${relTime(t.updated_at)}</div>
-        <span class="cat-tag">${escapeHtml(t.category || 'ทั่วไป')}</span>
-      </div>`;
-  }).join('') : `<div class="empty-card">ยังไม่มีงาน</div>`;
-
-  col.innerHTML = `
-    <div class="col-head">
-      ${avatarHtml(head)}
-      <div class="who">
-        <div class="name">${escapeHtml(head.nickname)} <svg class="crown" viewBox="0 0 24 24" fill="#c99a3f"><path d="M3 17l2-9 5 4 2-6 2 6 5-4 2 9z"/></svg></div>
-        <div class="role">${escapeHtml(head.scope)}</div>
-        ${head.phone ? `<div class="role" style="margin-top:2px;">☎ ${escapeHtml(head.phone)}</div>` : ''}
-      </div>
-    </div>
-    <div class="stat-row">
-      <div class="stat-tile"><div class="num">${totalDoing}</div><div class="lbl">กำลังทำ</div></div>
-      <div class="stat-tile"><div class="num">${totalTodo}</div><div class="lbl">ต้องทำ</div></div>
-      <div class="stat-tile"><div class="num">${totalDone}</div><div class="lbl">เสร็จแล้ว</div></div>
-    </div>
-    <div class="task-group">
-      <div class="group-label">ภาพรวมรายคน</div>
-      ${teamLines || '<div class="empty-note">ยังไม่มีสมาชิกในทีม</div>'}
-    </div>
-    <div class="task-group">
-      <div class="group-label"><span class="gdot" style="background:var(--sky)"></span>อัปเดตล่าสุด</div>
-      ${recentHtml}
-    </div>
-  `;
-  return col;
-}
-
-function renderMemberColumn(member) {
-  const col = document.createElement('div');
-  col.className = 'col';
-  const mine = ALL_TASKS.filter(t => t.assigned_to === member.id);
-
-  const groups = ['doing', 'todo', 'done'].map(status => {
-    const items = mine.filter(t => t.status === status && matchesFilter(status));
-    const cards = items.length
-      ? items.map(t => taskCardHtml(t)).join('')
-      : (matchesFilter(status) ? `<div class="empty-card">ไม่มีงาน</div>` : '');
-    if (!matchesFilter(status)) return '';
-    return `
-      <div class="task-group">
-        <div class="group-label"><span class="gdot" style="background:${STATUS_DOT[status]}"></span>${STATUS_LABEL[status]}<span class="gcount">${items.length}</span></div>
-        ${cards}
-      </div>`;
-  }).join('');
-
-  col.innerHTML = `
-    <div class="col-head">
-      ${avatarHtml(member)}
-      <div class="who">
-        <div class="name">${escapeHtml(member.nickname)}</div>
-        <div class="role">${escapeHtml(member.scope)}</div>
-        ${member.phone ? `<div class="role" style="margin-top:2px;">☎ ${escapeHtml(member.phone)}</div>` : ''}
-      </div>
-    </div>
-    ${groups || '<div class="empty-note">ไม่มีงานตามตัวกรองนี้</div>'}
-  `;
-  return col;
-}
-
-function matchesFilter(status) { return ACTIVE_FILTER === 'all' || ACTIVE_FILTER === status; }
-
-function taskCardHtml(t) {
-  const canEdit = CURRENT_STAFF && (CURRENT_STAFF.role === 'head' || t.assigned_to === CURRENT_STAFF.id);
-  return `
-    <div class="card ${t.status === 'done' ? 'done' : ''}" data-task-id="${t.id}">
-      ${canEdit ? `
-        <div class="card-menu">
-          <button class="del-task" title="ลบงาน" data-id="${t.id}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
-          </button>
-        </div>` : ''}
-      <div class="title">${escapeHtml(t.title)}</div>
-      ${t.due_date ? `<div class="due">กำหนดส่ง ${fmtDueDate(t.due_date)}</div>` : `<div class="due">${t.status === 'done' ? 'เสร็จเมื่อ ' + relTime(t.completed_at) : 'ไม่ระบุกำหนด'}</div>`}
-      <span class="cat-tag">${escapeHtml(t.category || 'ทั่วไป')}</span>
-      ${canEdit ? `
-        <select class="status-select" data-id="${t.id}">
-          <option value="todo" ${t.status === 'todo' ? 'selected' : ''}>ต้องทำ</option>
-          <option value="doing" ${t.status === 'doing' ? 'selected' : ''}>กำลังทำ</option>
-          <option value="done" ${t.status === 'done' ? 'selected' : ''}>เสร็จแล้ว</option>
-        </select>` : ''}
-    </div>`;
-}
-
-function escapeHtml(s) {
-  return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
-}
-
-// event delegation for status change / delete (board re-renders often, so attach once on parent)
-document.addEventListener('change', async (e) => {
-  if (e.target.matches('.status-select')) {
-    const id = e.target.dataset.id;
-    const status = e.target.value;
-    const { error } = await sb.from('hr_tasks').update({ status }).eq('id', id);
-    if (error) alert('อัปเดตสถานะไม่สำเร็จ: ' + error.message);
-  }
-});
-document.addEventListener('click', async (e) => {
-  const del = e.target.closest('.del-task');
-  if (del) {
-    if (!confirm('ลบงานนี้ใช่หรือไม่?')) return;
-    const { error } = await sb.from('hr_tasks').delete().eq('id', del.dataset.id);
-    if (error) alert('ลบไม่สำเร็จ: ' + error.message);
-  }
-});
-
-// ---------------- toolbar filter ----------------
-function wireToolbar() {
-  document.getElementById('filter-toggle').addEventListener('click', (e) => {
-    const btn = e.target.closest('button[data-filter]');
-    if (!btn) return;
-    ACTIVE_FILTER = btn.dataset.filter;
-    [...document.querySelectorAll('#filter-toggle button')].forEach(b => b.classList.toggle('active', b === btn));
-    renderBoard();
-  });
-}
-
-// ---------------- activity feed ----------------
-function renderActivity() {
-  const feed = document.getElementById('activity-feed');
-  const recent = [...ALL_TASKS].sort((a,b) => new Date(b.updated_at) - new Date(a.updated_at)).slice(0, 8);
-  if (!recent.length) { feed.innerHTML = `<div class="empty-note">ยังไม่มีความเคลื่อนไหว</div>`; return; }
-  feed.innerHTML = recent.map(t => {
-    const staff = ALL_STAFF.find(s => s.id === t.assigned_to);
-    const label = t.status === 'done' ? 'ทำงานเสร็จ' : (t.status === 'doing' ? 'กำลังดำเนินการ' : 'เพิ่มงานใหม่');
-    return `
-      <div class="notif-row">
-        <div class="notif-dot" style="background:${STATUS_DOT[t.status]}"></div>
-        <div><div class="t">${staff ? escapeHtml(staff.nickname) : ''} ${label}: ${escapeHtml(t.title)}</div><div class="s">${relTime(t.updated_at)}</div></div>
-      </div>`;
-  }).join('');
-}
-
-// ---------------- add task modal ----------------
-function populateAssigneeSelect() {
-  const sel = document.getElementById('f-assignee');
-  const options = CURRENT_STAFF && CURRENT_STAFF.role === 'head' ? ALL_STAFF : ALL_STAFF.filter(s => s.id === CURRENT_STAFF?.id);
-  sel.innerHTML = options.map(s => `<option value="${s.id}">${escapeHtml(s.nickname)}${s.role === 'head' ? ' (หัวหน้าแผนก)' : ''}</option>`).join('');
-}
-
-function wireModal() {
-  const overlay = document.getElementById('task-modal');
-  document.getElementById('open-add-task').addEventListener('click', () => overlay.classList.add('open'));
-  document.getElementById('cancel-task').addEventListener('click', () => overlay.classList.remove('open'));
-  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.remove('open'); });
-
-  document.getElementById('task-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const assigned_to = document.getElementById('f-assignee').value;
-    const title = document.getElementById('f-title').value.trim();
-    const category = document.getElementById('f-category').value.trim();
-    const due_date = document.getElementById('f-due').value || null;
-    const status = document.getElementById('f-status').value;
-    if (!title) return;
-
-    const { error } = await sb.from('hr_tasks').insert({
-      assigned_to, title, category, due_date, status, created_by: CURRENT_STAFF?.id ?? null,
-    });
-    if (error) { alert('เพิ่มงานไม่สำเร็จ: ' + error.message); return; }
-
-    overlay.classList.remove('open');
-    e.target.reset();
-  });
-}
-
-// ---------------- realtime ----------------
-function subscribeRealtime() {
-  sb.channel('tasks-realtime')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'hr_tasks' }, async () => {
-      const { data } = await sb.from('hr_tasks').select('*').order('updated_at', { ascending: false });
-      ALL_TASKS = data || [];
-      renderBoard();
-      renderActivity();
-    })
-    .subscribe();
-}
-
-// ---------------- Google Drive panel ----------------
-async function authedFetch(url, options = {}) {
-  const headers = Object.assign({}, options.headers, {
-    Authorization: `Bearer ${CURRENT_SESSION.access_token}`,
-  });
-  return fetch(url, Object.assign({}, options, { headers }));
-}
-
-async function loadDriveList() {
-  const listEl = document.getElementById('drive-list');
-  try {
-    const res = await authedFetch('/api/drive-list');
-    if (!res.ok) throw new Error(await res.text());
-    const data = await res.json();
-    if (data.folderUrl) document.getElementById('drive-open-btn').href = data.folderUrl;
-    renderDriveList(data.files || []);
-  } catch (err) {
-    listEl.innerHTML = `<div class="empty-note">โหลดรายการไฟล์ไม่สำเร็จ — ตรวจสอบว่าตั้งค่า Google Service Account ใน Vercel env vars แล้ว<br><span style="opacity:.7">${escapeHtml(err.message || '')}</span></div>`;
-  }
-}
-
-function fmtSize(bytes) {
-  if (!bytes) return '';
-  if (bytes < 1024) return bytes + ' B';
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
-  return (bytes / 1024 / 1024).toFixed(1) + ' MB';
-}
-
-function renderDriveList(files) {
-  const listEl = document.getElementById('drive-list');
-  if (!files.length) { listEl.innerHTML = `<div class="empty-note">ยังไม่มีไฟล์ในโฟลเดอร์กลาง</div>`; return; }
-  listEl.innerHTML = files.map(f => `
-    <div class="drive-row">
-      <div class="drive-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 3v5h5"/><path d="M6 3h8l5 5v13H6z"/></svg></div>
-      <div><div class="drive-name">${escapeHtml(f.name)}</div><div class="drive-meta">${fmtSize(f.size)} · ${f.uploadedByNickname ? escapeHtml(f.uploadedByNickname) + ' · ' : ''}${relTime(f.modifiedTime)}</div></div>
-      <a class="drive-view" href="${f.webViewLink}" target="_blank" rel="noopener" title="เปิดใน Drive">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg>
-      </a>
-    </div>`).join('');
-}
-
-function wireDropzone() {
-  const dropzone = document.getElementById('dropzone');
-  const fileInput = document.getElementById('drive-file-input');
-
-  fileInput.addEventListener('change', (e) => { uploadFiles(e.target.files); fileInput.value = ''; });
-  ['dragenter', 'dragover'].forEach(ev => dropzone.addEventListener(ev, (e) => { e.preventDefault(); dropzone.classList.add('drag'); }));
-  ['dragleave', 'drop'].forEach(ev => dropzone.addEventListener(ev, (e) => { e.preventDefault(); dropzone.classList.remove('drag'); }));
-  dropzone.addEventListener('drop', (e) => { if (e.dataTransfer?.files?.length) uploadFiles(e.dataTransfer.files); });
-}
-
-async function uploadFiles(fileList) {
-  const sub = document.getElementById('dz-sub');
-  for (const file of Array.from(fileList)) {
-    sub.textContent = `กำลังอัปโหลด ${file.name}…`;
-    try {
-      const fd = new FormData();
-      fd.append('file', file);
-      const res = await authedFetch('/api/drive-upload', { method: 'POST', body: fd });
-      if (!res.ok) throw new Error(await res.text());
-    } catch (err) {
-      alert(`อัปโหลด ${file.name} ไม่สำเร็จ: ${err.message}`);
-    }
-  }
-  sub.textContent = 'ไฟล์จะถูกเก็บในโฟลเดอร์ของแผนกบุคคลและสวัสดิการ';
-  loadDriveList();
-}
