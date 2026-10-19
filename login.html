@@ -113,6 +113,13 @@ input.sm{width:100%;font:inherit;font-size:13px;padding:6px 8px;border-radius:8p
 .tile{text-align:center}
 .pgrid4{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
 
+.btn:disabled{opacity:.45;cursor:default}.btn:disabled:hover{color:var(--ink-soft)}
+.pager{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}.pgn{font-weight:700;font-size:13px;padding:0 6px}
+.tbl.reg th,.tbl.reg td{padding:11px 16px}.tbl.reg td:nth-child(2){min-width:220px}
+
+.tbl.reg td:nth-child(2){min-width:150px}
+@media (max-width:1100px){.tbl.reg th,.tbl.reg td{padding:9px 9px;font-size:12.5px}.tbl.reg th:first-child,.tbl.reg td:first-child{display:none}}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
