@@ -1,7 +1,12 @@
 /* HR Desk — แกนหลัก: auth · โหลดข้อมูล · เชลล์ · เหตุการณ์ · มุมมองงาน (board/dash/tasks/cal/meet) */
 (function () {
   const H = window.HR, esc = H.esc, num = H.num, TONE = H.TONE;
-  const sb = (H.sb = supabase.createClient(window.HR_CONFIG.SUPABASE_URL, window.HR_CONFIG.SUPABASE_ANON_KEY));
+  const fail = (t, d) => { const el = document.getElementById('app'); if (el) el.innerHTML = '<div class="gate"><div class="card pad" style="max-width:520px"><h2>' + t + '</h2><p class="mu" style="white-space:pre-wrap">' + d + '</p></div></div>'; };
+  window.addEventListener('error', e => { if (!window.HR || !HR.S || !HR.S.me) fail('เกิดข้อผิดพลาดตอนโหลด', e.message + '\n' + (e.filename || '')); });
+  window.addEventListener('unhandledrejection', e => { if (!HR.S.me) fail('เกิดข้อผิดพลาดตอนโหลด', String(e.reason && e.reason.message || e.reason)); });
+  const CF = window.HR_CONFIG;
+  if (!CF || !CF.SUPABASE_URL || /YOUR-/.test(CF.SUPABASE_URL) || !CF.SUPABASE_ANON_KEY || /YOUR-/.test(CF.SUPABASE_ANON_KEY)) { fail('ยังไม่ได้ตั้งค่า config.js', 'ไม่พบ config.js หรือยังเป็นค่าตัวอย่าง\nสร้างไฟล์ config.js (คัดลอกจาก config.example.js) ใส่ SUPABASE_URL และ anon public key แล้ว deploy ใหม่'); return; }
+  const sb = (H.sb = supabase.createClient(CF.SUPABASE_URL, CF.SUPABASE_ANON_KEY));
   const S = (H.S = { view: 'board', f: 'all', ownerF: 'all', typeF: 'all', q: '', eq: '', empF: 'all', rollP: null, payF: 'all', payP: 'all', dlg: null, bell: false, prof: false, msg: {}, d: {}, me: null, now: new Date() });
   H.A = {}; H.V = {}; H.D = {}; H.NAVX = [];
   const T = { staff: 'hr_staff', tasks: 'hr_tasks', emps: 'hr_employees', moves: 'hr_moves', roll: 'hr_payroll', pays: 'hr_disbursements', ins: 'hr_group_insurance', ben: 'hr_beneficiaries', meets: 'hr_meetings', files: 'hr_task_files' };
@@ -110,12 +115,12 @@
   document.addEventListener('input', ev => { const el = ev.target.closest('[data-in]'); if (el && A[el.dataset.in]) A[el.dataset.in](el.value, el, ev); });
   document.addEventListener('change', ev => { const el = ev.target.closest('[data-ch]'); if (el && A[el.dataset.ch]) { A[el.dataset.ch](el.type === 'file' ? Array.from(el.files) : el.value, el, ev); if (el.type === 'file') el.value = ''; } });
   // ---------- เริ่มระบบ ----------
-  async function init() {
+  async function init() { try {
     const { data: { session } } = await sb.auth.getSession(); if (!session) { location.replace('login.html'); return; } S.session = session;
     const { data: me } = await sb.rpc('hr_claim');
     if (!me || !me.id) { document.getElementById('app').innerHTML = '<div class="gate"><div class="card pad" style="max-width:440px;text-align:center"><h2>บัญชีนี้ยังไม่ได้รับสิทธิ์เข้าใช้งาน</h2><p class="mu">เข้าสู่ระบบด้วย Gmail สำเร็จแล้ว แต่ยังไม่ถูกเพิ่มในทีมแผนก ส่งข้อมูลด้านล่างให้หัวหน้าแผนกเพื่อเพิ่มสิทธิ์</p><div class="idb"><b>อีเมล</b>' + esc(session.user.email) + '</div><div class="idb"><b>รหัสผู้ใช้ (UID)</b>' + esc(session.user.id) + '</div><button class="btn ghost" onclick="HR.A.logout()">ออกจากระบบ</button></div></div>'; return; }
     S.me = me; await H.loadAll(); H.render(); setInterval(() => { S.now = new Date(); const c = document.querySelector('.ck'); if (c) c.textContent = S.now.toLocaleTimeString('th-TH', { hour12: false }) + ' น.'; }, 1000);
     const rev = Object.fromEntries(Object.entries(T).map(([k, v]) => [v, k])); let tm = {}; sb.channel('hr-all').on('postgres_changes', { event: '*', schema: 'public' }, p => { const k = rev[p.table]; if (!k) return; clearTimeout(tm[k]); tm[k] = setTimeout(async () => { await H.load(k); if (!(S.dlg && S.dlg.type !== 'task')) H.render(); }, 300); }).subscribe();
-  }
+  } catch (e) { fail('เข้าสู่ระบบไม่สำเร็จ', String(e && e.message || e)); } }
   window.addEventListener('load', init);
 })();
