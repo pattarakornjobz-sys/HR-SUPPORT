@@ -561,7 +561,7 @@ H.D.task = () => { const t = S.d.tasks.find(x => x.id === S.dlg.data); if (!t) r
 
   // ======================= ประกันกลุ่ม =======================
   reg('ins', 'ประกันกลุ่ม', () => S.d.ins.length, ['ประกันสุขภาพและอุบัติเหตุกลุ่ม', 'รายชื่อผู้เอาประกัน วงเงินสุขภาพ/อุบัติเหตุ ซิงก์กับทะเบียนบุคลากร'],
-    () => (H.has('pan') ? lbl('↑ นำเข้ารายชื่อประกัน', 'importIns') + '<button class="btn primary" data-act="syncIns">ซิงก์จากทะเบียน</button>' : '') + '<button class="btn ghost" data-act="expIns">↓ ส่งออก CSV</button>');
+    () => (H.has('pan') ? lbl('↑ นำเข้ารายชื่อประกัน', 'importIns') + '<button class="btn primary" data-act="syncIns">ซิงก์จากทะเบียน</button><button class="btn ghost danger" data-act="clearIns">🗑 ลบรายชื่อทั้งหมด</button>' : '') + '<button class="btn ghost" data-act="expIns">↓ ส่งออก CSV</button>');
   const fmtCard = c => c.length === 13 ? c[0] + ' ' + c.slice(1, 5) + ' ' + c.slice(5, 10) + ' ' + c.slice(10, 12) + ' ' + c[12] : c;
   const regCards = () => { const m = new Map(); S.d.emps.forEach(e => { const k = cardKey(e.id_card); if (k.length >= 8) m.set(k, e); }); return m; };
   const insInfo = (r, rc) => { const cd = cardKey(r.id_card), e = (cd.length >= 8 ? rc.get(cd) : null) || (r.employee_id ? S.d.emps.find(x => x.employee_id === r.employee_id) : null), fl = [], cy = new Date().getFullYear(); let bad = false, left = false, ret = false;
@@ -582,6 +582,8 @@ H.D.task = () => { const t = S.d.tasks.find(x => x.id === S.dlg.data); if (!t) r
       '<div class="mu" style="margin-top:8px">นำเข้าจับคู่ด้วย "เลขที่บัตรประชาชน" · ชื่อ-นามสกุลและวันเกิดยึดไฟล์ประกันเป็นหลักและซิงก์เข้าทะเบียน · อายุคำนวณจากวันเกิด ณ วันนี้ · สิทธิ์: เจ้าหน้าที่มูลนิธิ (ทดลองงานได้เมื่อบรรจุ, ลูกจ้างชั่วคราวไม่อยู่ในประกัน) · เจ้าหน้าที่มูลนิธิเกษียณอายุ 65 ปี ณ 31 ธ.ค. ของปีที่ครบ 65</div>'; };
   A.insq = v => { S.insq = v; S.insPage = 0; H.render(); }; A.insF = v => { S.insF = v; S.insPage = 0; H.render(); };
   A.insPg = v => { S.insPage = v === 'first' ? 0 : v === 'last' ? 99999 : Math.max(0, (S.insPage || 0) + Number(v)); H.render(); window.scrollTo(0, 0); };
+  A.clearIns = async () => { const n = S.d.ins.length; if (!n) return H.toast('ไม่มีรายชื่อให้ลบ', true); if (!confirm('ลบรายชื่อประกันทั้งหมด ' + n + ' คน?\nลบแล้วกู้คืนไม่ได้ (ข้อมูลทะเบียนบุคลากรไม่ถูกลบ)')) return; if (prompt('พิมพ์คำว่า ลบ เพื่อยืนยัน') !== 'ลบ') return;
+    const { error } = await sb.from('hr_group_insurance').delete().not('id', 'is', null); if (error) return H.toast(error.message, true); S.insPage = 0; S.msg.ins = 'ลบรายชื่อประกันทั้งหมด ' + n + ' คนแล้ว — นำเข้าไฟล์ต้นฉบับใหม่ได้เลย'; await H.load('ins'); H.render(); };
   A.editIns = id => H.open('ins', id);
   D.ins = () => { const r = S.d.ins.find(x => x.id === S.dlg.data); return H.dlgBox(esc(r.name), esc(String(r.id_card || '')) + ' · ' + esc(r.position || ''), H.inp('note', 'หมายเหตุ', r.note || ''), '<button class="btn ghost danger" data-act="delIns">ลบออกจากกรมธรรม์</button><button class="btn ghost grow" data-act="close">ยกเลิก</button><button class="btn primary grow" data-act="saveIns">บันทึก</button>', 460); };
   A.saveIns = async () => { const f = H.form(); if (await H.save(sb.from('hr_group_insurance').update({ note: f.note }).eq('id', S.dlg.data), 'บันทึกแล้ว', ['ins'])) { S.dlg = null; H.render(); } };
