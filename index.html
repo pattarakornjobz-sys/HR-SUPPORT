@@ -123,6 +123,10 @@ input.sm{width:100%;font:inherit;font-size:13px;padding:6px 8px;border-radius:8p
 .yrsel{display:flex;gap:8px;align-items:center;padding:4px 6px 4px 14px;border-radius:14px;font-size:12px;font-weight:700;color:var(--ink-soft);white-space:nowrap}
 .yrsel select{font:inherit;font-weight:700;font-size:13px;padding:6px 8px;border:1.5px solid var(--line);border-radius:10px;background:var(--paper-soft);color:var(--ink)}
 
+.tiles{grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr))}
+.tile{min-width:0}.tile .tv{font-size:clamp(18px,2.1vw,28px)!important;white-space:nowrap;overflow:hidden;text-overflow:clip;line-height:1.35}
+.tile .tl,.tile .ts{overflow-wrap:anywhere}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
@@ -307,7 +311,7 @@ window.HR_CONFIG = {
   H.V.board = () => { const ts = H.YT(), c = s => ts.filter(t => t.status === s).length, od = ts.filter(t => t.status !== 'done' && t.due_date && H.days(t.due_date) < 0).length, people = H.people(), myK = H.keyOfStaff(S.me);
     const tl = H.tiles([{ label: 'รอรับเรื่อง', value: c('todo'), sub: 'มอบหมายแล้ว รอเจ้าหน้าที่รับ', m: H.ST.todo[3], d: H.ST.todo[2] }, { label: 'กำลังดำเนินการ', value: c('doing'), sub: 'เจ้าหน้าที่รับเรื่องแล้ว', m: H.ST.doing[3], d: H.ST.doing[2] }, { label: 'เกินกำหนด', value: od, sub: 'ต้องติดตาม', m: '#b3261e', d: '#8a1a14' }, { label: 'ปิดงานแล้ว', value: c('done'), sub: 'เจ้าหน้าที่กดปิดงาน', m: H.ST.done[3], d: H.ST.done[2] }]);
     const card = (key, st, p, a, avatar) => { const odn = a.filter(t => t.status !== 'done' && t.due_date && H.days(t.due_date) < 0).length, next = a.filter(t => t.status !== 'done' && t.due_date).sort((x, y) => x.due_date.localeCompare(y.due_date))[0], mine = key !== 'all' && key === myK;
-      return '<div class="pcx card" data-act="person" data-a="' + key + '" style="--c:' + p.m + '"><div class="pban" style="background:linear-gradient(135deg,' + p.t + ',' + p.m + '55)"><span class="pblob" style="background:' + p.m + '"></span>' + (mine ? '<span class="mine">งานของฉัน</span>' : '') + '</div><div class="pav2">' + avatar + '</div><b class="pn">' + esc(st ? st.nickname : 'งานร่วมกัน') + '</b><div class="mu ps">' + esc(st ? st.scope || '' : 'งานที่ทุกคนช่วยกัน เช่น งานประชุม') + '</div><div class="pcnt">' + cnt3(a) + '</div>' + (odn ? '<div class="odue">เกินกำหนด ' + odn + ' งาน</div>' : '') + '<div class="mu pnext">' + (next ? 'ถัดไป: ' + esc(next.title) + ' · ' + H.fd(next.due_date) : 'ไม่มีงานค้าง') + '</div><div class="pgo" style="color:' + p.d + '">ดูงานทั้งหมด →</div></div>'; };
+      return '<div class="pcx card" data-act="person" data-a="' + key + '" style="--c:' + p.m + '"><div class="pban" style="background:linear-gradient(135deg,' + p.t + ',' + p.m + '55)"><span class="pblob" style="background:' + p.m + '"></span>' + (mine ? '<span class="mine">งานของฉัน</span>' : '') + '</div><div class="pav2">' + avatar + '</div><b class="pn">' + esc(st ? st.nickname : 'งานร่วมกัน') + '</b><div class="pcnt">' + cnt3(a) + '</div>' + (odn ? '<div class="odue">เกินกำหนด ' + odn + ' งาน</div>' : '') + '<div class="mu pnext">' + (next ? 'ถัดไป: ' + esc(next.title) + ' · ' + H.fd(next.due_date) : 'ไม่มีงานค้าง') + '</div><div class="pgo" style="color:' + p.d + '">ดูงานทั้งหมด →</div></div>'; };
     const cards = people.map(x => card(x.k, x.s, H.P(x.k), personTasks(x.k), H.avatar(x.s, 96))).join('') + card('all', null, TONE.gray, personTasks('all'), '<span class="stack">' + people.map(x => H.avatar(x.s, 44)).join('') + '</span>');
     return tl + '<div class="pgrid">' + cards + '</div>'; };
   // ---------- งานประจำเดือน / หน่วยงานรัฐ ----------
