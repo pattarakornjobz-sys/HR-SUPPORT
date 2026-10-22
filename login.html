@@ -122,6 +122,32 @@ input.sm{width:100%;font:inherit;font-size:13px;padding:6px 8px;border-radius:8p
 
 .tbl.reg td:first-child{max-width:200px}
 
+.pcx .ps{display:block;-webkit-line-clamp:unset;overflow:visible;min-height:0}
+.pcx .pgo{margin-top:auto;padding-top:6px}
+.yrsel{display:flex;gap:8px;align-items:center;padding:4px 6px 4px 14px;border-radius:14px;font-size:12px;font-weight:700;color:var(--ink-soft);white-space:nowrap}
+.yrsel select{font:inherit;font-weight:700;font-size:13px;padding:6px 8px;border:1.5px solid var(--line);border-radius:10px;background:var(--paper-soft);color:var(--ink)}
+
+.tiles{grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr))}
+.tile{min-width:0}.tile .tv{font-size:clamp(18px,2.1vw,28px)!important;white-space:nowrap;overflow:hidden;text-overflow:clip;line-height:1.35}
+.tile .tl,.tile .ts{overflow-wrap:anywhere}
+
+.pfc{overflow:hidden;padding:0}
+.pfband{height:64px}
+.pfbody{padding:0 18px 16px}
+.pfhead{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:-38px;text-align:center}
+.pfhead .av{border:4px solid #fff;box-shadow:0 0 0 3px var(--c),0 8px 18px rgba(58,31,48,.18)}
+.pfn{font:600 19px Kanit,sans-serif;color:var(--plum-900)}
+.pfc .pcnt{margin:14px 0 8px}
+.pcnt span,.tile,.tile *{text-align:center}
+.pcnt span{align-items:center;justify-content:center;text-align:center}
+.pcnt b{display:block;text-align:center}
+.pfc .ln{align-items:center}
+.pcx{overflow:hidden}
+.pcx .pban{margin-top:0}
+.stack{padding:6px 0 2px}
+.pav2{margin-top:-48px}
+.pcx .pav2,.pcx .stack{position:relative;z-index:2}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>

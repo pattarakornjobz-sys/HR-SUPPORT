@@ -127,6 +127,23 @@ input.sm{width:100%;font:inherit;font-size:13px;padding:6px 8px;border-radius:8p
 .tile{min-width:0}.tile .tv{font-size:clamp(18px,2.1vw,28px)!important;white-space:nowrap;overflow:hidden;text-overflow:clip;line-height:1.35}
 .tile .tl,.tile .ts{overflow-wrap:anywhere}
 
+.pfc{overflow:hidden;padding:0}
+.pfband{height:64px}
+.pfbody{padding:0 18px 16px}
+.pfhead{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:-38px;text-align:center}
+.pfhead .av{border:4px solid #fff;box-shadow:0 0 0 3px var(--c),0 8px 18px rgba(58,31,48,.18)}
+.pfn{font:600 19px Kanit,sans-serif;color:var(--plum-900)}
+.pfc .pcnt{margin:14px 0 8px}
+.pcnt span,.tile,.tile *{text-align:center}
+.pcnt span{align-items:center;justify-content:center;text-align:center}
+.pcnt b{display:block;text-align:center}
+.pfc .ln{align-items:center}
+.pcx{overflow:hidden}
+.pcx .pban{margin-top:0}
+.stack{padding:6px 0 2px}
+.pav2{margin-top:-48px}
+.pcx .pav2,.pcx .stack{position:relative;z-index:2}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
@@ -346,7 +363,7 @@ window.HR_CONFIG = {
     const all = rows.reduce((o, r) => ({ n: o.n + r.n, dn: o.dn + r.dn }), { n: 0, dn: 0 });
     const tl = H.tiles([{ label: 'เรื่องที่คีย์เข้าระบบ', value: ts.length, sub: Object.keys(creators).map(k => k + ' ' + creators[k]).join(' · ') || '—', m: '#c65d82', d: '#8a3357' }, { label: 'เวลารับเรื่องเฉลี่ย', value: dur(avg(rows.filter(r => r.tAcc != null).map(r => r.tAcc))), sub: 'จากมอบหมายถึงกดรับเรื่อง', fs: 24, m: H.ST.todo[3], d: H.ST.todo[2] }, { label: 'เวลาปิดเรื่องเฉลี่ย', value: dur(avg(rows.filter(r => r.tAll != null).map(r => r.tAll))), sub: 'จากมอบหมายถึงปิดงาน', fs: 24, m: H.ST.done[3], d: H.ST.done[2] }, { label: 'ปิดงานแล้ว', value: all.dn + ' / ' + all.n, sub: 'ในช่วงที่เลือก', m: '#8a5aa8', d: '#5e3a78' }]);
     const card = r => { const p = H.P(r.k), b = r === fast ? '<span class="pill" style="background:#e7f2ea;color:#2b5640">⚡ ปิดเรื่องเร็วสุด</span>' : r === slow ? '<span class="pill" style="background:#fbf1dc;color:#8a6516">ใช้เวลานานสุด</span>' : '';
-      return '<div class="card pad" style="border-top:5px solid ' + p.m + '"><div style="display:flex;gap:12px;align-items:center">' + H.avatar(r.s, 48) + '<div class="g1"><b style="font-size:16px">' + esc(r.s.nickname) + '</b><div class="mu">' + esc(r.s.scope || '') + '</div></div>' + b + '</div><div class="pcnt" style="margin-top:12px"><span style="background:' + p.t + ';color:' + p.d + '"><b>' + r.n + '</b>รับมอบหมาย</span><span style="background:' + H.ST.doing[1] + ';color:' + H.ST.doing[2] + '"><b>' + r.acc + '</b>รับเรื่อง</span><span style="background:' + H.ST.done[1] + ';color:' + H.ST.done[2] + '"><b>' + r.dn + '</b>ปิดงาน</span></div><div class="ln"><span>เวลารับเรื่องเฉลี่ย</span><b>' + dur(r.tAcc) + '</b></div><div class="ln"><span>เวลาทำงานเฉลี่ย (รับ→ปิด)</span><b>' + dur(r.tWork) + '</b></div><div class="ln"><span>เวลาปิดเรื่องรวมเฉลี่ย</span><b>' + dur(r.tAll) + '</b></div><div class="ln"><span>ปิดทันกำหนด</span><b style="color:' + (r.ontime == null ? 'inherit' : r.ontime >= 80 ? '#2b5640' : '#b3261e') + '">' + (r.ontime == null ? '—' : r.ontime + '%') + '</b></div><div class="ln"><span>งานค้าง / เกินกำหนด</span><b style="color:' + (r.od ? '#b3261e' : 'inherit') + '">' + r.open + ' / ' + r.od + '</b></div></div>'; };
+      return '<div class="card pfc" style="--c:' + p.m + '"><div class="pfband" style="background:linear-gradient(135deg,' + p.t + ',' + p.m + '66)"></div><div class="pfbody"><div class="pfhead">' + H.avatar(r.s, 72) + '<b class="pfn">' + esc(r.s.nickname) + '</b>' + b + '</div><div class="pcnt" style="margin-top:12px"><span style="background:' + p.t + ';color:' + p.d + '"><b>' + r.n + '</b>รับมอบหมาย</span><span style="background:' + H.ST.doing[1] + ';color:' + H.ST.doing[2] + '"><b>' + r.acc + '</b>รับเรื่อง</span><span style="background:' + H.ST.done[1] + ';color:' + H.ST.done[2] + '"><b>' + r.dn + '</b>ปิดงาน</span></div><div class="ln"><span>เวลารับเรื่องเฉลี่ย</span><b>' + dur(r.tAcc) + '</b></div><div class="ln"><span>เวลาทำงานเฉลี่ย (รับ→ปิด)</span><b>' + dur(r.tWork) + '</b></div><div class="ln"><span>เวลาปิดเรื่องรวมเฉลี่ย</span><b>' + dur(r.tAll) + '</b></div><div class="ln"><span>ปิดทันกำหนด</span><b style="color:' + (r.ontime == null ? 'inherit' : r.ontime >= 80 ? '#2b5640' : '#b3261e') + '">' + (r.ontime == null ? '—' : r.ontime + '%') + '</b></div><div class="ln"><span>งานค้าง / เกินกำหนด</span><b style="color:' + (r.od ? '#b3261e' : 'inherit') + '">' + r.open + ' / ' + r.od + '</b></div></div></div>'; };
     return '<div class="frow noprint"><span>ช่วงเวลา</span>' + [['30', '30 วันล่าสุด'], ['90', '3 เดือนล่าสุด'], ['365', '1 ปี'], ['all', 'ทั้งหมด']].map(c => H.chip(c[1], S.perfP === c[0], 'perfP', c[0])).join('') + '</div>' + tl + '<div class="pgrid4">' + rows.map(card).join('') + '</div>' +
       '<div class="grid3"><section class="card pad"><h3>เวลาปิดเรื่องเฉลี่ย (เรียงจากเร็วไปช้า)</h3>' + (ranked.map((r, i) => '<div class="pr"><span class="cn">' + (i + 1) + '</span><div class="g1"><b>' + esc(r.s.nickname) + '</b> <span class="mu">' + dur(r.tAll) + ' · ' + r.dn + ' เรื่อง</span><div class="pb"><span style="width:' + 100 * r.tAll / mx + '%;background:' + H.P(r.k).m + '"></span></div></div></div>').join('') || '<div class="empty">ยังไม่มีงานที่ปิด</div>') + '</section>' +
       '<section class="card pad"><h3>เรื่องที่รอรับนานที่สุด</h3>' + (wait.map(x => '<div class="li" data-act="task" data-a="' + x.t.id + '"><div class="g1"><b>' + esc(x.t.title) + '</b><div class="mu">' + esc(H.ownerName(H.ownerKey(x.t))) + '</div></div><b style="color:' + (x.h > 48 ? '#b3261e' : '#8a6516') + '">รอ ' + dur(x.h) + '</b></div>').join('') || '<div class="empty">ไม่มีเรื่องรอรับ</div>') + '</section></div>' +
