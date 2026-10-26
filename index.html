@@ -151,7 +151,7 @@ window.HR_CONFIG = {
   SUPABASE_URL: "https://uhefxwccuqagnbrbidbh.supabase.co",
   SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVoZWZ4d2NjdXFhZ25icmJpZGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwMDI1NDYsImV4cCI6MjEwMTU3ODU0Nn0.EE5QWPVjSkZpUTU37hgiz4LsGMAfq87dxFOkt9OYynY",
   // ลิงก์เว็บแอปคลังสัญญาจ้าง (Apps Script) — วาง URL ที่ได้จาก Deploy ลงตรงนี้
-  ARCHIVE_URL: "",
+  ARCHIVE_URL: "https://script.google.com/macros/s/AKfycbxTk8GaUKCzM7NBChgBPTXoR2dcNphTpi7fDlaQfkL2ffYOlp68AEgXoQxcZlGKpiEuZQ/exec",
 };
 
 </script>
@@ -465,7 +465,11 @@ H.D.task = () => { const t = S.d.tasks.find(x => x.id === S.dlg.data); if (!t) r
       '<div class="prhead">แผนกบุคคลและสวัสดิการ มูลนิธิ — พิมพ์เมื่อ ' + dateT + '</div><div class="card ph2"><div class="g1"><h2>' + esc(m[0]) + '</h2><div class="mu">' + esc(m[1]) + '</div></div><div class="noprint hacts">' + (['dash', 'board'].includes(S.view) ? '' : '<button class="btn ghost" onclick="window.print()">พิมพ์รายงาน</button>') + acts + '</div></div><main>' + (H.V[S.view] ? H.V[S.view]() : '') + '</main></div></div>' + (S.dlg && H.D[S.dlg.type] ? H.D[S.dlg.type]() : ''); };
   
   H.render = () => { if (!S.me) return; const ae = document.activeElement, id = ae && ae.id, pos = ae && ae.selectionStart; if (S.dlg) Object.assign(S.dlg.vals, H.form());
-    document.getElementById('app').innerHTML = H.shell(); if (id) { const n = document.getElementById(id); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) { } } } };
+    // จำตำแหน่งเลื่อนของแถบเมนูซ้าย / กล่องโต้ตอบ / ตาราง ไว้ แล้วคืนค่าหลังวาดหน้าใหม่ (ไม่ให้เด้งกลับขึ้นบน)
+    const keep = ['.side', '.dlg', '.content', '.scroll'].map(sel => Array.from(document.querySelectorAll(sel)).map(n => [n.scrollTop, n.scrollLeft]));
+    document.getElementById('app').innerHTML = H.shell();
+    ['.side', '.dlg', '.content', '.scroll'].forEach((sel, i) => Array.from(document.querySelectorAll(sel)).forEach((n, j) => { const v = keep[i][j]; if (v) { n.scrollTop = v[0]; n.scrollLeft = v[1]; } }));
+    if (id) { const n = document.getElementById(id); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) { } } } };
   // ---------- เหตุการณ์ ----------
   document.addEventListener('mousedown', ev => { S._md = ev.target; }, true);
   document.addEventListener('click', ev => { const el = ev.target.closest('[data-act]'); if (!el) { if (ev.target.id === 'dlg' && S._md && S._md.id === 'dlg') A.close(); return; } if (el.tagName === 'A') ev.preventDefault(); const fn = A[el.dataset.act]; if (fn) fn(el.dataset.a, el, ev); });
