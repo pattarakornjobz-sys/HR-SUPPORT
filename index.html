@@ -152,8 +152,8 @@ window.HR_CONFIG = {
   SUPABASE_URL: "https://uhefxwccuqagnbrbidbh.supabase.co",
   SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVoZWZ4d2NjdXFhZ25icmJpZGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwMDI1NDYsImV4cCI6MjEwMTU3ODU0Nn0.EE5QWPVjSkZpUTU37hgiz4LsGMAfq87dxFOkt9OYynY",
   // ลิงก์เว็บแอป Apps Script (คลังสัญญา / แฟ้มใบแสดงเจตนา) ตั้งค่าในไฟล์ app-links.js
-  ARCHIVE_URL: "https://script.google.com/macros/s/AKfycbzTTdoU5xLUztJueM1H-flqfSfi7f6LiwwidNo1Vh3jARSM7r7AP3BQyfRIfGSvpaqPoQ/exec",
-  BEN_URL: "https://script.google.com/macros/s/AKfycbx8ohKF1a315lEETstsxAPC3DuIWsL2fP_uYzMANZXg-Ktjcw0OviccCasDhV1f1-FA/exec",
+  ARCHIVE_URL: "",
+  BEN_URL: "",
 };
 </script>
 <!-- ลิงก์เว็บแอปแยกไว้ในไฟล์นี้ อัปเดต index.html ครั้งต่อไป ลิงก์จะไม่หาย -->
@@ -728,7 +728,7 @@ H.D.task = () => { const t = S.d.tasks.find(x => x.id === S.dlg.data); if (!t) r
 
   // ======================= ประกันกลุ่ม =======================
   reg('ins', 'ประกันกลุ่ม', () => S.d.ins.length, ['ประกันสุขภาพและอุบัติเหตุกลุ่ม', 'รายชื่อผู้เอาประกัน วงเงินสุขภาพ/อุบัติเหตุ ซิงก์กับทะเบียนบุคลากร'],
-    () => (H.has('pan') ? lbl('↑ นำเข้ารายชื่อประกัน', 'importIns') + '<button class="btn primary" data-act="syncIns">ซิงก์จากทะเบียน</button><button class="btn ghost danger" data-act="clearIns">🗑 ลบรายชื่อทั้งหมด</button>' : '') + '<button class="btn ghost" data-act="expIns">↓ ส่งออก CSV</button>' + (H.has('pan') || H.has('bb') ? lbl('↑ นำเข้าใบแสดงเจตนา', 'importBen') : '') + '<button class="btn ghost" data-act="expBen">↓ ส่งออกใบแสดงเจตนา</button>' + ((window.HR_CONFIG || {}).BEN_URL ? '<button class="btn blue" data-act="openBenDocs" data-a="|tw">แฟ้ม PDF ใบแสดงเจตนา ↗</button>' : ''));
+    () => (H.has('pan') ? lbl('↑ นำเข้ารายชื่อประกัน', 'importIns') + '<button class="btn primary" data-act="syncIns">ซิงก์จากทะเบียน</button><button class="btn ghost danger" data-act="clearIns">🗑 ลบรายชื่อทั้งหมด</button>' : '') + '<button class="btn ghost" data-act="expIns">↓ ส่งออก CSV</button>' + (H.has('pan') || H.has('bb') ? lbl('↑ นำเข้าใบแสดงเจตนา', 'importBen') : '') + '<button class="btn ghost" data-act="expBen">↓ ส่งออกใบแสดงเจตนา</button>' + ((window.HR_CONFIG || {}).BEN_URL ? '<button class="btn blue" data-act="openBenDocs" data-a="|tw">แฟ้ม PDF ใบแสดงเจตนา ↗</button>' : '') + '<a class="btn blue" href="' + esc((window.HR_CONFIG || {}).CLAIM_URL || 'https://hris-support.vercel.app/manage_claim_status.html') + '" target="_blank" rel="noopener" style="text-decoration:none">สถานะการเคลมประกัน ↗</a>');
   const fmtCard = c => c.length === 13 ? c[0] + ' ' + c.slice(1, 5) + ' ' + c.slice(5, 10) + ' ' + c.slice(10, 12) + ' ' + c[12] : c;
   const regCards = () => { const m = new Map(); S.d.emps.forEach(e => { const k = cardKey(e.id_card); if (k.length >= 8) m.set(k, e); }); return m; };
   const insInfo = (r, rc) => { const cd = cardKey(r.id_card), e = (cd.length >= 8 ? rc.get(cd) : null) || (r.employee_id ? S.d.emps.find(x => x.employee_id === r.employee_id) : null), fl = [], cy = new Date().getFullYear(); let bad = false, left = false, ret = false;
