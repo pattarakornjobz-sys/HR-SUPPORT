@@ -145,9 +145,6 @@ input.sm{width:100%;font:inherit;font-size:13px;padding:6px 8px;border-radius:8p
 .pcx .pav2,.pcx .stack{position:relative;z-index:2}
 
 .sqbox{display:flex;flex-direction:column;gap:6px}.sqbox .sqn{font-size:12.5px;min-height:0}.sqbox .sqn:empty{display:none}
-.pick{max-height:46vh;overflow:auto;border:1px solid var(--line);border-radius:12px}
-.pr2{display:flex;gap:12px;align-items:center;padding:9px 12px;border-bottom:1px solid var(--line);cursor:pointer}.pr2:hover{background:var(--paper-soft)}.pr2.on{background:#fbe6ee}.pr2.off{opacity:.55;cursor:not-allowed}
-.btn[disabled]{opacity:.45;cursor:not-allowed}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
@@ -320,7 +317,7 @@ window.HR_CONFIG = {
   H.ownerKey = t => { const s = H.staffBy(t.assigned_to); return s ? (H.keyOfStaff(s) || 'head') : 'all'; };
   H.ownerName = k => k === 'head' ? 'หัวหน้า' : ((H.personStaff(k) || {}).nickname || H.OWN[k]);
   H.isHead = () => S.me.role === 'head';
-  H.has = k => H.isHead() || S.me.owner_key === k;
+  H.has = k => H.isHead() || H.keyOfStaff(S.me) === k;
   H.canReg = () => H.isHead() || S.me.can_registry;
   H.canTask = t => H.isHead() || t.assigned_to == null || t.assigned_to === S.me.id || (!!H.keyOfStaff(S.me) && H.keyOfStaff(H.staffBy(t.assigned_to)) === H.keyOfStaff(S.me));
   H.ini = n => Array.from(n || '?').slice(0, 2).join('');
@@ -731,7 +728,7 @@ H.D.task = () => { const t = S.d.tasks.find(x => x.id === S.dlg.data); if (!t) r
 
   // ======================= ประกันกลุ่ม =======================
   reg('ins', 'ประกันกลุ่ม', () => S.d.ins.length, ['ประกันสุขภาพและอุบัติเหตุกลุ่ม', 'รายชื่อผู้เอาประกัน วงเงินสุขภาพ/อุบัติเหตุ ซิงก์กับทะเบียนบุคลากร'],
-    () => (H.has('pan') ? lbl('↑ นำเข้ารายชื่อประกัน', 'importIns') + '<button class="btn primary" data-act="pickIns">+ เลือกจากทะเบียน</button><button class="btn ghost" data-act="syncIns">ซิงก์จากทะเบียน</button><button class="btn ghost danger" data-act="clearIns">🗑 ลบรายชื่อทั้งหมด</button>' : '') + '<button class="btn ghost" data-act="expIns">↓ ส่งออก CSV</button>' + (H.has('pan') || H.has('bb') ? lbl('↑ นำเข้าใบแสดงเจตนา', 'importBen') : '') + '<button class="btn ghost" data-act="expBen">↓ ส่งออกใบแสดงเจตนา</button>' + ((window.HR_CONFIG || {}).BEN_URL ? '<button class="btn blue" data-act="openBenDocs" data-a="|tw">แฟ้ม PDF ใบแสดงเจตนา ↗</button>' : '') + '<a class="btn blue" href="' + esc((window.HR_CONFIG || {}).CLAIM_URL || 'https://hris-support.vercel.app/manage_claim_status.html') + '" target="_blank" rel="noopener" style="text-decoration:none">สถานะการเคลมประกัน ↗</a>');
+    () => (H.has('pan') ? lbl('↑ นำเข้ารายชื่อประกัน', 'importIns') + '<button class="btn primary" data-act="syncIns">ซิงก์จากทะเบียน</button><button class="btn ghost danger" data-act="clearIns">🗑 ลบรายชื่อทั้งหมด</button>' : '') + '<button class="btn ghost" data-act="expIns">↓ ส่งออก CSV</button>' + (H.has('pan') || H.has('bb') ? lbl('↑ นำเข้าใบแสดงเจตนา', 'importBen') : '') + '<button class="btn ghost" data-act="expBen">↓ ส่งออกใบแสดงเจตนา</button>' + ((window.HR_CONFIG || {}).BEN_URL ? '<button class="btn blue" data-act="openBenDocs" data-a="|tw">แฟ้ม PDF ใบแสดงเจตนา ↗</button>' : '') + '<a class="btn blue" href="' + esc((window.HR_CONFIG || {}).CLAIM_URL || 'https://hris-support.vercel.app/manage_claim_status.html') + '" target="_blank" rel="noopener" style="text-decoration:none">สถานะการเคลมประกัน ↗</a>');
   const fmtCard = c => c.length === 13 ? c[0] + ' ' + c.slice(1, 5) + ' ' + c.slice(5, 10) + ' ' + c.slice(10, 12) + ' ' + c[12] : c;
   const regCards = () => { const m = new Map(); S.d.emps.forEach(e => { const k = cardKey(e.id_card); if (k.length >= 8) m.set(k, e); }); return m; };
   const insInfo = (r, rc) => { const cd = cardKey(r.id_card), e = (cd.length >= 8 ? rc.get(cd) : null) || (r.employee_id ? S.d.emps.find(x => x.employee_id === r.employee_id) : null), fl = [], cy = new Date().getFullYear(); let bad = false, left = false, ret = false;
@@ -791,21 +788,6 @@ H.D.task = () => { const t = S.d.tasks.find(x => x.id === S.dlg.data); if (!t) r
     if (upd.length && !(await chunk('hr_group_insurance', upd, 'id'))) return; if (add.length && !(await chunk('hr_group_insurance', add, 'id_card'))) return;
     let syncNote = ''; for (let i = 0; i < sync.length; i += 300) { const { error } = await sb.rpc('hr_sync_from_insurance', { p_rows: sync.slice(i, i + 300) }); if (error) { syncNote = ' · ซิงก์ทะเบียนไม่สำเร็จ: ' + error.message + ' (ต้องรัน schema.sql ฉบับล่าสุด)'; break; } }
     S.msg.ins = 'นำเข้าประกัน ' + num(upd.length + add.length) + ' คน (เพิ่มใหม่ ' + add.length + ' · อัปเดต ' + upd.length + ')' + (syncNote || ' · ซิงก์ทะเบียน: วันเกิด ' + dobFix + ' · แก้ชื่อตามไฟล์ประกัน ' + nameFix) + (miss.length ? ' · ไม่พบในทะเบียน ' + miss.length + ' คน (เช่น ' + miss.slice(0, 3).join(', ') + ')' : '') + (dobBad ? ' · วันเกิดอ่านไม่ได้ ' + dobBad + ' แถว' : '') + (skip ? ' · ข้าม ' + skip + ' แถว (เลขบัตรไม่ครบ 13 หลัก/ซ้ำ)' : ''); S.insPage = 0; await Promise.all([H.load('ins'), H.load('emps')]); H.render(); });
-  const pickList = () => { const d = S.dlg.data, have = new Set(S.d.ins.map(r => cardKey(r.id_card))), q = (d.q || '').trim(), qd = cardKey(q);
-    return S.d.emps.filter(e => H.isAct(e) && !have.has(cardKey(e.id_card)) && (d.t === 'all' || etype(e) === d.t) && (!q || (H.empFull(e) + (e.position || '') + (e.org || '')).includes(q) || (qd.length >= 3 && cardKey(e.id_card).includes(qd)))); };
-  A.pickIns = () => H.open('pickIns', { q: '', t: 'all', sel: [] });
-  A.pickq = v => { S.dlg.data.q = v; H.render(); }; A.pickT = v => { S.dlg.data.t = v; H.render(); };
-  A.pickTog = id => { const s = S.dlg.data.sel, i = s.indexOf(id); i < 0 ? s.push(id) : s.splice(i, 1); H.render(); };
-  A.pickAll = () => { const d = S.dlg.data, ids = pickList().filter(e => cardKey(e.id_card).length === 13).slice(0, 200).map(e => e.employee_id), all = ids.every(i => d.sel.includes(i)); d.sel = all ? d.sel.filter(i => !ids.includes(i)) : [...new Set([...d.sel, ...ids])]; H.render(); };
-  D.pickIns = () => { const d = S.dlg.data, list = pickList(), shown = list.slice(0, 60), tabs = [['all', 'ทั้งหมด'], ...ETYPES.map(t => [t[0], t[1]])];
-    const body = '<div class="frow" style="margin-bottom:8px"><input id="pickq" class="search" style="max-width:none" placeholder="ค้นหาชื่อ / เลขบัตร / ตำแหน่ง / หน่วยงาน…" value="' + esc(d.q) + '" data-in="pickq"></div><div class="chips" style="margin-bottom:10px">' + tabs.map(t => H.chip(t[1], d.t === t[0], 'pickT', t[0])).join('') + '</div>' +
-      '<div class="mu" style="margin-bottom:6px">พบ ' + num(list.length) + ' คนที่ยังไม่อยู่ในประกัน' + (list.length > 60 ? ' · แสดง 60 คนแรก ค้นหาเพื่อกรอง' : '') + ' · เลือกแล้ว <b>' + d.sel.length + '</b> คน <button class="lk" data-act="pickAll">เลือก/ยกเลิกทั้งหมดที่แสดง</button></div>' +
-      '<div class="pick">' + (shown.map(e => { const ok = cardKey(e.id_card).length === 13, on = d.sel.includes(e.employee_id), tn = etype(e) === 'staff' ? TONE.sage : etype(e) === 'probation' ? TONE.gold : TONE.gray;
-        return '<div class="pr2' + (on ? ' on' : '') + (ok ? '' : ' off') + '"' + (ok ? ' data-act="pickTog" data-a="' + esc(e.employee_id) + '"' : '') + '><span class="box' + (on ? ' on' : '') + '">' + (on ? '✓' : '') + '</span><span class="g1"><b>' + esc(H.empFull(e)) + '</b><span class="mu" style="display:block">' + esc([e.position, e.org].filter(Boolean).join(' · ')) + ' · ' + (ok ? fmtCard(cardKey(e.id_card)) : '<span style="color:#b3261e">ไม่มีเลขบัตร 13 หลัก — เพิ่มไม่ได้</span>') + '</span></span><span class="pill" style="background:' + tn.t + ';color:' + tn.d + '">' + esc((ETYPES.find(t => t[0] === etype(e)) || [0, ''])[1]) + '</span></div>'; }).join('') || '<div class="empty">ไม่พบรายชื่อ</div>') + '</div>' +
-      '<div class="mu" style="margin-top:8px">เจ้าหน้าที่ทดลองปฏิบัติงานเพิ่มได้เมื่อบรรจุแล้ว — เลือกมาเพิ่มจากหน้านี้ได้เลย</div>';
-    return H.dlgBox('เลือกผู้เอาประกันจากทะเบียน', 'ค้นหาและติ๊กเลือกได้หลายคน', body, '<button class="btn ghost grow" data-act="close">ยกเลิก</button><button class="btn primary grow" data-act="pickSave"' + (d.sel.length ? '' : ' disabled') + '>เพิ่มเข้าประกัน ' + d.sel.length + ' คน</button>', 680); };
-  A.pickSave = async () => { const d = S.dlg.data, have = new Set(S.d.ins.map(r => cardKey(r.id_card))), add = S.d.emps.filter(e => d.sel.includes(e.employee_id) && cardKey(e.id_card).length === 13 && !have.has(cardKey(e.id_card))).map(e => ({ id_card: cardKey(e.id_card), employee_id: e.employee_id, name: H.empFull(e), birth_date: e.birth_date || null, position: e.position || null, org: e.org || null, note: '' }));
-    if (!add.length) return H.toast('ไม่มีรายชื่อที่เพิ่มได้', true); if (!(await chunk('hr_group_insurance', add, 'id_card'))) return; S.dlg = null; S.msg.ins = 'เพิ่มผู้เอาประกันจากทะเบียน ' + add.length + ' คน'; await H.load('ins'); H.render(); };
   A.syncIns = async () => { const rc = new Map(), byEmp = new Map(); S.d.ins.forEach(r => { const k = cardKey(r.id_card); if (k.length >= 8) rc.set(k, r); if (r.employee_id) byEmp.set(r.employee_id, r); });
     const upd = [], add = []; let noCard = 0; S.d.emps.filter(e => H.isAct(e) && etype(e) === 'staff').forEach(e => { const card = cardKey(e.id_card); if (card.length !== 13) { noCard++; return; } const ex = rc.get(card) || byEmp.get(e.employee_id), base = { id_card: card, employee_id: e.employee_id, name: H.empFull(e), birth_date: e.birth_date || null, position: e.position || null, org: e.org || null };
       if (ex) upd.push({ ...base, id: ex.id, note: ex.note || '' }); else add.push({ ...base, note: '' }); });
