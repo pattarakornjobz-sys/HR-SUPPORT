@@ -33,7 +33,15 @@ button{font:inherit;color:inherit;cursor:pointer}a{color:var(--rose-600)}
 .search{flex:1;min-width:160px;max-width:300px;font:inherit;padding:10px 14px;border-radius:999px;border:1.5px solid var(--line);background:#fff;color:var(--ink)}
 .filters{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}.frow{display:flex;gap:6px 8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}.filters .frow{margin:0}.frow>span:first-child{font-size:12px;font-weight:700;color:var(--ink-soft);min-width:70px}
 .chk{display:flex;gap:10px;align-items:center;background:none;border:0;padding:0;font-weight:700;font-size:13.5px}.box{width:20px;height:20px;border-radius:6px;border:1.5px solid #5c8a6d;background:#fff;color:#fff;font-size:12px;font-weight:800;display:inline-grid;place-items:center;flex:none}.box.on{background:#5c8a6d}
-.fld{display:block;font-size:12.5px;font-weight:700;margin-bottom:12px}.fld input,.fld select,.fld textarea{display:block;margin-top:5px;width:100%;font:inherit;font-size:14px;padding:9px 11px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper-soft);color:var(--ink)}.fld input:focus,.fld select:focus,.search:focus,input.sm:focus{outline:2px solid var(--rose-500);outline-offset:1px}
+.fld{display:block;font-size:12.5px;font-weight:700;margin-bottom:12px}.fld input,.fld select,.fld textarea{display:block;margin-top:5px;width:100%;font:inherit;font-size:14px;padding:9px 11px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper-soft);color:var(--ink)}.dp{display:block;position:relative}.dp input.bad{border-color:var(--rose-600);background:var(--pink-50)}.dp input[readonly]{opacity:.7}
+#dpop{position:fixed;z-index:90;width:270px;background:var(--paper);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:12px;font-size:14px;color:var(--ink)}
+#dpop .dph{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}#dpop .dph b{font-size:14.5px}
+#dpop button{border:0;background:none;font:inherit;cursor:pointer;border-radius:9px;color:var(--ink)}
+#dpop .dph button{width:34px;height:32px;font-size:18px}#dpop .dph button:hover,#dpop .dpg button:hover{background:var(--pink-100)}
+#dpop .dpw,#dpop .dpg{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}#dpop .dpw span{font-size:12px;color:var(--ink-soft);padding:4px 0}
+#dpop .dpg button{height:33px}#dpop .dpg button.td{color:var(--rose-700);font-weight:700;box-shadow:inset 0 0 0 1.5px var(--rose-500)}#dpop .dpg button.on{background:var(--rose-600);color:#fff;font-weight:700}
+#dpop .dpf{display:flex;justify-content:space-between;margin-top:8px;border-top:1px solid var(--line);padding-top:8px}#dpop .dpf button{padding:4px 10px;color:var(--rose-700);font-weight:600}
+.fld input:focus,.fld select:focus,.search:focus,input.sm:focus{outline:2px solid var(--rose-500);outline-offset:1px}
 input.sm{width:100%;font:inherit;font-size:13px;padding:6px 8px;border-radius:8px;border:1.5px solid var(--line);background:var(--paper-soft)}
 .pill{display:inline-flex;font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;border:0;white-space:nowrap}
 .msg{display:flex;gap:12px;align-items:center;padding:10px 16px;margin-bottom:12px;background:#e7f2ea;border:1px solid #b9d6c3;border-radius:14px;font-size:13px;font-weight:600;color:#2b5640}.msg span{flex:1}.msg button:not(.btn){background:none;border:0;font-weight:700;color:#2b5640}
@@ -176,8 +184,49 @@ window.HR_CONFIG = {
   H.pad = n => String(n).padStart(2, '0');
   H.today = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
   H.iso = d => d.getFullYear() + '-' + H.pad(d.getMonth() + 1) + '-' + H.pad(d.getDate());
-  H.d0 = s => new Date(String(s).slice(0, 10) + 'T00:00:00');
-  H.fd = (s, o) => s ? H.d0(s).toLocaleDateString('th-TH', o || { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+  /* ----- ช่องวันที่แบบไทย วว/ดด/ปปปป (พ.ศ.) · ค่าจริงเก็บเป็น YYYY-MM-DD ในช่องซ่อน (data-f) ----- */
+  const DP = { id: null, y: 0, m: 0 }, $d = id => document.getElementById(id);
+  const dpSet = (id, v) => { const h = $d(id), x = $d(id + '_txt'); if (h) h.value = v || ''; if (x) { x.value = H.isoToBE(v); x.classList.remove('bad'); } };
+  const dpClose = () => { DP.id = null; const el = $d('dpop'); if (el) el.remove(); };
+  const dpDraw = () => {
+    const inp = $d(DP.id + '_txt'); if (!inp) return dpClose();
+    let el = $d('dpop'); if (!el) { el = document.createElement('div'); el.id = 'dpop'; document.body.appendChild(el); }
+    const r = inp.getBoundingClientRect(), sel = $d(DP.id).value, td = H.iso(H.today()), first = new Date(DP.y, DP.m, 1).getDay(), n = new Date(DP.y, DP.m + 1, 0).getDate();
+    let cells = ''; for (let i = 0; i < first; i++) cells += '<span></span>';
+    for (let i = 1; i <= n; i++) { const v = H.iso(new Date(DP.y, DP.m, i)); cells += '<button type="button" data-dpv="' + v + '" class="' + (v === sel ? 'on' : '') + (v === td ? ' td' : '') + '">' + i + '</button>'; }
+    el.innerHTML = '<div class="dph"><button type="button" data-dpn="-1">‹</button><b>' + H.TH_M[DP.m] + ' ' + (DP.y + 543) + '</b><button type="button" data-dpn="1">›</button></div><div class="dpw">' + ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'].map(x => '<span>' + x + '</span>').join('') + '</div><div class="dpg">' + cells + '</div><div class="dpf"><button type="button" data-dpv="' + td + '">วันนี้</button><button type="button" data-dpv="">ล้าง</button></div>';
+    const top = r.bottom + 4 + 300 > innerHeight ? Math.max(8, r.top - 304) : r.bottom + 4;
+    el.style.top = top + 'px'; el.style.left = Math.max(8, Math.min(r.left, innerWidth - 278)) + 'px';
+  };
+  const dpOpen = id => { DP.id = id; const cur = $d(id).value || H.iso(H.today()), d = new Date(cur + 'T00:00:00'); DP.y = d.getFullYear(); DP.m = d.getMonth(); dpDraw(); };
+  document.addEventListener('focusin', e => { const id = e.target.dataset && e.target.dataset.dp; if (id) dpOpen(id); });
+  document.addEventListener('click', e => { const id = e.target.dataset && e.target.dataset.dp; if (id && DP.id !== id) dpOpen(id); });
+  document.addEventListener('mousedown', e => {
+    const pop = e.target.closest && e.target.closest('#dpop');
+    if (pop) { e.preventDefault(); e.stopPropagation(); const b = e.target.closest('button'); if (!b) return;
+      if (b.dataset.dpn) { DP.m += +b.dataset.dpn; if (DP.m < 0) { DP.m = 11; DP.y--; } if (DP.m > 11) { DP.m = 0; DP.y++; } dpDraw(); }
+      else if (b.dataset.dpv !== undefined) { const id = DP.id; dpSet(id, b.dataset.dpv); dpClose(); const h = $d(id); if (h) h.dispatchEvent(new Event('change', { bubbles: true })); }
+      return; }
+    if (DP.id && !(e.target.dataset && e.target.dataset.dp)) dpClose();
+  }, true);
+  document.addEventListener('input', e => {
+    const id = e.target.dataset && e.target.dataset.dp; if (!id) return;
+    let t = e.target.value.replace(/[^\d/]/g, '');
+    if (!/^delete/.test(e.inputType || '')) { const ps = t.split('/').slice(0, 3); for (let i = 0; i < 2; i++) if (ps[i] !== undefined && ps[i].length > 2) { const x = ps[i].slice(2); ps[i] = ps[i].slice(0, 2); ps[i + 1] = ps[i + 1] === undefined ? x : x + ps[i + 1]; } if (ps[2]) ps[2] = ps[2].slice(0, 4); t = ps.join('/'); if (ps.length < 3 && ps[ps.length - 1].length === 2) t += '/'; }
+    e.target.value = t; const v = H.beToIso(t); if (v && /\d{4}$/.test(t)) { $d(id).value = v; e.target.classList.remove('bad'); DP.y = +v.slice(0, 4); DP.m = +v.slice(5, 7) - 1; if (DP.id) dpDraw(); } else if (!t) $d(id).value = '';
+  });
+  document.addEventListener('focusout', e => {
+    const id = e.target.dataset && e.target.dataset.dp; if (!id) return; const t = e.target.value.trim();
+    if (!t) dpSet(id, ''); else { const v = H.beToIso(t); if (v) dpSet(id, v); else e.target.classList.add('bad'); }
+    setTimeout(() => { if (DP.id === id && document.activeElement !== e.target) dpClose(); }, 0);
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && DP.id) { e.stopImmediatePropagation(); dpClose(); } }, true);
+  addEventListener('scroll', e => { if (DP.id && !(e.target.closest && e.target.closest('#dpop'))) dpDraw(); }, true);
+  H.d0 = s => { s = String(s); if (s.length > 10 && /[T ]\d{2}:\d{2}/.test(s)) { const x = new Date(s); if (!isNaN(x)) { x.setHours(0, 0, 0, 0); return x; } } return new Date(s.slice(0, 10) + 'T00:00:00'); };
+  H.beDate = d => H.pad(d.getDate()) + '/' + H.pad(d.getMonth() + 1) + '/' + (d.getFullYear() + 543);
+  H.fd = (s, o) => { if (!s) return '—'; const d = H.d0(s); if (isNaN(d)) return '—'; return o && !o.day ? d.toLocaleDateString('th-TH', o) : (o && o.weekday ? d.toLocaleDateString('th-TH', { weekday: o.weekday }) + ' ' : '') + H.beDate(d); };
+  H.isoToBE = v => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(v || ''); return m ? m[3] + '/' + m[2] + '/' + (+m[1] + 543) : ''; };
+  H.beToIso = t => { const m = /^(\d{1,2})\D+(\d{1,2})\D+(\d{2,4})$/.exec(String(t || '').trim()); if (!m) return null; let d = +m[1], mo = +m[2], y = +m[3]; if (y < 100) y += 2500; if (y < 2400) y += 543; y -= 543; const x = new Date(y, mo - 1, d); if (x.getFullYear() !== y || x.getMonth() !== mo - 1 || x.getDate() !== d) return null; return H.iso(x); };
   H.days = s => Math.round((H.d0(s) - H.today()) / 864e5);
   H.ageOf = (b, ref) => { if (!b) return ''; const a = H.d0(b), r = ref ? H.d0(ref) : H.today(); let y = r.getFullYear() - a.getFullYear(); if (r.getMonth() < a.getMonth() || (r.getMonth() === a.getMonth() && r.getDate() < a.getDate())) y--; return y; };
   H.tenure = (s, ref) => { if (!s) return ''; const a = H.d0(s), r = ref ? H.d0(ref) : H.today(); let m = (r.getFullYear() - a.getFullYear()) * 12 + r.getMonth() - a.getMonth(); if (r.getDate() < a.getDate()) m--; if (m < 0) m = 0; const y = Math.floor(m / 12); return (y ? y + ' ปี ' : '') + (m % 12) + ' เดือน'; };
@@ -336,7 +385,10 @@ window.HR_CONFIG = {
   H.tbl = (cols, rows, foot) => '<div class="card scroll"><table class="tbl"><thead><tr>' + cols.map(c => '<th' + (c.r ? ' class="r"' : '') + '>' + c.h + '</th>').join('') + '</tr></thead><tbody>' + rows + '</tbody>' + (foot || '') + '</table></div>';
   H.msg = k => S.msg[k] ? '<div class="msg noprint"><span>' + esc(S.msg[k]) + '</span><button data-act="clrMsg" data-a="' + k + '">✕</button></div>' : '';
   H.fv = (f, d) => (S.dlg && S.dlg.vals && f in S.dlg.vals) ? S.dlg.vals[f] : d;
-  H.inp = (f, label, d, type, ex) => '<label class="fld">' + esc(label) + '<input data-f="' + f + '" type="' + (type || 'text') + '" value="' + esc(H.fv(f, d == null ? '' : d)) + '" ' + (ex || '') + '></label>';
+  H._dpn = 0;
+  H.inp = (f, label, d, type, ex) => { const v = H.fv(f, d == null ? '' : d);
+    if (type === 'date') { const id = 'dp' + (++H._dpn), ro = /readonly|disabled/.test(ex || ''); return '<label class="fld">' + esc(label) + '<span class="dp"><input class="dpt" id="' + id + '_txt"' + (ro ? ' readonly' : ' data-dp="' + id + '"') + ' value="' + H.isoToBE(String(v || '').slice(0, 10)) + '" placeholder="วว/ดด/ปปปป (พ.ศ.)" autocomplete="off" inputmode="numeric" maxlength="10"><input type="hidden" id="' + id + '" data-f="' + f + '" value="' + esc(String(v || '').slice(0, 10)) + '"></span></label>'; }
+    return '<label class="fld">' + esc(label) + '<input data-f="' + f + '" type="' + (type || 'text') + '" value="' + esc(v) + '" ' + (ex || '') + '></label>'; };
   H.sel = (f, label, opts, d) => { const v = H.fv(f, d); return '<label class="fld">' + esc(label) + '<select data-f="' + f + '">' + opts.map(o => '<option value="' + esc(o[0]) + '"' + (o[2] ? ' data-k="' + esc(o[2]) + '"' : '') + (String(o[0]) === String(v) ? ' selected' : '') + '>' + esc(o[1]) + '</option>').join('') + '</select></label>'; };
   H.form = () => { const o = {}; document.querySelectorAll('#dlg [data-f]').forEach(e => { o[e.dataset.f] = e.type === 'checkbox' ? e.checked : e.value; }); return o; };
   H.open = (type, data) => { H._sq = {}; S.dlg = { type, data, vals: {} }; H.render(); };
@@ -674,7 +726,7 @@ H.D.task = () => { const t = S.d.tasks.find(x => x.id === S.dlg.data); if (!t) r
     const t = prompt('ลบทะเบียนบุคลากรทั้งหมด ' + n + ' คน ออกจากฐานข้อมูล (กู้คืนไม่ได้)\nแนะนำกด "ส่งออก CSV" สำรองก่อน\n\nพิมพ์คำว่า  ลบทั้งหมด  เพื่อยืนยัน'); if (t == null) return; if (t.trim() !== 'ลบทั้งหมด') return H.toast('พิมพ์ไม่ตรง ยกเลิกการลบ', true);
     H.toast('กำลังลบ ' + n + ' คน…'); if (await delIds(S.d.emps.map(e => e.employee_id))) S.msg.emp = 'ลบทะเบียนทั้งหมดแล้ว ' + num(n) + ' คน (ข้อมูลสัญญาในคลังสัญญายังอยู่ จับคู่กลับเมื่อนำเข้าทะเบียนที่มีเลขบัตรเดิม)'; await H.load('emps'); H.render(); };
   A.delEmp = async () => { if (!confirm('ลบบุคลากรคนนี้ออกจากทะเบียน? (แนะนำให้เปลี่ยนสถานะผ่านหน้าเข้า-ออกแทน)')) return; const id = S.dlg.data.employee_id; S.dlg = null; await H.save(sb.from('hr_employees').delete().eq('employee_id', id), 'ลบแล้ว', ['emps']); };
-  A.expEmp = () => H.download('ไฟล์ฐานข้อมูลทะเบียน.csv', H.csv([H.EF.map(f => f[1]), ...S.d.emps.map(e => H.EF.map(f => e[f[0]] == null ? '' : e[f[0]]))]));
+  A.expEmp = () => H.download('ไฟล์ฐานข้อมูลทะเบียน.csv', H.csv([H.EF.map(f => f[1]), ...S.d.emps.map(e => H.EF.map(f => e[f[0]] == null ? '' : f[3] === 'date' ? H.isoToBE(String(e[f[0]])) || e[f[0]] : e[f[0]]))]));
   const TM = [["id_card","เลขบัตรประชาชน"],["title","คำนำหน้า"],["first_name","ชื่อ"],["last_name","นามสกุล"],["birth_date","วันเกิด"],["gender","เพศ"],["emp_type","ประเภท"],["org","ต้นสังกัด"],["section","หน่วยงาน/แผนก"],["position","ตำแหน่ง"],["start_date","วันเริ่มงาน"],["contract_end","วันหมดสัญญา"],["base_salary","เงินเดือน"],["comp_allowance","ค่าตอบแทน"],["prof_allowance","ค่าวิชาชีพ"],["bank_no","เลขบัญชี"]];
   A.tmplEmp = () => { const ex = { id_card: '3 2009 00561 18 4', title: 'นาย', first_name: 'ชื่อ', last_name: 'นามสกุล', emp_type: 'เจ้าหน้าที่มูลนิธิ', org: 'โรงฝึกสถาบันสิริกิติ์ (รฝส.)', section: 'แผนกปักผ้า', position: 'ตำแหน่ง', base_salary: '37,715.00' }; H.download('แม่แบบฐานข้อมูลทะเบียน.csv', H.csv([TM.map(f => f[1]), TM.map(f => ex[f[0]] == null ? '' : ex[f[0]])])); };
   const cardKey = x => String(x == null ? '' : x).replace(/\D/g, '');
