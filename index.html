@@ -312,7 +312,7 @@ window.HR_CONFIG = {
   // ต้นสังกัด 8 หน่วย [ชื่อเต็ม, ตัวย่อ, ชื่อเดิม...] · เก็บในฐานข้อมูลเป็น "ชื่อเต็ม (ตัวย่อ)"
   H.ORGS = [['สำนักงานมูลนิธิ', 'สงม.', 'สำนักเลขาธิการมูลนิธิ', 'สำนักเลขาธิการ'], ['หน่วยประสานงานศูนย์/โครงการศิลปาชีพ', 'นคศ.', 'กองศิลปาชีพ'],
     ['พิพิธภัณฑ์ผ้า ในสมเด็จพระนางเจ้าสิริกิติ์ พระบรมราชินีนาถ', 'พพผ.', 'พิพิธภัณฑ์ผ้า', 'พิพิธภัณฑ์ผ้าฯ'], ['โรงฝึกสถาบันสิริกิติ์', 'รฝส.', 'สถาบันสิริกิติ์'], ['พิพิธภัณฑ์ศิลป์แผ่นดิน', 'พภศ.'],
-    ['โครงการฟาร์มตัวอย่าง', 'ฟตย.', 'โครงการส่วนพระองค์'], ['ศูนย์การเรียน-รู้-เรื่องโขน', 'ศรข.', 'ศูนย์การเรียนรู้เรื่องโขน'], ['ศูนย์การเรียนรู้ตามพระราชดำริเกษตรวิถีไทย', 'ศรก.']];
+    ['โครงการฟาร์มตัวอย่าง', 'ฟตย.', 'โครงการส่วนพระองค์', 'โครงการส่วนพระองค์ 902', 'โครงการส่วนพระองค์902'], ['ศูนย์การเรียน-รู้-เรื่องโขน', 'ศรข.', 'ศูนย์การเรียนรู้เรื่องโขน'], ['ศูนย์การเรียนรู้ตามพระราชดำริเกษตรวิถีไทย', 'ศรก.']];
   H.orgFull = o => o[0] + ' (' + o[1] + ')';
   /** แปลงชื่อต้นสังกัดแบบเก่า / ตัวย่อ / ไม่มีวงเล็บ → "ชื่อเต็ม (ตัวย่อ)" · ไม่รู้จัก = คืนค่าเดิม */
   H.orgStd = v => { const t = String(v == null ? '' : v).trim(); if (!t) return t; const k = x => String(x).replace(/[\s.]+/g, ''), m = /^(.*?)\s*\(([^()]+)\)\s*$/.exec(t), cands = [k(t)].concat(m ? [k(m[1]), k(m[2])] : []);
@@ -1002,7 +1002,7 @@ H.D.task = () => { const t = S.d.tasks.find(x => x.id === S.dlg.data); if (!t) r
   /** รายการสวัสดิการในรูปแบบเดียวกับ hr_disbursements เพื่อรวมในสถิติเบิกจ่าย */
   const welAsPays = () => (S.d.wel || []).map(w => ({ id: w.id, _w: 1, paid_date: w.record_date, category: w.welfare_type === 'gratuity' ? 'pen' : 'wel', payee: w.staff_name + (w.welfare_type === 'funeral_family' && w.relationship ? ' (' + w.relationship + ')' : ''), items: 1, cheques: 0, amount: wTot(w), ref: w.doc_no || '', created_by: w.created_by }));
   const allPays = () => S.d.pays.concat(welAsPays());
-  H.ACTS.pay = () => S.payTab === 'wel' ? (S.d.wel ? '<button class="btn ghost" data-act="welImport">↓ นำเข้าจากระบบเดิม</button><button class="btn ghost" data-act="welExp">↓ ส่งออก CSV</button><button class="btn primary" data-act="welNew">+ บันทึกเบิกสวัสดิการ</button>' : '') : '<button class="btn ghost" data-act="expPay">↓ ส่งออก CSV</button><button class="btn primary" data-act="openPay">+ บันทึกการเบิกจ่าย</button>';
+  H.ACTS.pay = () => S.payTab === 'wel' ? (S.d.wel ? '<button class="btn ghost" data-act="welFixOrg">ปรับชื่อหน่วยงานเป็นปัจจุบัน</button><button class="btn ghost" data-act="welImport">↓ นำเข้าจากระบบเดิม</button><button class="btn ghost" data-act="welExp">↓ ส่งออก CSV</button><button class="btn primary" data-act="welNew">+ บันทึกเบิกสวัสดิการ</button>' : '') : '<button class="btn ghost" data-act="expPay">↓ ส่งออก CSV</button><button class="btn primary" data-act="openPay">+ บันทึกการเบิกจ่าย</button>';
   A.payTab = v => { S.payTab = v; H.render(); };
   A.welT = v => { S.welT = v; H.render(); }; A.welq = v => { S.welq = v; H.render(); };
   const welRows = () => (S.d.wel || []).filter(w => (S.year === 'all' || wYear(w) === S.year) && (!S.welT || S.welT === 'all' || w.welfare_type === S.welT) && (!S.welq || [w.staff_name, w.department, w.doc_no, w.deceased_name].some(v => String(v || '').includes(S.welq)))).sort(byDoc);
@@ -1050,12 +1050,23 @@ H.D.task = () => { const t = S.d.tasks.find(x => x.id === S.dlg.data); if (!t) r
     return ''; };
   A.welSave = async () => { const f = H.form(), d = S.dlg.data, k = d.welfare_type, fam = k === 'funeral_family', r2 = n => Math.round((Number(n) || 0) * 100) / 100;
     if (!f.record_date) return H.toast('ระบุวันที่บันทึก', true); if (!String(f.staff_name || '').trim()) return H.toast('ระบุชื่อเจ้าหน้าที่', true); if (!(r2(f.main_amount) > 0)) return H.toast('กรอกจำนวนเงิน', true);
-    const p = { doc_no: String(f.doc_no || '').trim() || null, record_date: f.record_date, welfare_type: k, staff_name: f.staff_name.trim(), department: String(f.department || '').trim() || null, position: String(f.position || '').trim() || null,
+    const p = { doc_no: String(f.doc_no || '').trim() || null, record_date: f.record_date, welfare_type: k, staff_name: f.staff_name.trim(), department: H.orgStd(String(f.department || '').trim()) || null, position: String(f.position || '').trim() || null,
       start_date: fam ? null : f.start_date || null, event_date: f.event_date || null, relationship: fam ? f.relationship : null, deceased_name: fam ? String(f.deceased_name || '').trim() || null : null,
       gratuity_reason: k === 'gratuity' ? f.gratuity_reason : null, main_amount: r2(f.main_amount), wreath_amount: k === 'funeral_staff' ? r2(f.wreath_amount) : 0, note: String(f.note || '').trim() || null, updated_at: new Date().toISOString() };
     const w = welDup({ ...p, id: d.id }); if (w && !confirm('⚠️ ' + w + '\nต้องการบันทึกต่อหรือไม่?')) return;
     if (d.isNew) p.created_by = S.me.id;
     if (await H.save(d.isNew ? sb.from('hr_welfare').insert(p) : sb.from('hr_welfare').update(p).eq('id', d.id), d.isNew ? 'บันทึกรายการแล้ว' : 'บันทึกการแก้ไขแล้ว', ['wel'])) { S.dlg = null; H.render(); } };
+  // ---- ชื่อหน่วยงานปัจจุบัน: จับชื่อเจ้าหน้าที่กับทะเบียน (ใช้ต้นสังกัดในทะเบียน) ไม่พบ → แปลงชื่อเดิมตามตาราง 8 ต้นสังกัด ----
+  const nmKey = s => { s = String(s || '').replace(/\s+/g, ' ').trim(); const t = TITLES.find(x => s.startsWith(x)); return (t ? s.slice(t.length) : s).replace(/\s+/g, ''); };
+  const welOrg = (name, dept) => { const k = nmKey(name), hit = k ? S.d.emps.filter(e => nmKey(H.empName(e)) === k && e.org) : []; const orgs = [...new Set(hit.map(e => H.orgStd(e.org)))]; return orgs.length === 1 ? orgs[0] : (H.orgStd(dept) || dept || null); };
+  A.welFixOrg = async () => { const list = (S.d.wel || []).map(w => ({ w, to: welOrg(w.staff_name, w.department) })).filter(x => x.to && x.to !== x.w.department);
+    const unk = [...new Set((S.d.wel || []).map(w => welOrg(w.staff_name, w.department)).filter(d => d && !H.ORGS.some(o => H.orgFull(o) === d)))];
+    if (!list.length) return H.toast('ชื่อหน่วยงานเป็นปัจจุบันครบแล้ว' + (unk.length ? ' · ยังมีชื่อที่ระบบไม่รู้จัก: ' + unk.join(', ') : ''), !!unk.length);
+    const pv = {}; list.forEach(x => { const k = (x.w.department || '(ว่าง)') + ' → ' + x.to; pv[k] = (pv[k] || 0) + 1; });
+    if (!confirm('ปรับชื่อหน่วยงาน ' + list.length + ' รายการ:\n\n' + Object.entries(pv).map(([k, n]) => '• ' + k + ' (' + n + ')').join('\n') + (unk.length ? '\n\nชื่อที่ระบบไม่รู้จัก (คงเดิม): ' + unk.join(', ') : ''))) return;
+    const by = {}; list.forEach(x => (by[x.to] = by[x.to] || []).push(x.w.id)); let n = 0;
+    for (const to in by) { const { error } = await sb.from('hr_welfare').update({ department: to }).in('id', by[to]); if (error) return H.toast(error.message, true); n += by[to].length; }
+    S.msg.wel = 'ปรับชื่อหน่วยงานเป็นปัจจุบันแล้ว ' + n + ' รายการ' + (unk.length ? ' · ชื่อที่ระบบไม่รู้จัก ต้องแก้เองในรายการ: ' + unk.join(', ') : ''); await H.load('wel'); H.render(); };
   A.welDel = async () => { if (!confirm('ลบรายการนี้? กู้คืนไม่ได้')) return; const id = S.dlg.data.id; S.dlg = null; await H.save(sb.from('hr_welfare').delete().eq('id', id), 'ลบแล้ว', ['wel']); };
   A.welExp = () => { const rows = welRows(); if (!rows.length) return H.toast('ไม่มีข้อมูลให้ส่งออก', true);
     H.download('ทะเบียนเบิกสวัสดิการ.csv', H.csv([['ที่', 'เลขที่หนังสือ', 'วันที่บันทึก', 'ประเภท', 'ชื่อ-สกุล', 'หน่วยงาน', 'ตำแหน่ง', 'ผู้เสียชีวิต', 'เหตุบำเหน็จ', 'วันที่เริ่มงาน', 'วันที่เสียชีวิต/ออกจากงาน', 'อายุงาน', 'เงินช่วยเหลือ/บำเหน็จ', 'พวงหรีด', 'ยอดรวม', 'หมายเหตุ']].concat(rows.map((w, i) => [rows.length - i, w.doc_no || '', H.isoToBE(w.record_date), wt(w.welfare_type)[1], w.staff_name, w.department || '', w.position || '', w.deceased_name ? (w.relationship || '') + ' ' + w.deceased_name : (w.relationship || ''), w.gratuity_reason || '', H.isoToBE(w.start_date), H.isoToBE(w.event_date), wDur(w.start_date, w.event_date), Number(w.main_amount) || 0, Number(w.wreath_amount) || 0, wTot(w), w.note || ''])))); };
@@ -1066,7 +1077,7 @@ H.D.task = () => { const t = S.d.tasks.find(x => x.id === S.dlg.data); if (!t) r
     for (;;) { const { data, error } = await old.from('welfare_disbursements').select('*').order('id').range(from, from + 999); if (error) return H.toast('อ่านระบบเดิมไม่ได้: ' + error.message, true); all = all.concat(data || []); if (!data || data.length < 1000) break; from += 1000; }
     if (!all.length) return H.toast('ระบบเดิมไม่มีรายการ', true);
     const C = ['doc_no', 'record_date', 'welfare_type', 'staff_name', 'department', 'position', 'start_date', 'event_date', 'relationship', 'deceased_name', 'gratuity_reason', 'main_amount', 'wreath_amount', 'note'];
-    const rows = all.map(o => { const r = { legacy_id: o.id, created_by: S.me.id }; C.forEach(c => { r[c] = o[c] == null ? null : o[c]; }); r.main_amount = Number(r.main_amount) || 0; r.wreath_amount = Number(r.wreath_amount) || 0; if (o.created_at) r.created_at = o.created_at; return r; });
+    const rows = all.map(o => { const r = { legacy_id: o.id, created_by: S.me.id }; C.forEach(c => { r[c] = o[c] == null ? null : o[c]; }); r.department = welOrg(r.staff_name, r.department); r.main_amount = Number(r.main_amount) || 0; r.wreath_amount = Number(r.wreath_amount) || 0; if (o.created_at) r.created_at = o.created_at; return r; });
     if (!(await chunk('hr_welfare', rows, 'legacy_id'))) return;
     S.msg.wel = 'นำเข้าจากระบบเดิมแล้ว ' + num(rows.length) + ' รายการ · ยอดรวม ' + mon(rows.reduce((s, w) => s + wTot(w), 0)) + ' บาท'; await H.load('wel'); H.render(); };
   V.pay = () => '<div class="noprint" style="margin-bottom:14px">' + H.seg([['stat', 'สถิติเบิกจ่าย'], ['wel', 'ทะเบียนเบิกสวัสดิการ' + (S.d.wel ? ' ' + S.d.wel.length : '')]], S.payTab === 'wel' ? 'wel' : 'stat', 'payTab') + '</div>' + (S.payTab === 'wel' ? V.welView() : payStatView());
