@@ -1,5 +1,8 @@
 <!doctype html>
-<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>HR Desk — แผนกบุคคลและสวัสดิการ</title>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#fdf3f6"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"><link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="HR Desk">
+<title>HR Desk — แผนกบุคคลและสวัสดิการ</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Sarabun:wght@400;500;600;700&display=swap">
 <style>
 :root{--pink-50:#fdf3f6;--pink-100:#faeaf0;--pink-200:#f4d7e3;--rose-500:#c65d82;--rose-600:#a8446a;--rose-700:#8a3357;--plum-900:#3a1f30;--ink:#3a2a33;--ink-soft:#7a6570;--paper:#fff;--paper-soft:#fffafc;--line:#f0dde6;--shadow:0 1px 2px rgba(58,31,48,.06),0 6px 20px rgba(58,31,48,.06);--lift:0 4px 10px rgba(58,31,48,.08),0 14px 34px rgba(58,31,48,.10)}
@@ -179,7 +182,20 @@ window.HR_CONFIG = {
 };
 </script>
 <!-- ลิงก์เว็บแอปแยกไว้ในไฟล์นี้ อัปเดต index.html ครั้งต่อไป ลิงก์จะไม่หาย -->
+<script>
+/* Desk Suite · เชื่อมแอปในชุด (แท็บจองรถ การ์ดสถานะรถ และแผ่นสลับแอป) — แก้ทับได้ใน app-links.js */
+window.DESK_SUITE = Object.assign({
+  APP: "hr",
+  // ลิงก์เว็บแอประบบจองรถ (Apps Script) รูปแบบ https://script.google.com/macros/s/…/exec
+  CAR_APP_URL: "",
+  // ลิงก์ Team Desk (เว้นว่างได้ ถ้าว่างจะไม่แสดงในแผ่นสลับแอป)
+  TEAM_DESK_URL: "",
+  DEPT_NAME: "แผนกบุคคลและสวัสดิการ",
+  CAR_OPEN: "inapp"
+}, window.DESK_SUITE || {});
+</script>
 <script src="app-links.js"></script>
+<script src="desk-suite.js" defer></script>
 </head><body>
 <div id="app"><div class="gate"><div class="mu">กำลังโหลด…</div></div></div>
 <script>
