@@ -1,4 +1,4 @@
-/* Desk Suite · เชื่อม Team Desk / HR Desk กับระบบจองรถส่วนกลาง (Apps Script)
+/* Desk Suite · เชื่อม Team Desk / HR Desk กับระบบจองรถประจำฝ่าย (Apps Script)
    ไฟล์เดียวกันใช้ได้ทั้งสองแอป ตั้งค่าใน window.DESK_SUITE (config.js / app-links.js)
    - แท็บ "จองรถ" ในแถบล่าง + เมนูด้านข้าง
    - การ์ดสถานะรถบนหน้าภาพรวม (ดึงจาก CAR_APP_URL?api=status)
@@ -44,10 +44,10 @@
   const hm = s => String(s || '').slice(11, 16);
   const when = s => { if (!s) return ''; const d = s.slice(0, 10), t = new Date(), td = t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0'); return d === td ? hm(s) + ' น.' : s.slice(8, 10) + '/' + s.slice(5, 7) + ' ' + hm(s) + ' น.'; };
   function carView() {
-    if (!C.CAR_APP_URL) return { cls: 'na', word: 'ระบบจองรถ', sub: 'ยังไม่ได้ตั้งค่า CAR_APP_URL', plate: 'รถส่วนกลาง' };
-    if (!car.ok) return { cls: 'na', word: car.loaded ? 'ระบบจองรถ' : 'กำลังตรวจสถานะ…', sub: 'แตะเพื่อดูสถานะและจองรถ', plate: 'รถส่วนกลาง' };
+    if (!C.CAR_APP_URL) return { cls: 'na', word: 'ระบบจองรถ', sub: 'ยังไม่ได้ตั้งค่า CAR_APP_URL', plate: 'รถประจำฝ่าย' };
+    if (!car.ok) return { cls: 'na', word: car.loaded ? 'ระบบจองรถ' : 'กำลังตรวจสถานะ…', sub: 'แตะเพื่อดูสถานะและจองรถ', plate: 'รถประจำฝ่าย' };
     const v = (car.vehicles || [])[0] || {}, c = v.current, n = v.next;
-    const plate = 'รถส่วนกลาง' + (v.plate ? ' · ' + v.plate : '');
+    const plate = 'รถประจำฝ่าย' + (v.plate ? ' · ' + v.plate : '');
     // ไม่มีเวลาคืน: ไม่ว่าง ตั้งแต่รับป้ายจนกว่าจะคืนป้าย
     if (v.state === 'IN_USE') return { cls: 'use', word: 'ไม่ว่าง', sub: c ? c.name + ' · รับป้าย ' + when(c.start) : 'ยังไม่คืนป้าย', plate };
     return { cls: 'free', word: 'ว่าง', sub: n ? 'คิวถัดไป ' + when(n.start) + ' · ' + n.name : 'ไม่มีคิวจอง · จองได้เลย', plate };
@@ -151,7 +151,7 @@
     let ov = $('#dsCar');
     if (!ov) {
       ov = document.createElement('div'); ov.id = 'dsCar'; ov.className = 'ds-ov noprint';
-      ov.innerHTML = '<div class="ds-ovh"><button type="button" class="ds-back" aria-label="กลับ">' + svg('<path d="M15 18l-6-6 6-6"/>') + '<span>' + NAME + '</span></button><div class="ds-ovt"><img src="' + ICON.car + '" alt=""><b>จองรถส่วนกลาง</b></div><a class="ds-ext" target="_blank" rel="noopener">เปิดแยก ↗</a></div><div class="ds-ovb"><div class="ds-load"><img src="' + ICON.car + '" alt=""><span>กำลังเปิดระบบจองรถ…</span></div><iframe title="ระบบจองรถส่วนกลาง" allow="clipboard-write"></iframe></div>';
+      ov.innerHTML = '<div class="ds-ovh"><button type="button" class="ds-back" aria-label="กลับ">' + svg('<path d="M15 18l-6-6 6-6"/>') + '<span>' + NAME + '</span></button><div class="ds-ovt"><img src="' + ICON.car + '" alt=""><b>จองรถประจำฝ่าย</b></div><a class="ds-ext" target="_blank" rel="noopener">เปิดแยก ↗</a></div><div class="ds-ovb"><div class="ds-load"><img src="' + ICON.car + '" alt=""><span>กำลังเปิดระบบจองรถ…</span></div><iframe title="ระบบจองรถประจำฝ่าย" allow="clipboard-write"></iframe></div>';
       document.body.appendChild(ov);
       ov.querySelector('.ds-back').onclick = closeCar;
       ov.querySelector('iframe').addEventListener('load', () => ov.classList.add('ready'));
@@ -181,7 +181,7 @@
       sw.innerHTML = '<div class="ds-swbg"></div><div class="ds-sws" role="dialog" aria-label="สลับแอป"><i class="ds-grab"></i><div class="ds-swh">แอปในชุด Desk</div>' +
         row('team', 'Team Desk', 'มอบหมายและติดตามงาน', APP === 'team' ? '' : C.TEAM_DESK_URL, APP === 'team') +
         row('hr', 'HR Desk', 'แผนกบุคคลและสวัสดิการ', APP === 'hr' ? '' : C.HR_DESK_URL, APP === 'hr') +
-        row('car', 'จองรถส่วนกลาง', '', '', false) + '</div>';
+        row('car', 'จองรถประจำฝ่าย', '', '', false) + '</div>';
       document.body.appendChild(sw);
       sw.querySelector('.ds-swbg').onclick = closeSwitch;
       sw.querySelectorAll('a.ds-swr[href=""]').forEach(a => a.remove());
@@ -212,7 +212,7 @@
     const side = $('.side'), meBox = side && $('.me', side);
     if (side && meBox && !$('.ds-nav', side)) {
       const n = document.createElement('nav'); n.className = 'nav ds-nav';
-      n.innerHTML = '<div class="gh">แอปในชุด</div><button type="button" data-ds-open="car">' + CAR_SVG + '<span>จองรถส่วนกลาง</span><i data-ds-dot class="ds-dot"></i></button>' +
+      n.innerHTML = '<div class="gh">แอปในชุด</div><button type="button" data-ds-open="car">' + CAR_SVG + '<span>จองรถประจำฝ่าย</span><i data-ds-dot class="ds-dot"></i></button>' +
         (C.HR_DESK_URL ? '<button type="button" onclick="location.href=\'' + esc(C.HR_DESK_URL) + '\'"><img class="ds-ni" src="' + ICON.hr + '" alt=""><span>HR Desk</span></button>' : '');
       side.insertBefore(n, meBox);
     }
@@ -239,7 +239,7 @@
     const side = $('.side'), sp = side && $('.sp', side);
     if (side && sp && !$('.ds-nav', side)) {
       const n = document.createElement('div'); n.className = 'ds-nav';
-      n.innerHTML = '<div class="sg">แอปในชุด</div><button type="button" class="nv" data-ds-open="car"><span class="ds-nvi">' + CAR_SVG + '</span><span class="g1">จองรถส่วนกลาง</span><i data-ds-dot class="ds-dot"></i></button>' +
+      n.innerHTML = '<div class="sg">แอปในชุด</div><button type="button" class="nv" data-ds-open="car"><span class="ds-nvi">' + CAR_SVG + '</span><span class="g1">จองรถประจำฝ่าย</span><i data-ds-dot class="ds-dot"></i></button>' +
         (C.TEAM_DESK_URL ? '<a class="nv" href="' + esc(C.TEAM_DESK_URL) + '"><img class="ds-ni" src="' + ICON.team + '" alt=""><span class="g1">Team Desk</span></a>' : '');
       side.insertBefore(n, sp);
     }
