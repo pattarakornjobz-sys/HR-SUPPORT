@@ -3,7 +3,8 @@
    - แท็บ "จองรถ" ในแถบล่าง + เมนูด้านข้าง
    - การ์ดสถานะรถบนหน้าภาพรวม (ดึงจาก CAR_APP_URL?api=status)
    - เปิดระบบจองรถเต็มจอในแอป พร้อมเติมชื่อ/หน่วยงานของผู้ใช้
-   - แตะโลโก้เพื่อสลับแอปในชุด */
+   - แตะโลโก้เพื่อสลับแอปในชุด
+   - แจ้งเตือน: มีการจองรถใหม่ / คืนป้ายแล้ว / "ถึงคิวของคุณแล้ว" (เฉพาะผู้จองคิวถัดไป ระบุด้วยรหัสผู้ใช้) */
 (function () {
   'use strict';
   const C = window.DESK_SUITE || {};
@@ -28,14 +29,14 @@
     try {
       if (APP === 'team' && typeof S !== 'undefined' && S && S.me) { // eslint-disable-line no-undef
         const m = S.me, d = (S.d.depts || []).find(x => x.id === (S.dept || m.dept_id)); // eslint-disable-line no-undef
-        return { name: m.full_name || m.nickname || '', nick: m.nickname || '', dept: d ? d.name : '', view: S.view }; // eslint-disable-line no-undef
+        return { name: m.full_name || m.nickname || '', nick: m.nickname || '', code: String(m.username || '').toLowerCase(), dept: d ? d.name : '', view: S.view }; // eslint-disable-line no-undef
       }
       if (APP === 'hr' && window.HR && HR.S && HR.S.me) {
-        const m = HR.S.me;
-        return { name: m.full_name || m.name || m.nickname || '', nick: m.nickname || '', dept: C.DEPT_NAME || 'แผนกบุคคลและสวัสดิการ', view: HR.S.view };
+        const m = HR.S.me, ses = HR.S.session, em = ses && ses.user ? String(ses.user.email || '') : '';
+        return { name: m.full_name || m.name || m.nickname || '', nick: m.nickname || '', code: String(m.username || m.code || em.split('@')[0] || '').toLowerCase(), dept: C.DEPT_NAME || 'แผนกบุคคลและสวัสดิการ', view: HR.S.view };
       }
     } catch (e) {}
-    return { name: '', nick: '', dept: '', view: '' };
+    return { name: '', nick: '', code: '', dept: '', view: '' };
   }
 
   /* ---------- สถานะรถ ---------- */
@@ -47,20 +48,82 @@
     if (!car.ok) return { cls: 'na', word: car.loaded ? 'ระบบจองรถ' : 'กำลังตรวจสถานะ…', sub: 'แตะเพื่อดูสถานะและจองรถ', plate: 'รถส่วนกลาง' };
     const v = (car.vehicles || [])[0] || {}, c = v.current, n = v.next;
     const plate = 'รถส่วนกลาง' + (v.plate ? ' · ' + v.plate : '');
-    if (v.state === 'IN_USE') return { cls: 'use', word: 'กำลังใช้งาน', sub: (c ? c.name + ' · คืน ' + when(c.end) : ''), plate };
-    if (v.state === 'RESERVED') return { cls: 'resv', word: 'ถึงคิวจองแล้ว', sub: c ? 'รอ ' + c.name + ' รับป้ายหน้ารถ' : '', plate };
-    return { cls: 'free', word: 'รถว่าง', sub: n ? 'ว่างถึง ' + when(n.start) + ' · จองได้เลย' : 'ไม่มีคิวจอง · จองได้เลย', plate };
+    // ไม่มีเวลาคืน: ไม่ว่าง ตั้งแต่รับป้ายจนกว่าจะคืนป้าย
+    if (v.state === 'IN_USE') return { cls: 'use', word: 'ไม่ว่าง', sub: c ? c.name + ' · รับป้าย ' + when(c.start) : 'ยังไม่คืนป้าย', plate };
+    return { cls: 'free', word: 'ว่าง', sub: n ? 'คิวถัดไป ' + when(n.start) + ' · ' + n.name : 'ไม่มีคิวจอง · จองได้เลย', plate };
   }
   async function loadCar(force) {
-    if (!C.CAR_APP_URL || carBusy || (!force && Date.now() - carAt < 60000)) return;
+    if (!C.CAR_APP_URL || carBusy || (!force && Date.now() - carAt < 25000)) return;
     carBusy = true;
     try {
-      const r = await fetch(C.CAR_APP_URL + (C.CAR_APP_URL.indexOf('?') < 0 ? '?' : '&') + 'api=status', { redirect: 'follow' });
+      const since = lastVer();
+      const r = await fetch(C.CAR_APP_URL + (C.CAR_APP_URL.indexOf('?') < 0 ? '?' : '&') + 'api=status' + (since ? '&since=' + since : ''), { redirect: 'follow' });
       const j = await r.json();
       car = Object.assign({ loaded: true }, j); carAt = Date.now();
+      if (j.ok) handleEvents(j, since);
     } catch (e) { car = { loaded: true, ok: false }; carAt = Date.now(); }
     carBusy = false; paintCar();
   }
+  /* ---------- แจ้งเตือน ---------- */
+  const VK = 'ds_car_ver';
+  let polledOnce = false;
+  function lastVer() { try { return Number(localStorage.getItem(VK)) || 0; } catch (e) { return 0; } }
+  const norm = s => String(s || '').replace(/^(นางสาว|นาง|นาย|น\.ส\.)\s*/, '').replace(/\s+/g, '').toLowerCase();
+  function isTarget(ev, u) {
+    if (u.code && ev.target_code) return String(ev.target_code).toLowerCase() === u.code;
+    return !!u.name && !!ev.target_name && norm(ev.target_name) === norm(u.name);
+  }
+  function byMe(ev, u) {
+    if (u.code && ev.actor_code) return String(ev.actor_code).toLowerCase() === u.code;
+    return !!u.name && !!ev.actor_name && norm(ev.actor_name) === norm(u.name);
+  }
+  function handleEvents(j, since) {
+    try { localStorage.setItem(VK, String(j.ver || 0)); } catch (e) {}
+    const first = !polledOnce; polledOnce = true;
+    if (!since || !j.events || !j.events.length) return;
+    const u = me(), open = !!document.querySelector('#dsCar.open');
+    j.events.forEach(ev => {
+      if (ev.target_text && isTarget(ev, u)) return alertMe(ev);       // ถึงคิวของฉัน (แจ้งแม้เพิ่งเปิดแอป)
+      if (first || open || byMe(ev, u) || !ev.text) return;           // เปิดหน้าใหม่ไม่เด้งรายการเก่าของคนอื่น
+      if (ev.type === 'NEW' || ev.type === 'RETURNED' || ev.type === 'CHECKOUT') notice(ev);
+    });
+  }
+  function sysNotify(title, body, tag) {
+    try {
+      if (!('Notification' in window) || Notification.permission !== 'granted') return;
+      const o = { body, icon: ICON.car, badge: ICON.car, tag, renotify: true };
+      const fb = () => { try { new Notification(title, o); } catch (e) {} };
+      if (navigator.serviceWorker && navigator.serviceWorker.getRegistration) navigator.serviceWorker.getRegistration().then(r => r ? r.showNotification(title, o) : fb()).catch(fb); else fb();
+    } catch (e) {}
+  }
+  function askPermission() { try { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission(); } catch (e) {} }
+  function chime() {
+    try {
+      const A = window.AudioContext || window.webkitAudioContext; if (!A) return; const c = new A();
+      [0, 0.2].forEach((t, i) => { const o = c.createOscillator(), g = c.createGain(); o.frequency.value = i ? 1046 : 784; g.gain.setValueAtTime(0.0001, c.currentTime + t); g.gain.exponentialRampToValueAtTime(0.25, c.currentTime + t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + t + 0.4); o.connect(g); g.connect(c.destination); o.start(c.currentTime + t); o.stop(c.currentTime + t + 0.45); });
+    } catch (e) {}
+  }
+  function alertMe(ev) {
+    sysNotify('ถึงคิวของคุณแล้ว · จองรถ', ev.target_text, 'car-q-' + ev.ver);
+    chime(); try { if (navigator.vibrate) navigator.vibrate([220, 120, 220]); } catch (e) {}
+    let el = $('#dsAlert'); if (el) el.remove();
+    el = document.createElement('div'); el.id = 'dsAlert'; el.className = 'ds-alert noprint'; el.setAttribute('role', 'alert');
+    el.innerHTML = '<img src="' + ICON.car + '" alt=""><div class="ds-am"><b>ถึงคิวของคุณแล้ว</b><span>' + esc(ev.target_text) + '</span></div><div class="ds-aa"><button type="button" class="ds-ago" data-ds-open="car" data-ds-page="status">ดูสถานะรถ</button><button type="button" class="ds-ax" aria-label="ปิด">ปิด</button></div>';
+    document.body.appendChild(el);
+    el.querySelector('.ds-ax').onclick = () => el.remove();
+    el.querySelector('.ds-ago').addEventListener('click', () => el.remove());
+  }
+  function notice(ev) {
+    if (document.hidden) sysNotify(ev.type === 'NEW' ? 'มีการจองรถใหม่' : 'ระบบจองรถ', ev.text, 'car-' + ev.ver);
+    let box = $('#dsToasts');
+    if (!box) { box = document.createElement('div'); box.id = 'dsToasts'; box.className = 'ds-toasts noprint'; document.body.appendChild(box); }
+    const el = document.createElement('button'); el.type = 'button'; el.className = 'ds-toast ds-k-' + String(ev.type || '').toLowerCase();
+    el.setAttribute('data-ds-open', 'car'); el.setAttribute('data-ds-page', 'status');
+    el.innerHTML = '<span class="ds-ti">' + CAR_SVG + '</span><span>' + esc(ev.text) + '</span>';
+    box.appendChild(el);
+    setTimeout(() => el.classList.add('out'), 6500); setTimeout(() => el.remove(), 7000);
+  }
+
   function paintCar() {
     const v = carView();
     document.querySelectorAll('[data-ds-card]').forEach(el => {
@@ -75,6 +138,7 @@
   function carUrl(page) {
     const u = me(), q = ['page=' + encodeURIComponent(page || 'book')];
     if (u.name) q.push('name=' + encodeURIComponent(u.name));
+    if (u.code) q.push('code=' + encodeURIComponent(u.code));
     if (u.dept) q.push('dept=' + encodeURIComponent(u.dept));
     q.push('from=' + APP);
     return C.CAR_APP_URL + (C.CAR_APP_URL.indexOf('?') < 0 ? '?' : '&') + q.join('&');
@@ -132,6 +196,7 @@
     if (!t) return;
     e.preventDefault(); e.stopPropagation();
     const k = t.getAttribute('data-ds-open');
+    askPermission();
     if (k === 'car') openCar(t.getAttribute('data-ds-page') || 'book');
     else if (k === 'switch') openSwitch();
   }, true);
@@ -248,6 +313,15 @@
     '.ds-swr img{width:48px;height:48px;border-radius:14px;flex:none}.ds-swm{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.35}.ds-swm b{font-family:var(--ds-font);font-weight:600;font-size:15px}' +
     '.ds-swsub{font-size:12.5px;color:var(--ds-mu);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ds-t-free{color:#059669}.ds-t-use{color:#ea6a0c}.ds-t-resv{color:#2563eb}' +
     '.ds-cur{font-size:11px;font-weight:600;color:var(--ds-pri);background:var(--ds-surf);border-radius:999px;padding:2px 9px}.ds-chev{color:var(--ds-mu);font-size:20px}' +
+    '.ds-alert{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top));transform:translateX(-50%);z-index:400;width:min(540px,calc(100% - 20px));display:flex;gap:12px;align-items:center;background:#0b2545;color:#fff;border-radius:20px;padding:12px 14px;box-shadow:0 20px 50px rgba(0,0,0,.35);animation:dsDrop .4s cubic-bezier(.2,.8,.2,1)}' +
+    '.ds-alert img{width:44px;height:44px;border-radius:13px;flex:none}.ds-am{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.4;font-size:13.5px}.ds-am b{font-family:var(--ds-font);font-weight:600;font-size:16px;color:#e9c46a}' +
+    '.ds-aa{display:flex;flex-direction:column;gap:6px;flex:none}.ds-aa button{border:0;border-radius:10px;padding:7px 10px;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer}.ds-ago{background:#e9c46a;color:#1f2328}.ds-ax{background:rgba(255,255,255,.14);color:#fff}' +
+    '@keyframes dsDrop{from{transform:translate(-50%,-30px);opacity:0}}' +
+    '.ds-toasts{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + env(safe-area-inset-bottom));z-index:390;display:flex;flex-direction:column;gap:8px;width:min(480px,calc(100% - 20px));pointer-events:none}' +
+    '.ds-toast{pointer-events:auto;display:flex;gap:10px;align-items:center;text-align:left;border:1px solid var(--ds-line);background:var(--ds-surf);color:var(--ds-ink);border-radius:16px;padding:10px 12px;font:inherit;font-size:13.5px;line-height:1.4;box-shadow:0 14px 36px rgba(20,25,70,.2);cursor:pointer;animation:dsUpT .3s ease;transition:opacity .4s,transform .4s}.ds-toast.out{opacity:0;transform:translateY(8px)}' +
+    '.ds-ti{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;flex:none;background:#e6eeff;color:#2563eb}.ds-ti svg{width:18px;height:18px}.ds-k-returned .ds-ti{background:#e1f7ee;color:#059669}.ds-k-checkout .ds-ti{background:#fff2e6;color:#ea6a0c}' +
+    '@keyframes dsUpT{from{transform:translateY(12px);opacity:0}}' +
+    '@media (min-width:861px){.ds-toasts{left:auto;right:20px;transform:none;bottom:20px}}' +
     '@media (max-width:860px){.appbar .ds-applogo{display:flex}.appbar .ds-applogo img{width:32px;height:32px}.tabbar .ds-tab span:last-child{font-size:10.5px}}' +
     '@media print{.ds-carcard,.ds-ov,.ds-sw,.ds-tabbar,.ds-applogo{display:none!important}}';
 
@@ -283,7 +357,8 @@
     const root = document.getElementById('app');
     if (root) new MutationObserver(() => requestAnimationFrame(ensure)).observe(root, { childList: true });
     setInterval(ensure, 1500);
-    setInterval(() => loadCar(false), 60000);
+    setInterval(() => { if (!document.hidden) loadCar(false); }, 30000);
+    setInterval(() => { if (document.hidden) loadCar(false); }, 90000);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) loadCar(false); });
     ensure();
   }
