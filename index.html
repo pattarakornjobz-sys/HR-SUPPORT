@@ -3,7 +3,7 @@
 <meta name="theme-color" content="#fdf3f6"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"><link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="HR Desk">
 <title>HR Desk — แผนกบุคคลและสวัสดิการ</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Sarabun:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Sarabun:wght@400;500;600;700&display=swap">
 <style>
 :root{--pink-50:#fdf3f6;--pink-100:#faeaf0;--pink-200:#f4d7e3;--rose-500:#c65d82;--rose-600:#a8446a;--rose-700:#8a3357;--plum-900:#3a1f30;--ink:#3a2a33;--ink-soft:#7a6570;--paper:#fff;--paper-soft:#fffafc;--line:#f0dde6;--shadow:0 1px 2px rgba(58,31,48,.06),0 6px 20px rgba(58,31,48,.06);--lift:0 4px 10px rgba(58,31,48,.08),0 14px 34px rgba(58,31,48,.10)}
 *{box-sizing:border-box}
@@ -170,6 +170,87 @@ input.sm{width:100%;font:inherit;font-size:13px;padding:6px 8px;border-radius:8p
 .pick{max-height:46vh;overflow:auto;border:1px solid var(--line);border-radius:12px}
 .pr2{display:flex;gap:12px;align-items:center;padding:9px 12px;border-bottom:1px solid var(--line);cursor:pointer}.pr2:hover{background:var(--paper-soft)}.pr2.on{background:#fbe6ee}.pr2.off{opacity:.55;cursor:not-allowed}
 .btn[disabled]{opacity:.45;cursor:not-allowed}
+</style>
+<style id="theme-2569">
+/* ===== HR Desk โฉมใหม่ 2569 ===== */
+body{background:#f7f2f4;font-family:'IBM Plex Sans Thai','Sarabun','Noto Sans Thai',sans-serif}
+.card{border-color:#ecdfe5;border-radius:18px;box-shadow:0 1px 2px rgba(42,23,36,.05)}
+/* เมนูข้าง: ม่วงเข้ม */
+.side{background:#2a1724;border-right:0;color:#f3e7ed}
+.side .bt{color:#fff}.side .mu{color:#bfa6b3}
+.side .logo{background:#b8436d;box-shadow:none}
+.sg{color:#bfa6b3}
+.nv{color:#e6d6de;font-weight:500}
+.nv:hover{background:#3a2131;color:#fff}
+.nv.on{background:#43263a;color:#fff;font-weight:600;box-shadow:inset 3px 0 0 #e08aa9}
+.side .cn{background:#43263a;color:#f3e7ed}
+.nv.on .cn{background:#5a3a4e;color:#fff}
+.who2{background:#35202e;border-color:#43263a;color:#f3e7ed}.who2 .mu{color:#bfa6b3}
+.sysbox{margin:6px 4px 10px;padding:12px 12px;border-radius:12px;background:#35202e;display:flex;flex-direction:column;gap:6px;font-size:12.5px}
+.sysbox .mu{font-size:11.5px}
+.sysbox span i{display:inline-block;width:8px;height:8px;border-radius:50%;background:#6fd3a8;margin-right:8px}
+/* ป้ายแหล่งข้อมูล */
+.src{display:inline-flex;flex:none;height:fit-content;padding:2px 8px;border-radius:6px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.hm-live{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#22605c}
+.hm-live i{width:8px;height:8px;border-radius:50%;background:#2f9e7a}
+/* หน้าหลัก */
+.hm-search{position:relative;display:flex;align-items:center;gap:10px;height:50px;padding:0 12px 0 16px;margin:6px 0 10px;border:1px solid #e3d3db;border-radius:14px;background:#fff;color:#6f5c66}
+.hm-search input{flex:1;min-width:0;border:0;outline:0;background:transparent;font:inherit;font-size:15px;color:#23141d;height:100%}
+.hm-search:focus-within{border-color:#b8436d;box-shadow:0 0 0 3px #f6d9e4}
+.hm-search kbd{font:12px inherit;padding:2px 8px;border:1px solid #e3d3db;border-radius:6px;color:#6f5c66;background:#fff}
+.hm-res{padding:6px;margin-bottom:16px;display:flex;flex-direction:column}
+.hm-row{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;border:0;border-radius:12px;background:transparent;text-align:left;font:inherit;color:inherit;cursor:pointer}
+.hm-row:hover{background:#fbf3f6}.hm-row .g1{display:flex;flex-direction:column}
+.hm-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:0 0 12px;flex-wrap:wrap}
+.hm-h h3{margin:0;font-size:17px}
+.hm-acts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:14px;margin-bottom:20px}
+.hm-act{display:flex;flex-direction:column;gap:4px;align-items:flex-start;padding:18px;border-radius:16px;background:#fff;border:1px solid #ecdfe5;text-align:left;font:inherit;color:#23141d;cursor:pointer;transition:.15s}
+.hm-act:hover{border-color:#e2b6c8;box-shadow:0 6px 18px rgba(42,23,36,.08);transform:translateY(-1px)}
+.hm-n{font:600 34px/1.15 Kanit,sans-serif;color:#23141d}.hm-n small{font-size:16px;font-weight:500}
+.hm-t{color:#4a3842}.hm-go{font-size:13px;font-weight:600;color:#b8436d}
+.hm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:18px;align-items:start}
+.hm-dark{padding:22px;border-radius:18px;background:#2a1724;color:#f3e7ed}
+.hm-dark h3{color:#fff}.hm-dark .hm-h span{font-size:12px;color:#bfa6b3}
+.hm-big{display:flex;align-items:baseline;gap:8px;margin-bottom:10px}.hm-big b{font:600 52px/1 Kanit,sans-serif;color:#fff}.hm-big span{color:#e6d6de}
+.hm-li{display:flex;justify-content:space-between;padding:10px 0;border-top:1px solid #43263a}
+.hm-team{display:flex;align-items:center;gap:12px;padding:8px 0}.hm-team .g1{display:flex;flex-direction:column}
+.hm-bar{width:96px;height:8px;border-radius:4px;background:#f1e6eb;overflow:hidden;display:flex}.hm-bar i{display:block;height:100%}
+.hm-feed{display:flex;gap:12px;padding:9px 0;border-top:1px solid #f1e6eb}.hm-feed:first-of-type{border-top:0}.hm-feed .g1{display:flex;flex-direction:column}
+.pav{display:inline-grid;place-items:center;flex:none;border-radius:30%;color:#fff;font-family:Kanit,sans-serif;font-weight:500}
+/* แฟ้มบุคคล 360° */
+.p-top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:4px 0 12px;flex-wrap:wrap}
+.p-hero{display:flex;flex-wrap:wrap;align-items:center;gap:22px;padding:24px;border-radius:20px;background:#2a1724;color:#f3e7ed;margin-bottom:16px}
+.p-hero .pav{border-radius:24px}
+.p-hero h2{color:#fff;font-size:26px;line-height:1.25;margin:0}
+.p-sub{color:#e6d6de;margin-top:4px}
+.p-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.p-tag{padding:3px 10px;border-radius:999px;background:#43263a;color:#f3e7ed;font-size:12px;font-weight:600}
+.p-btns{display:flex;flex-wrap:wrap;gap:10px}
+.pbtn{height:44px;padding:0 16px;border-radius:12px;border:1px solid #5a3a4e;background:transparent;color:#fff;font:inherit;font-weight:600;cursor:pointer}
+.pbtn:hover{background:#3a2131}.pbtn.solid{background:#fff;color:#2a1724;border-color:#fff}.pbtn.solid:hover{background:#f3e7ed}
+.p-mets{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:14px;margin-bottom:16px}
+.p-met{display:flex;flex-direction:column;gap:2px;padding:16px 18px;border-radius:16px;background:#fff;border:1px solid #ecdfe5}
+.p-met .l{font-size:13px;color:#6f5c66}.p-met .v{font:600 22px/1.3 Kanit,sans-serif;color:#23141d}.p-met .s{font-size:12px;color:#6f5c66}
+.p-met.hot{background:#fff7fa;border-color:#f1c9d8}.p-met.hot .l,.p-met.hot .s{color:#8a2f52;font-weight:600}
+.p-cols{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.p-main{flex:3 1 460px;min-width:0;display:flex;flex-direction:column;gap:16px}
+.p-side{flex:2 1 320px;min-width:0;display:flex;flex-direction:column;gap:16px}
+.p-card .sec:first-child{margin-top:0}
+.p-tl{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px}
+.p-step{display:flex;flex-direction:column;gap:4px}.p-step i{display:block;height:6px;border-radius:3px;background:#b8436d}.p-step b{font-size:13px}
+.p-step.fut i{background:#f1d3df}
+.p-hrow{display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-top:1px solid #f1e6eb;font-size:13px}.p-hrow:first-of-type{border-top:0}
+.p-hrow .r{text-align:right;white-space:nowrap}
+.p-kv{display:flex;justify-content:space-between;gap:12px;padding:6px 0}.p-kv span{color:#6f5c66}
+@media print{.p-hero,.hm-dark{background:#fff;color:#23141d}.p-hero h2{color:#23141d}}
+@media (max-width:760px){
+.hm-acts,.p-mets{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.hm-act{padding:14px;gap:2px}.hm-n{font-size:26px}.hm-n small{font-size:14px}.hm-t{font-size:13px;line-height:1.4}.hm-act .src{font-size:11px}
+.hm-search kbd{display:none}
+.p-hero{padding:18px;gap:14px}.p-hero .pav{width:56px!important;height:56px!important;font-size:21px!important;border-radius:16px}.p-hero h2{font-size:21px}
+.p-btns{width:100%}.p-btns .pbtn{flex:1}
+.p-met{padding:12px 14px}.p-met .v{font-size:18px}
+}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
@@ -385,7 +466,7 @@ window.DESK_SUITE = Object.assign({
   const CF = window.HR_CONFIG;
   if (!CF || !CF.SUPABASE_URL || /YOUR-/.test(CF.SUPABASE_URL) || !CF.SUPABASE_ANON_KEY || /YOUR-/.test(CF.SUPABASE_ANON_KEY)) { fail('ยังไม่ได้ตั้งค่า config.js', 'ไม่พบ config.js หรือยังเป็นค่าตัวอย่าง\nสร้างไฟล์ config.js (คัดลอกจาก config.example.js) ใส่ SUPABASE_URL และ anon public key แล้ว deploy ใหม่'); return; }
   const sb = (H.sb = supabase.createClient(CF.SUPABASE_URL, CF.SUPABASE_ANON_KEY));
-  const S = (H.S = { view: 'board', f: 'all', perfP: '30', year: new Date().getFullYear(), ownerF: 'all', typeF: 'all', q: '', eq: '', empF: 'all', rollP: null, payF: 'all', payP: 'all', dlg: null, bell: false, prof: false, msg: {}, d: {}, me: null, now: new Date() });
+  const S = (H.S = { view: 'home', f: 'all', perfP: '30', year: new Date().getFullYear(), ownerF: 'all', typeF: 'all', q: '', eq: '', empF: 'all', rollP: null, payF: 'all', payP: 'all', dlg: null, bell: false, prof: false, msg: {}, d: {}, me: null, now: new Date() });
   
   const T = { staff: 'hr_staff', tasks: 'hr_tasks', emps: 'hr_employees', moves: 'hr_moves', roll: 'hr_payroll', pays: 'hr_disbursements', ins: 'hr_group_insurance', ben: 'hr_beneficiaries', meets: 'hr_meetings', files: 'hr_task_files', cats: 'hr_categories', cons: 'hr_contracts', bdocs: 'hr_ben_docs', settings: 'hr_settings', logs: 'hr_task_logs', wel: 'hr_welfare', orgs: 'hr_orgs' };
   const ORD = { staff: ['sort_order', 1], tasks: ['updated_at', 0], emps: ['employee_id', 1], moves: ['effective_date', 0], roll: ['period', 1], pays: ['paid_date', 0], ins: ['employee_id', 1], ben: ['seq', 1], meets: ['meeting_date', 0], files: ['created_at', 1], cats: ['sort_order', 1], cons: ['id_card', 1], bdocs: ['id', 1], settings: ['key', 1], logs: ['created_at', 1], wel: ['record_date', 0], orgs: ['sort', 1] };
@@ -588,12 +669,13 @@ H.D.task = () => { const t = S.d.tasks.find(x => x.id === S.dlg.data); if (!t) r
   A.delCat = async id => { const c = H.cats().find(x => x.id === id); if (!c || c.name === 'ทั่วไป' || !confirm('ลบหมวด "' + c.name + '"? งานในหมวดนี้จะย้ายไป "ทั่วไป"')) return; await sb.from('hr_tasks').update({ category: 'ทั่วไป' }).eq('category', c.name); await sb.from('hr_categories').delete().eq('id', id); S.typeF = 'all'; await Promise.all([H.load('cats'), H.load('tasks')]); H.render(); };
   // ---------- เชลล์ ----------
   H.shell = () => { const me = S.me, al = alerts(), clock = S.now.toLocaleTimeString('th-TH', { hour12: false }), dateT = S.now.toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-    const nav1 = [['board', 'บอร์ดทีม', ''], ['dash', 'ภาพรวม', ''], ['tasks', 'งานทั้งหมด', H.YT().length], ['gov', 'งานประจำเดือน', ''], ['cal', 'ปฏิทินงาน', ''], ['perf', 'สถิติการทำงาน', ''], ['meet', 'การประชุม', S.d.meets.length]], nav2 = H.NAVX.filter(n => !n[4]).map(n => [n[0], n[1], n[2] ? n[2]() : '']);
+    const nav1 = [['home', 'หน้าหลัก', ''], ['board', 'บอร์ดทีม', ''], ['dash', 'ภาพรวม', ''], ['tasks', 'งานทั้งหมด', H.YT().length], ['gov', 'งานประจำเดือน', ''], ['cal', 'ปฏิทินงาน', ''], ['perf', 'สถิติการทำงาน', ''], ['meet', 'การประชุม', S.d.meets.length]], nav2 = H.NAVX.filter(n => !n[4]).map(n => [n[0], n[1], n[2] ? n[2]() : '']);
     const nb = n => '<button class="nv' + (S.view === n[0] ? ' on' : '') + '" data-act="view" data-a="' + n[0] + '"><span class="g1">' + n[1] + '</span>' + (n[2] !== '' ? '<span class="cn">' + n[2] + '</span>' : '') + '</button>';
-    const meta = { board: ['บอร์ดทีม', H.isHead() ? 'หัวหน้ามอบหมายงาน → เจ้าหน้าที่รับเรื่องและกดปิดงาน → หัวหน้าติดตามสถานะ · คลิกการ์ดเพื่อดูงานของแต่ละคน' : 'งานที่หัวหน้ามอบหมาย — คลิกการ์ดของคุณเพื่อรับเรื่องและปิดงาน'], dash: ['ภาพรวมแผนก', 'สถานะงานทั้งหมดของแผนกบุคคลและสวัสดิการในที่เดียว'], tasks: ['งานทั้งหมด', 'กรองตามผู้รับผิดชอบ ประเภทงาน และสถานะ'], gov: ['งานประจำเดือน · หน่วยงานรัฐและธนาคาร', 'สรรพากร กยศ. ประกันสังคม ธนาคารไทยพาณิชย์ — กำหนดที่ต้องทำทุกเดือน'], meet: ['การประชุม', 'เตรียมเอกสาร วาระ slide และรายงานการประชุม'], cal: ['ปฏิทินงาน', 'กำหนดส่งเรียงตามเดือน'], perf: ['สถิติการทำงาน', 'ใครรับเรื่องไว ปิดงานไว ค้างนาน — คำนวณจากเวลามอบหมาย รับเรื่อง และปิดงานจริง'] };
+    const hr0 = S.now.getHours(), greet = hr0 < 12 ? 'สวัสดีตอนเช้า' : hr0 < 17 ? 'สวัสดีตอนบ่าย' : 'สวัสดีตอนเย็น';
+    const meta = { home: [greet + ' ' + (me.nickname || ''), 'ทุกเรื่องที่ต้องจัดการ คัดจากทะเบียน คลังสัญญา ใบแสดงเจตนา และประกันกลุ่มให้อัตโนมัติ'], person: ['แฟ้มบุคคล', 'ข้อมูลชุดเดียวจากทุกระบบของเจ้าหน้าที่หนึ่งคน'], board: ['บอร์ดทีม', H.isHead() ? 'หัวหน้ามอบหมายงาน → เจ้าหน้าที่รับเรื่องและกดปิดงาน → หัวหน้าติดตามสถานะ · คลิกการ์ดเพื่อดูงานของแต่ละคน' : 'งานที่หัวหน้ามอบหมาย — คลิกการ์ดของคุณเพื่อรับเรื่องและปิดงาน'], dash: ['ภาพรวมแผนก', 'สถานะงานทั้งหมดของแผนกบุคคลและสวัสดิการในที่เดียว'], tasks: ['งานทั้งหมด', 'กรองตามผู้รับผิดชอบ ประเภทงาน และสถานะ'], gov: ['งานประจำเดือน · หน่วยงานรัฐและธนาคาร', 'สรรพากร กยศ. ประกันสังคม ธนาคารไทยพาณิชย์ — กำหนดที่ต้องทำทุกเดือน'], meet: ['การประชุม', 'เตรียมเอกสาร วาระ slide และรายงานการประชุม'], cal: ['ปฏิทินงาน', 'กำหนดส่งเรียงตามเดือน'], perf: ['สถิติการทำงาน', 'ใครรับเรื่องไว ปิดงานไว ค้างนาน — คำนวณจากเวลามอบหมาย รับเรื่อง และปิดงานจริง'] };
     H.NAVX.forEach(n => { meta[n[0]] = n[3]; }); const m = meta[S.view] || ['', ''];
     const acts = (H.ACTS[S.view] ? H.ACTS[S.view]() : '') + (H.isHead() && (S.view === 'tasks' || S.view === 'board') ? '<button class="btn primary" data-act="openAdd">+ มอบหมายงาน</button>' : '');
-    return '<div class="app"><div class="scrim noprint' + (S.menu ? ' show' : '') + '" data-act="menu"></div><aside class="side noprint' + (S.menu ? ' open' : '') + '"><div class="brand"><div class="logo">HR</div><div><div class="bt">HR Desk</div><div class="mu">แผนกบุคคลและสวัสดิการ</div></div></div><div class="sg">งานทีม</div>' + nav1.map(nb).join('') + '<div class="sg">ข้อมูลบุคลากร</div>' + nav2.map(nb).join('') + '<div class="sp"></div><button class="who2" data-act="prof">' + H.avatar(me, 40) + '<span class="g1"><b>' + esc(me.nickname) + '</b><span class="mu">' + (me.role === 'head' ? 'หัวหน้าแผนก' : 'เจ้าหน้าที่') + '</span></span><span class="mu">⋯</span></button></aside>' +
+    return '<div class="app"><div class="scrim noprint' + (S.menu ? ' show' : '') + '" data-act="menu"></div><aside class="side noprint' + (S.menu ? ' open' : '') + '"><div class="brand"><div class="logo">HR</div><div><div class="bt">HR Desk</div><div class="mu">แผนกบุคคลและสวัสดิการ</div></div></div><div class="sg">งานทีม</div>' + nav1.map(nb).join('') + '<div class="sg">ข้อมูลบุคลากร</div>' + nav2.map(nb).join('') + '<div class="sp"></div><div class="sysbox"><span class="mu">ระบบที่เชื่อมกัน</span><span><i></i>คลังสัญญาจ้าง</span><span><i></i>แฟ้มใบแสดงเจตนา</span><span><i></i>Team Desk</span></div><button class="who2" data-act="prof">' + H.avatar(me, 40) + '<span class="g1"><b>' + esc(me.nickname) + '</b><span class="mu">' + (me.role === 'head' ? 'หัวหน้าแผนก' : 'เจ้าหน้าที่') + '</span></span><span class="mu">⋯</span></button></aside>' +
       '<div class="content"><header class="noprint top2"><button class="hamb card" data-act="menu">☰</button><div class="g1"><div class="eyebrow">' + dateT + '</div></div><label class="yrsel card" title="สถิติและงานแยกตามปี พ.ศ.">ปี พ.ศ.<select data-ch="setYear">' + H.years().map(y => '<option value="' + y + '"' + (S.year === y ? ' selected' : '') + '>' + (y + 543) + '</option>').join('') + '<option value="all"' + (S.year === 'all' ? ' selected' : '') + '>ทุกปี</option></select></label><div class="ck card">' + clock + ' น.</div><button class="round card" data-act="bell" title="แจ้งเตือน">♪<span class="badge">' + al.length + '</span></button></header>' +
       (S.prof ? '<div class="pop pup noprint"><div class="ph"><label class="avl" title="อัปโหลดรูปโปรไฟล์">' + H.avatar(me, 54) + '<span class="plus">+</span><input type="file" accept="image/*" style="display:none" data-ch="avatar"></label><span><b>' + esc(me.nickname) + '</b><br><span class="mu">' + esc(me.email || S.session.user.email) + '</span></span></div><div class="mu" style="margin:6px 0">คลิกที่รูปเพื่ออัปโหลด (ครอบเป็นวงกลมอัตโนมัติ)</div><label class="fld">เบอร์ติดต่อ<input value="' + esc(me.phone || '') + '" placeholder="08x-xxx-xxxx" data-ch="savePhone"></label>' + (me.avatar_url ? '<button class="btn ghost" data-act="rmAvatar" style="margin-bottom:8px">ลบรูปโปรไฟล์</button>' : '') + '<button class="btn ghost" data-act="logout">ออกจากระบบ</button></div>' : '') +
       (S.bell ? '<div class="pop wide noprint"><div class="ph"><b>ต้องติดตาม · เกินกำหนด / ภายใน 7 วัน</b></div>' + (al.map(t => '<div class="li" data-act="task" data-a="' + t.id + '"><i class="dot" style="background:' + dueInfo(t).d + '"></i><div><b>' + esc(t.title) + '</b><div class="mu">' + esc(H.ownerName(H.ownerKey(t))) + ' · <b style="color:' + dueInfo(t).c + '">' + dueInfo(t).t + '</b></div></div></div>').join('') || '<div class="empty">ไม่มีงานที่ต้องติดตาม</div>') + '</div>' : '') +
@@ -629,7 +711,7 @@ H.D.task = () => { const t = S.d.tasks.find(x => x.id === S.dlg.data); if (!t) r
     const { data: me } = await sb.rpc('hr_claim');
     if (!me || !me.id) { document.getElementById('app').innerHTML = '<div class="gate"><div class="card pad" style="max-width:440px;text-align:center"><h2>บัญชีนี้ยังไม่ได้รับสิทธิ์เข้าใช้งาน</h2><p class="mu">เข้าสู่ระบบด้วย Gmail สำเร็จแล้ว แต่ยังไม่ถูกเพิ่มในทีมแผนก ส่งข้อมูลด้านล่างให้หัวหน้าแผนกเพื่อเพิ่มสิทธิ์</p><div class="idb"><b>อีเมล</b>' + esc(session.user.email) + '</div><div class="idb"><b>รหัสผู้ใช้ (UID)</b>' + esc(session.user.id) + '</div><button class="btn ghost" onclick="HR.A.logout()">ออกจากระบบ</button></div></div>'; return; }
     S.me = me; await H.loadAll(); H.render(); setInterval(() => { S.now = new Date(); const c = document.querySelector('.ck'); if (c) c.textContent = S.now.toLocaleTimeString('th-TH', { hour12: false }) + ' น.'; }, 1000);
-    const rev = Object.fromEntries(Object.entries(T).map(([k, v]) => [v, k])); let tm = {}; sb.channel('hr-all').on('postgres_changes', { event: '*', schema: 'public' }, p => { const k = rev[p.table]; if (!k) return; clearTimeout(tm[k]); tm[k] = setTimeout(async () => { await H.load(k); if (!(S.dlg && S.dlg.type !== 'task')) H.render(); }, 300); }).subscribe();
+    const rev = Object.fromEntries(Object.entries(T).map(([k, v]) => [v, k])); let tm = {}; sb.channel('hr-all').on('postgres_changes', { event: '*', schema: 'public' }, p => { const k = rev[p.table]; if (!k) return; clearTimeout(tm[k]); tm[k] = setTimeout(async () => { await H.load(k); if (S.view === 'home' && H.refreshChg) H.refreshChg(); if (H.refreshP) H.refreshP(); if (!(S.dlg && S.dlg.type !== 'task')) H.render(); }, 300); }).subscribe();
   } catch (e) { fail('เข้าสู่ระบบไม่สำเร็จ', String(e && e.message || e)); } }
   window.addEventListener('load', init);
 })();
@@ -714,7 +796,7 @@ H.D.task = () => { const t = S.d.tasks.find(x => x.id === S.dlg.data); if (!t) r
     const PS = 50, pages = Math.max(1, Math.ceil(rows.length / PS)), pg = Math.max(0, Math.min(S.empPage || 0, pages - 1)), slice = rows.slice(pg * PS, pg * PS + PS); S.empPage = pg;
     const cmap = conMap();
     const body = slice.map(e => { const left = !H.isAct(e), rt = left ? null : retInfo(e), tn = left ? TONE[H.MV[e.status]] || TONE.gray : TONE.sage, ed = !left && e.contract_end ? H.days(e.contract_end) : null, soon = ed != null && ed <= 120 && e.emp_type !== 'ประจำ', ref = left ? e.exit_date : null, ex = [e.comp_allowance ? 'ตอบแทน ' + mon(e.comp_allowance) : '', e.prof_allowance ? 'วิชาชีพ ' + mon(e.prof_allowance) : ''].filter(Boolean).join(' · ');
-      return '<tr class="clk" data-act="editEmp" data-a="' + esc(e.employee_id) + '"' + (can ? '' : ' title="ดูข้อมูล (แก้ไขได้เฉพาะผู้ดูแลข้อมูลทะเบียน)"') + ' style="' + (soon ? 'background:#fffafc;' : '') + (left ? 'opacity:.7' : '') + '"><td>' + esc(e.org || '—') + (e.staff_code ? '<div class="mu">รหัส ' + esc(e.staff_code) + '</div>' : '') + '</td><td><b>' + esc(H.empFull(e)) + '</b><div class="mu">' + esc(e.position || '') + '</div>' + conBadge(e, cmap) + '</td><td>' + (e.birth_date ? 'อายุ ' + H.ageOf(e.birth_date, ref) + ' ปี' : '<span class="mu">อายุ —</span>') + '<div class="mu">' + (e.start_date ? 'ทำงาน ' + H.tenure(e.start_date, ref) : 'วันเริ่มงาน —') + '</div>' + (rt ? '<div class="mu" style="' + (rt.y <= cy ? 'color:#5e3a78;font-weight:700' : '') + '">เกษียณ ' + rt.text + (rt.ext ? ' (ต่ออายุ)' : '') + '</div>' : '') + '</td><td>' + tyPill(e) + '<div class="mu" style="margin-top:3px;' + (soon ? 'color:#a8446a;font-weight:700' : '') + '">' + (e.contract_end ? 'สัญญา ' + H.fd(e.contract_end) + (ed == null ? '' : ed < 0 ? ' (เกิน ' + (-ed) + ' วัน)' : ' (อีก ' + ed + ' วัน)') : e.emp_type === 'ประจำ' ? 'ไม่มีกำหนด' : '') + '</div></td>' + (showSal ? '<td class="r"><b>' + mc(e.base_salary) + '</b></td>' : '') + (showComp ? '<td class="r">' + (isB ? '<b>' : '') + mc(e.comp_allowance) + (isB ? '</b>' : '') + '</td>' : '') + (showProf ? '<td class="r">' + mc(e.prof_allowance) + '</td>' : '') + '<td><span class="pill" style="background:' + tn.t + ';color:' + tn.d + '">' + esc(e.status) + (left && e.exit_date ? ' ' + H.fd(e.exit_date) : '') + '</span></td></tr>'; }).join('');
+      return '<tr class="clk" data-act="person" data-a="' + esc(e.employee_id) + '"' + (can ? '' : ' title="ดูข้อมูล (แก้ไขได้เฉพาะผู้ดูแลข้อมูลทะเบียน)"') + ' style="' + (soon ? 'background:#fffafc;' : '') + (left ? 'opacity:.7' : '') + '"><td>' + esc(e.org || '—') + (e.staff_code ? '<div class="mu">รหัส ' + esc(e.staff_code) + '</div>' : '') + '</td><td><b>' + esc(H.empFull(e)) + '</b><div class="mu">' + esc(e.position || '') + '</div>' + conBadge(e, cmap) + '</td><td>' + (e.birth_date ? 'อายุ ' + H.ageOf(e.birth_date, ref) + ' ปี' : '<span class="mu">อายุ —</span>') + '<div class="mu">' + (e.start_date ? 'ทำงาน ' + H.tenure(e.start_date, ref) : 'วันเริ่มงาน —') + '</div>' + (rt ? '<div class="mu" style="' + (rt.y <= cy ? 'color:#5e3a78;font-weight:700' : '') + '">เกษียณ ' + rt.text + (rt.ext ? ' (ต่ออายุ)' : '') + '</div>' : '') + '</td><td>' + tyPill(e) + '<div class="mu" style="margin-top:3px;' + (soon ? 'color:#a8446a;font-weight:700' : '') + '">' + (e.contract_end ? 'สัญญา ' + H.fd(e.contract_end) + (ed == null ? '' : ed < 0 ? ' (เกิน ' + (-ed) + ' วัน)' : ' (อีก ' + ed + ' วัน)') : e.emp_type === 'ประจำ' ? 'ไม่มีกำหนด' : '') + '</div></td>' + (showSal ? '<td class="r"><b>' + mc(e.base_salary) + '</b></td>' : '') + (showComp ? '<td class="r">' + (isB ? '<b>' : '') + mc(e.comp_allowance) + (isB ? '</b>' : '') + '</td>' : '') + (showProf ? '<td class="r">' + mc(e.prof_allowance) + '</td>' : '') + '<td><span class="pill" style="background:' + tn.t + ';color:' + tn.d + '">' + esc(e.status) + (left && e.exit_date ? ' ' + H.fd(e.exit_date) : '') + '</span></td></tr>'; }).join('');
     const pager = rows.length > PS ? '<div class="pager noprint"><span class="mu">แสดง ' + (pg * PS + 1) + '–' + Math.min(rows.length, pg * PS + PS) + ' จาก ' + num(rows.length) + ' คน</span><span class="g1"></span><button class="btn ghost sm" data-act="empPg" data-a="first"' + (pg === 0 ? ' disabled' : '') + '>«</button><button class="btn ghost sm" data-act="empPg" data-a="-1"' + (pg === 0 ? ' disabled' : '') + '>‹ ก่อนหน้า</button><span class="pgn">หน้า ' + (pg + 1) + ' / ' + pages + '</span><button class="btn ghost sm" data-act="empPg" data-a="1"' + (pg >= pages - 1 ? ' disabled' : '') + '>ถัดไป ›</button><button class="btn ghost sm" data-act="empPg" data-a="last"' + (pg >= pages - 1 ? ' disabled' : '') + '>»</button></div>' : '<div class="mu" style="margin-top:8px">ทั้งหมด ' + num(rows.length) + ' คน</div>';
     return '<div class="card mbar noprint" style="border-left:8px solid #3f8f94"><span class="g1"><span class="eyebrow">ผู้ดูแลข้อมูลทะเบียน</span><br><b>' + (maint.map(s => esc(s.nickname)).join(', ') || 'หัวหน้าแผนก') + '</b></span>' + (H.isHead() ? '<span class="mu">มอบหมาย:</span>' + people.map(p => H.chip(p.s.nickname, !!p.s.can_registry, 'toggleReg', p.s.id, H.P(p.k))).join('') : '') + '</div>' +
       '<div class="noprint" style="margin-bottom:14px">' + H.seg(tabs, tab, 'empT') + '</div>' + H.tiles([{ label: 'ปฏิบัติงาน', value: act.length + ' คน', sub: 'พ้นสภาพ ' + (scoped.length - act.length) + ' คน', m: '#5c8a6d', d: '#2b5640' }, ...(isB ? [] : [{ label: 'เงินเดือนรวม / เดือน', value: '฿' + mon(sum('base_salary')), sub: 'เฉลี่ย ฿' + mon(sum('base_salary') / Math.max(1, act.length)), fs: 24, m: '#c65d82', d: '#8a3357' }]), ...(showComp ? [{ label: 'ค่าตอบแทนรวม / เดือน', value: '฿' + mon(sum('comp_allowance')), sub: 'เฉลี่ย ฿' + mon(Math.round(sum('comp_allowance') / Math.max(1, act.length))), fs: 24, m: '#3f8f94', d: '#245f63' }] : []), ...(isB ? [] : [{ label: 'ค่าวิชาชีพรวม / เดือน', value: '฿' + mon(sum('prof_allowance')), sub: 'ต่อเดือน', fs: 24, m: '#8a5aa8', d: '#5e3a78' }]), { label: 'อายุเฉลี่ย', value: (ages.length ? Math.round(ages.reduce((a, b) => a + b, 0) / ages.length) : 0) + ' ปี', m: '#4b7fa6', d: '#2f5c80' }, ...(tab === 'all' || tab === 'staff' ? [{ label: 'เกษียณปี ' + (cy + 543), value: retN + ' คน', sub: 'ครบ 65 ปี ณ 31 ธ.ค. ' + (cy + 543), m: '#8a5aa8', d: '#5e3a78' }] : []), { label: 'ใกล้ครบกำหนดสัญญา', value: near + ' คน', sub: 'ภายใน 120 วัน', m: '#b07f25', d: '#7a560f' }, ...(S.d.cons ? (() => { const cm = conMap(), inS = act.filter(conScope), done = inS.filter(e => { const c = cm.get(String(e.id_card == null ? '' : e.id_card).replace(/\D/g, '')); return c && c.contract_no; }).length; return [{ label: 'ทำสัญญาจ้างแล้ว', value: done + ' คน', sub: 'จาก ' + inS.length + ' คน (เจ้าหน้าที่มูลนิธิ/ทดลองงาน)', m: '#3f8f94', d: '#245f63' }]; })() : [])]) +
@@ -1151,6 +1233,96 @@ H.D.task = () => { const t = S.d.tasks.find(x => x.id === S.dlg.data); if (!t) r
     for (const c of rows.slice(1)) { const cd = ci >= 0 ? cardKey(c[ci]) : '', cde = cj >= 0 ? String(c[cj] || '').trim() : '', em = (cd.length >= 8 ? rcB.get(cd) : null) || (cde ? cdB.get(cde) : null), id = em ? em.employee_id : '', form = String(c[fi] || '').includes('เทเวศ') ? 'tw' : 'mf'; if (!id) continue; const g = k => k >= 0 ? String(c[k] == null ? '' : c[k]).trim() : '';
       const list = cols.map(m => ({ name: g(m.n), address: g(m.a), phone: g(m.p), pct: Number(g(m.t)) || 0 })).filter(r => r.name || r.pct); const { error } = await sb.rpc('hr_save_beneficiaries', { p_emp: id, p_form: form, p_rows: list }); if (error) fail.push(id + ' (' + (form === 'tw' ? 'เทเวศ' : 'มูลนิธิ') + ')'); else n++; }
     S.msg.ben = 'นำเข้า ' + n + ' ฉบับ' + (fail.length ? ' · ไม่ผ่าน ' + fail.length + ' ฉบับ (อัตราส่วนไม่ครบ 100% หรือไม่มีสิทธิ์): ' + fail.slice(0, 6).join(', ') : ' · อัตราส่วนครบ 100% ทุกฉบับ'); await H.load('ben'); H.render(); });
+
+  // ======================= HR Desk โฉมใหม่: หน้าหลัก (ศูนย์บัญชาการ) + แฟ้มบุคคล 360° =======================
+  const SRC = { hrdesk: ['HR Desk', '#fbe7ef', '#8a2f52'], archive: ['คลังสัญญา', '#f8eedb', '#7a520c'], ben: ['ใบแสดงเจตนา', '#e1f1ef', '#22605c'] };
+  const srcChip = k => { const x = SRC[k] || ['ระบบ', '#f1e8ed', '#4a3a43']; return '<span class="src" style="background:' + x[1] + ';color:' + x[2] + '">' + x[0] + '</span>'; };
+  const FLD = Object.fromEntries(H.EF.map(f => [f[0], f[1]]));
+  const TBL = { hr_employees: 'ทะเบียน', hr_contracts: 'สัญญาจ้าง', hr_beneficiaries: 'ผู้รับผลประโยชน์', hr_ben_docs: 'ไฟล์ใบแสดงเจตนา', hr_moves: 'รายการเข้า-ออก' };
+  const SKIPF = ['id', 'created_at', 'created_by', 'updated_at', 'updated_by', 'updated_by_name', 'employee_id', 'id_card'];
+  const chgKeys = c => Object.keys(c.changes || {}).filter(k => !SKIPF.includes(k) || (c.tbl === 'hr_employees' && k === 'id_card' && c.op === 'UPDATE'));
+  const empOfChg = c => S.d.emps.find(e => (c.id_card && cardKey(e.id_card) === c.id_card) || (c.row_key && e.employee_id === c.row_key));
+  const chgVerb = c => { const ks = chgKeys(c), f = ks.slice(0, 3).map(k => FLD[k] || k).join(', ') + (ks.length > 3 ? ' และอีก ' + (ks.length - 3) + ' ช่อง' : ''), t = TBL[c.tbl] || c.tbl;
+    return c.op === 'INSERT' ? 'เพิ่ม' + t : c.op === 'DELETE' ? 'ลบ' + t : 'แก้' + (c.tbl === 'hr_employees' ? ' ' + (f || 'ข้อมูล') : t + (f ? ' (' + f + ')' : '')); };
+  const shortV = v => { if (v == null || v === '') return '—'; const t = typeof v === 'object' ? JSON.stringify(v) : String(v); return /^\d{4}-\d{2}-\d{2}/.test(t) ? H.fd(t.slice(0, 10)) : t.length > 40 ? t.slice(0, 40) + '…' : t; };
+  const relT = t => H.rel ? H.rel(t) : H.fd(t);
+  H.loadChg = async card => { let q = sb.from('hr_change_log').select('*').order('id', { ascending: false }).limit(card ? 40 : 12); if (card) q = q.eq('id_card', card); const { data, error } = await q; return error ? null : (data || []); };
+  S.chg = undefined; S.pchg = {};
+  H.refreshChg = async () => { const r = await H.loadChg(); S.chg = r; if (S.view === 'home' && !S.dlg) H.render(); };
+
+  // ---------- หน้าหลัก ----------
+  A.hq = v => { S.hq = v; H.render(); };
+  A.homeGo = k => { if (k === 'soon') { S.view = 'emp'; S.empT = 'all'; S.empC = 'soon'; S.empF = 'all'; } else if (k === 'prob') { S.view = 'emp'; S.empT = 'probation'; S.empC = ''; S.empF = 'active'; } else if (k === 'ben') S.view = 'ben'; else if (k === 'ins') { S.view = 'ins'; S.insF = 'left'; }
+    S.empPage = 0; S.insPage = 0; S.menu = false; H.render(); window.scrollTo(0, 0); };
+  const hit = (e, q) => { const k = String(q || '').replace(/[\s-]+/g, '').toLowerCase(); if (!k) return false; return (String(e.title || '') + (e.first_name || '') + (e.last_name || '') + (e.nickname || '') + (e.position || '') + (e.org || '') + (e.staff_code || '') + cardKey(e.id_card)).replace(/\s+/g, '').toLowerCase().includes(k); };
+  const ini2 = e => (Array.from(String(e.first_name || '').replace(/^[เแโใไ]/, ''))[0] || '') + (Array.from(String(e.last_name || '').replace(/^[เแโใไ]/, ''))[0] || '');
+  const TONES = ['#b8436d', '#6b3f8f', '#9a6a12', '#2f7a76', '#4b6fa6'];
+  const toneOf = e => TONES[(parseInt(String(e.employee_id).replace(/\D/g, '')) || 0) % TONES.length];
+  const pAv = (e, n) => '<span class="pav" style="width:' + n + 'px;height:' + n + 'px;font-size:' + Math.round(n / 2.6) + 'px;background:' + toneOf(e) + '">' + esc(ini2(e) || '?') + '</span>';
+
+  V.home = () => { const act = active(), cm = conMap(), rc = regCards(), cy = new Date().getFullYear();
+    if (S.chg === undefined) { S.chg = null; H.refreshChg(); }
+    const nSoon = act.filter(e => conHit(e, 'soon', cm)).length, nProb = act.filter(e => etype(e) === 'probation').length,
+      nBen = act.filter(e => { const b = getB(e.employee_id); return H.benState(b.mf) !== 'ok' || H.benState(b.tw) !== 'ok'; }).length,
+      nIns = (S.d.ins || []).filter(r => insInfo(r, rc).left).length;
+    const card = (k, tag, tc, n, t) => '<button type="button" class="hm-act" data-act="homeGo" data-a="' + k + '"><span class="src" style="background:' + tc[0] + ';color:' + tc[1] + '">' + tag + '</span><span class="hm-n">' + num(n) + ' <small>คน</small></span><span class="hm-t">' + t + '</span><span class="hm-go">ดูรายชื่อ →</span></button>';
+    const q = S.hq || '', res = q ? S.d.emps.filter(e => hit(e, q)).sort((a, b) => H.isAct(b) - H.isAct(a)).slice(0, 8) : [];
+    const search = '<div class="hm-search noprint"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg><input id="hq" type="search" autocomplete="off" aria-label="ค้นหาบุคลากร" placeholder="ค้นหาชื่อ เลขบัตร ตำแหน่ง หรือรหัสเจ้าหน้าที่" value="' + esc(q) + '" data-in="hq"><kbd>Ctrl K</kbd></div>' +
+      (q ? '<div class="hm-res card">' + (res.map(e => '<button type="button" class="hm-row" data-act="person" data-a="' + esc(e.employee_id) + '">' + pAv(e, 36) + '<span class="g1"><b>' + esc(H.empFull(e)) + '</b><span class="mu">' + esc([e.position, e.org].filter(Boolean).join(' · ')) + '</span></span>' + (H.isAct(e) ? '' : '<span class="pill" style="background:#f1e8ed;color:#4a3a43">' + esc(e.status) + '</span>') + '<span class="mu" aria-hidden="true">›</span></button>').join('') || '<div class="empty">ไม่พบ ลองพิมพ์คำอื่น</div>') + '</div>' : '');
+    const todo = '<section aria-label="ต้องจัดการ"><div class="hm-h"><h3>ต้องจัดการ</h3><span class="mu">คัดจากทุกระบบให้อัตโนมัติ</span></div><div class="hm-acts">' +
+      card('soon', 'คลังสัญญา', ['#fbe7ef', '#8a2f52'], nSoon, 'สัญญาครบกำหนดภายใน 120 วัน') + card('prob', 'ทดลองงาน', ['#efe6f6', '#5a3479'], nProb, 'อยู่ระหว่างทดลองปฏิบัติงาน') +
+      card('ben', 'ใบแสดงเจตนา', ['#e1f1ef', '#22605c'], nBen, 'ผู้รับผลประโยชน์ยังไม่ครบ 100%') + card('ins', 'ประกันกลุ่ม', ['#f8eedb', '#7a520c'], nIns, 'พ้นสภาพแล้ว ยังอยู่ในกรมธรรม์') + '</div></section>';
+    const over = '<section class="hm-dark" aria-label="ภาพรวมบุคลากร"><div class="hm-h"><h3>ภาพรวมบุคลากร</h3><span>ณ วันนี้</span></div><div class="hm-big"><b>' + num(act.length) + '</b><span>คน ปฏิบัติงาน</span></div>' +
+      ETYPES.map(t => '<div class="hm-li"><span>' + t[1] + '</span><b>' + num(act.filter(e => etype(e) === t[0]).length) + '</b></div>').join('') +
+      '<div class="hm-li"><span>เกษียณสิ้นปี ' + (cy + 543) + '</span><b>' + num(act.filter(e => { const r = retInfo(e); return r && r.y === cy; }).length) + '</b></div></section>';
+    const ts = H.YT(), team = '<section class="card pad" aria-label="งานของทีม"><div class="hm-h"><h3>งานของทีม</h3><button type="button" class="lk" data-act="view" data-a="board">เปิดบอร์ด →</button></div>' + ['ney', 'jom', 'bb', 'pan'].map(k => { const a = ts.filter(t => H.ownerKey(t) === k), c = x => a.filter(t => H.ph(t) === x).length, st = H.personStaff(k), n = a.length;
+      return '<div class="hm-team">' + (st ? H.avatar(st, 36) : '<span class="av" style="width:36px;height:36px;background:' + H.P(k).m + '">' + H.ini(H.ownerName(k)) + '</span>') + '<span class="g1"><b>' + esc(H.ownerName(k)) + '</b><span class="mu">ต้องทำ ' + c('todo') + ' · กำลังทำ ' + c('doing') + ' · เสร็จ ' + c('done') + '</span></span><span class="hm-bar" role="img" aria-label="เสร็จ ' + c('done') + ' จาก ' + n + ' งาน"><i style="width:' + (n ? Math.round(100 * c('done') / n) : 0) + '%;background:' + H.P(k).m + '"></i></span></div>'; }).join('') + '<div class="mu">แถบ = งานที่เสร็จแล้ว เทียบกับงานทั้งหมดของแต่ละคน</div></section>';
+    const feed = '<section class="card pad" aria-label="ความเคลื่อนไหวล่าสุด"><div class="hm-h"><h3>ความเคลื่อนไหวล่าสุด</h3><span class="hm-live"><i></i>สด</span></div>' +
+      (S.chg === null ? '<div class="mu">กำลังโหลด…</div>' : !S.chg.length ? '<div class="mu">ยังไม่มีบันทึกการแก้ไข</div>' : S.chg.slice(0, 8).map(c => { const e = empOfChg(c);
+        return '<div class="hm-feed">' + srcChip(c.source) + '<span class="g1"><span><b>' + esc(c.actor || '—') + '</b> ' + esc(chgVerb(c)) + (e ? ' · <button type="button" class="lk" data-act="person" data-a="' + esc(e.employee_id) + '">' + esc(H.empFull(e)) + '</button>' : '') + '</span><span class="mu">' + relT(c.at) + '</span></span></div>'; }).join('')) + '</section>';
+    return search + todo + '<div class="hm-grid">' + over + team + feed + '</div>'; };
+
+  // ---------- แฟ้มบุคคล 360° ----------
+  A.person = id => { const e = S.d.emps.find(x => x.employee_id === id); if (!e) return; if (S.view !== 'person') S.pfrom = S.view; S.pid = id; S.view = 'person'; S.menu = false; S.hq = ''; H.render(); window.scrollTo(0, 0);
+    const k = cardKey(e.id_card); H.loadChg(k.length === 13 ? k : null).then(r => { S.pchg[id] = (r || []).filter(c => k.length === 13 ? true : c.row_key === id); if (S.view === 'person' && S.pid === id) H.render(); }); };
+  A.personBack = () => { S.view = S.pfrom || 'emp'; H.render(); };
+  const ym = d => { if (!d) return '—'; const a = H.d0(d), r = H.today(); let m = (r.getFullYear() - a.getFullYear()) * 12 + r.getMonth() - a.getMonth() - (r.getDate() < a.getDate() ? 1 : 0); if (m < 0) return 'ยังไม่เริ่มงาน'; return Math.floor(m / 12) + ' ปี ' + (m % 12) + ' เดือน'; };
+  const mask = k => k.length === 13 ? 'x-xxxx-xxxxx-' + k.slice(10, 12) + '-' + k[12] : 'ไม่มีเลขบัตร';
+  V.person = () => { const e = S.d.emps.find(x => x.employee_id === S.pid); if (!e) return '<div class="empty big">ไม่พบข้อมูลบุคลากร</div>';
+    const k = cardKey(e.id_card), left = !H.isAct(e), c = k.length === 13 ? conMap().get(k) : null, ed = e.contract_end ? H.days(e.contract_end) : null, rt = retInfo(e), b = getB(e.employee_id), d = Object.assign({}, e, { isNew: false });
+    const ins = (S.d.ins || []).find(r => (k.length === 13 && cardKey(r.id_card) === k) || (r.employee_id && r.employee_id === e.employee_id)),
+      pr = (S.d.roll || []).filter(r => r.employee_id === e.employee_id).sort((x, y) => String(y.period).localeCompare(String(x.period)))[0];
+    const soon = !left && ed != null && ed <= 120 && e.emp_type !== 'ประจำ';
+    const hero = '<section class="p-hero" aria-label="ข้อมูลหลัก">' + pAv(e, 84) + '<div class="g1"><h2>' + esc(H.empFull(e)) + '</h2><div class="p-sub">' + esc([e.position, e.org, e.section].filter(Boolean).join(' · ') || '—') + '</div><div class="p-tags">' +
+      '<span class="p-tag" style="background:' + (left ? '#5a3a4e' : '#1f5c47') + ';color:' + (left ? '#f3e7ed' : '#d6f5e7') + '">' + esc(left ? e.status || 'พ้นสภาพ' : 'ปฏิบัติงาน') + '</span>' + (e.emp_type ? '<span class="p-tag">' + esc(e.emp_type) + '</span>' : '') + '<span class="p-tag">เลขบัตร ' + mask(k) + '</span>' + (e.staff_code ? '<span class="p-tag">รหัส ' + esc(e.staff_code) + '</span>' : '') + '</div></div>' +
+      '<div class="p-btns noprint"><button type="button" class="pbtn" data-act="editEmp" data-a="' + esc(e.employee_id) + '">' + (H.canReg() ? 'แก้ไขข้อมูล' : 'ดูข้อมูลทั้งหมด') + '</button>' + (k.length === 13 ? '<button type="button" class="pbtn solid" data-act="openArchive" data-a="' + k + '">เปิดแฟ้มในคลังสัญญา ↗</button>' : '') + '</div></section>';
+    const met = (l, v, sub, hot) => '<div class="p-met' + (hot ? ' hot' : '') + '"><span class="l">' + l + '</span><span class="v">' + v + '</span><span class="s">' + (sub || '&nbsp;') + '</span></div>';
+    const mets = '<div class="p-mets">' + met('อายุงาน', ym(e.start_date), e.start_date ? 'เริ่มงาน ' + H.fd(e.start_date) : '') + met('อายุ', e.birth_date ? H.ageOf(e.birth_date) + ' ปี' : '—', rt ? 'เกษียณ ' + rt.text + (rt.ext ? ' (ต่ออายุ)' : '') : '') +
+      met('สัญญาครบกำหนด', e.contract_end ? H.fd(e.contract_end) : '—', ed == null ? '' : ed >= 0 ? 'อีก ' + num(ed) + ' วัน' : 'เกินกำหนด ' + num(-ed) + ' วัน', soon) +
+      met(etype(e) === 'temp' || etype(e) === 'consult' ? 'ค่าตอบแทน' : 'เงินเดือนฐาน', '฿' + mon(etype(e) === 'temp' || etype(e) === 'consult' ? e.comp_allowance || e.base_salary : e.base_salary), e.prof_allowance ? 'ค่าวิชาชีพ ฿' + mon(e.prof_allowance) : '') + '</div>';
+    const ev = [];
+    if (e.start_date) ev.push([e.start_date, 'เริ่มงาน', H.fd(e.start_date)]);
+    (S.d.moves || []).filter(m => m.employee_id === e.employee_id && m.kind !== 'เข้าใหม่').forEach(m => ev.push([m.effective_date, m.kind, H.fd(m.effective_date)]));
+    if (c && c.contract_date) ev.push([c.contract_date, 'ทำสัญญา', c.contract_no ? 'เลขที่ ' + c.contract_no : H.fd(c.contract_date)]);
+    if (e.contract_end && !left) ev.push([e.contract_end, 'ครบกำหนดสัญญา', ed >= 0 ? 'อีก ' + num(ed) + ' วัน' : H.fd(e.contract_end)]);
+    if (rt && !left) ev.push([rt.y + '-12-31', 'เกษียณ', rt.text]);
+    ev.sort((x, y) => String(x[0]).localeCompare(String(y[0])));
+    const td = H.today().toISOString().slice(0, 10);
+    const tl = '<section class="card pad" aria-label="เส้นทางการทำงาน"><h3>เส้นทางการทำงาน</h3>' + (ev.length ? '<div class="p-tl">' + ev.map(x => '<div class="p-step' + (String(x[0]) > td ? ' fut' : '') + '"><i></i><b>' + esc(x[1]) + '</b><span class="mu">' + esc(x[2]) + '</span></div>').join('') + '</div>' : '<div class="mu">ยังไม่มีวันเริ่มงานในทะเบียน</div>') + '</section>';
+    const hist = S.pchg[e.employee_id], hrow = h => { const ks = chgKeys(h), det = h.op === 'UPDATE' && ks.length ? ks.slice(0, 6).map(x => '<div><b>' + esc(FLD[x] || x) + '</b> ' + esc(shortV(h.changes[x][0])) + ' → ' + esc(shortV(h.changes[x][1])) + '</div>').join('') + (ks.length > 6 ? '<div class="mu">และอีก ' + (ks.length - 6) + ' ช่อง</div>' : '') : '<div>' + esc(chgVerb(h)) + '</div>';
+      return '<div class="p-hrow">' + srcChip(h.source) + '<div class="g1">' + det + '</div><span class="mu r">' + esc(h.actor || '—') + '<br>' + H.fd(h.at) + ' ' + new Date(h.at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + '</span></div>'; };
+    const histS = '<section class="card pad" aria-label="ประวัติการแก้ไข"><div class="hm-h"><h3>ประวัติการแก้ไข</h3><span class="mu">จากทุกระบบ</span></div>' + (hist === undefined ? '<div class="mu">กำลังโหลด…</div>' : !hist.length ? '<div class="mu">ยังไม่มีบันทึกการแก้ไข (เริ่มบันทึกตั้งแต่เปิดใช้ฐานข้อมูลเดียว)</div>' : hist.map(hrow).join('')) + '</section>';
+    const side = '<section class="card pad p-card">' + conBlock(d) + '</section>' +
+      '<section class="card pad p-card">' + mfBlock(d) + '<div class="sec ok">ใบแสดงเจตนา · ฉบับเทเวศประกันภัย</div><div class="tlx"><span>ผู้รับผลประโยชน์: ' + bchip(b.tw) + ' ' + H.benUsed(b.tw).map(r => esc(r.name) + ' ' + r.pct + '%').join(' · ') + '</span></div></section>' +
+      '<section class="card pad p-card"><div class="sec ok">ประกันกลุ่ม · เงินเดือน</div><div class="p-kv"><span>ประกันกลุ่ม</span><b>' + (ins ? 'อยู่ในกรมธรรม์' : 'ไม่อยู่ในกรมธรรม์') + '</b></div>' +
+      (pr ? '<div class="p-kv"><span>รับสุทธิงวดล่าสุด</span><b>฿' + mon(H.incT(pr) - H.dedT(pr)) + '</b></div><div class="p-kv"><span>งวด</span><b>' + esc(pr.period) + '</b></div>' : '<div class="p-kv"><span>เงินเดือนรายงวด</span><b>ยังไม่มีข้อมูล</b></div>') + '</section>';
+    return '<div class="p-top noprint"><button type="button" class="lk" data-act="personBack">← กลับ</button><span class="hm-live"><i></i>ข้อมูลชุดเดียว · อัปเดตสดจากทุกระบบ</span></div>' + hero + mets + '<div class="p-cols"><div class="p-main">' + tl + histS + '</div><div class="p-side">' + side + '</div></div>'; };
+
+  // Ctrl K / ⌘K = ไปช่องค้นหาที่หน้าหลัก
+  document.addEventListener('keydown', ev => { if ((ev.ctrlKey || ev.metaKey) && String(ev.key).toLowerCase() === 'k' && S.me) { ev.preventDefault(); if (S.view !== 'home') { S.view = 'home'; S.dlg = null; H.render(); } const n = document.getElementById('hq'); if (n) n.focus(); } });
+  H.refreshP = () => { if (S.view !== 'person' || !S.pid) return; const e = S.d.emps.find(x => x.employee_id === S.pid); if (!e) return; const k = cardKey(e.id_card), id = S.pid;
+    H.loadChg(k.length === 13 ? k : null).then(r => { S.pchg[id] = (r || []).filter(c => k.length === 13 ? true : c.row_key === id); if (S.view === 'person' && S.pid === id && !S.dlg) H.render(); }); };
+
 })();
 
 </script>
