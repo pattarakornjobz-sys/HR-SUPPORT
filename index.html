@@ -800,8 +800,8 @@ H.D.task = () => { const t = S.d.tasks.find(x => x.id === S.dlg.data); if (!t) r
     const pager = rows.length > PS ? '<div class="pager noprint"><span class="mu">แสดง ' + (pg * PS + 1) + '–' + Math.min(rows.length, pg * PS + PS) + ' จาก ' + num(rows.length) + ' คน</span><span class="g1"></span><button class="btn ghost sm" data-act="empPg" data-a="first"' + (pg === 0 ? ' disabled' : '') + '>«</button><button class="btn ghost sm" data-act="empPg" data-a="-1"' + (pg === 0 ? ' disabled' : '') + '>‹ ก่อนหน้า</button><span class="pgn">หน้า ' + (pg + 1) + ' / ' + pages + '</span><button class="btn ghost sm" data-act="empPg" data-a="1"' + (pg >= pages - 1 ? ' disabled' : '') + '>ถัดไป ›</button><button class="btn ghost sm" data-act="empPg" data-a="last"' + (pg >= pages - 1 ? ' disabled' : '') + '>»</button></div>' : '<div class="mu" style="margin-top:8px">ทั้งหมด ' + num(rows.length) + ' คน</div>';
     return '<div class="card mbar noprint" style="border-left:8px solid #3f8f94"><span class="g1"><span class="eyebrow">ผู้ดูแลข้อมูลทะเบียน</span><br><b>' + (maint.map(s => esc(s.nickname)).join(', ') || 'หัวหน้าแผนก') + '</b></span>' + (H.isHead() ? '<span class="mu">มอบหมาย:</span>' + people.map(p => H.chip(p.s.nickname, !!p.s.can_registry, 'toggleReg', p.s.id, H.P(p.k))).join('') : '') + '</div>' +
       '<div class="noprint" style="margin-bottom:14px">' + H.seg(tabs, tab, 'empT') + '</div>' + H.tiles([{ label: 'ปฏิบัติงาน', value: act.length + ' คน', sub: 'พ้นสภาพ ' + (scoped.length - act.length) + ' คน', m: '#5c8a6d', d: '#2b5640' }, ...(isB ? [] : [{ label: 'เงินเดือนรวม / เดือน', value: '฿' + mon(sum('base_salary')), sub: 'เฉลี่ย ฿' + mon(sum('base_salary') / Math.max(1, act.length)), fs: 24, m: '#c65d82', d: '#8a3357' }]), ...(showComp ? [{ label: 'ค่าตอบแทนรวม / เดือน', value: '฿' + mon(sum('comp_allowance')), sub: 'เฉลี่ย ฿' + mon(Math.round(sum('comp_allowance') / Math.max(1, act.length))), fs: 24, m: '#3f8f94', d: '#245f63' }] : []), ...(isB ? [] : [{ label: 'ค่าวิชาชีพรวม / เดือน', value: '฿' + mon(sum('prof_allowance')), sub: 'ต่อเดือน', fs: 24, m: '#8a5aa8', d: '#5e3a78' }]), { label: 'อายุเฉลี่ย', value: (ages.length ? Math.round(ages.reduce((a, b) => a + b, 0) / ages.length) : 0) + ' ปี', m: '#4b7fa6', d: '#2f5c80' }, ...(tab === 'all' || tab === 'staff' ? [{ label: 'เกษียณปี ' + (cy + 543), value: retN + ' คน', sub: 'ครบ 65 ปี ณ 31 ธ.ค. ' + (cy + 543), m: '#8a5aa8', d: '#5e3a78' }] : []), { label: 'ใกล้ครบกำหนดสัญญา', value: near + ' คน', sub: 'ภายใน 120 วัน', m: '#b07f25', d: '#7a560f' }, ...(S.d.cons ? (() => { const cm = conMap(), inS = act.filter(conScope), done = inS.filter(e => { const c = cm.get(String(e.id_card == null ? '' : e.id_card).replace(/\D/g, '')); return c && c.contract_no; }).length; return [{ label: 'ทำสัญญาจ้างแล้ว', value: done + ' คน', sub: 'จาก ' + inS.length + ' คน (เจ้าหน้าที่มูลนิธิ/ทดลองงาน)', m: '#3f8f94', d: '#245f63' }]; })() : [])]) +
-      (can ? '<label class="card dz noprint"><span class="up">↑</span><span class="g1"><b>นำเข้าทะเบียนบุคลากรจากไฟล์ CSV</b><br><span class="mu">ใช้หัวตารางตามแม่แบบ 16 คอลัมน์ (หรือไฟล์ทะเบียนเต็ม 55 คอลัมน์) · ช่องที่เว้นว่างจะไม่ทับข้อมูลเดิม · ไม่มีรหัสพนักงาน ระบบจับคู่ด้วยเลขบัตรประชาชนและออกรหัสให้เอง</span></span><span class="btn primary">เลือกไฟล์</span><input type="file" accept=".csv,.xlsx,.xls,text/csv" style="display:none" data-ch="importEmp"></label>' : '') + H.msg('emp') +
-      '<div class="frow noprint"><input id="eq" class="search" placeholder="ค้นหาชื่อ / ตำแหน่ง / ต้นสังกัด…" value="' + esc(S.eq) + '" data-in="eq">' + H.seg([['all', 'ทั้งหมด ' + scoped.length], ['active', 'ปฏิบัติงาน ' + act.length], ['left', 'พ้นสภาพ ' + (scoped.length - act.length)]], S.empF, 'empF') + fsel('empS', S.empS || '', 'สถานะ: ทั้งหมด', stOpts(scoped).map(o => [o[0], o[0] + ' (' + o[1] + ')'])) + (S.d.cons ? fsel('empC', S.empC || '', 'สัญญาจ้าง: ทั้งหมด', CON_F.map(o => [o[0], o[1] + ' (' + scoped.filter(e => conHit(e, o[0], cmF)).length + ')'])) : '') + (S.empS || S.empC ? '<button class="lk fclr" data-act="empClr">ล้างตัวกรอง · พบ ' + num(rows.length) + ' คน</button>' : '') + '<button class="btn ghost" data-act="expEmp">↓ ส่งออก CSV</button>' + ((window.HR_CONFIG || {}).ARCHIVE_URL ? '<button class="btn ghost" data-act="openArchive">คลังสัญญาจ้าง ↗</button>' : '') + '<button class="lk" data-act="tmplEmp">ดาวน์โหลดแม่แบบ</button>' + (can ? '<button class="btn primary" data-act="addEmp">+ เพิ่มบุคลากรใหม่</button><button class="btn ghost danger" data-act="dupEmp">ลบรายการซ้ำ</button><button class="btn ghost" data-act="fixOrg">ปรับชื่อต้นสังกัดเป็นชื่อใหม่</button>' + (H.isHead() ? '<button class="btn ghost" data-act="linkCfg">⚙ ลิงก์ระบบ</button>' : '') : '') + (H.isHead() ? '<button class="btn ghost danger" data-act="wipeEmp">ลบทะเบียนทั้งหมด</button>' : '') + '</div>' +
+      (can ? '<label class="card dz noprint"><span class="up">↑</span><span class="g1"><b>นำเข้า / อัปเดตทะเบียนบุคลากรจากไฟล์ Excel หรือ CSV</b><br><span class="mu">รองรับ .xlsx / .csv · จับคู่ด้วย<b>เลขบัตรประชาชน 13 หลัก</b>: ตรงกับคนเดิม = อัปเดตเฉพาะช่องที่เปลี่ยน · ไม่พบ = เพิ่มคนใหม่ · ไม่เพิ่มคนซ้ำ · ช่องว่างไม่ลบข้อมูลเดิม · <b>แสดงรายการให้ตรวจก่อนบันทึก</b> · แนะนำกด "ส่งออก Excel เพื่อแก้ไข" แล้วนำไฟล์นั้นกลับมา</span></span><span class="btn primary">เลือกไฟล์</span><input type="file" accept=".csv,.xlsx,.xls,text/csv" style="display:none" data-ch="importEmp"></label>' : '') + H.msg('emp') +
+      '<div class="frow noprint"><input id="eq" class="search" placeholder="ค้นหาชื่อ / ตำแหน่ง / ต้นสังกัด…" value="' + esc(S.eq) + '" data-in="eq">' + H.seg([['all', 'ทั้งหมด ' + scoped.length], ['active', 'ปฏิบัติงาน ' + act.length], ['left', 'พ้นสภาพ ' + (scoped.length - act.length)]], S.empF, 'empF') + fsel('empS', S.empS || '', 'สถานะ: ทั้งหมด', stOpts(scoped).map(o => [o[0], o[0] + ' (' + o[1] + ')'])) + (S.d.cons ? fsel('empC', S.empC || '', 'สัญญาจ้าง: ทั้งหมด', CON_F.map(o => [o[0], o[1] + ' (' + scoped.filter(e => conHit(e, o[0], cmF)).length + ')'])) : '') + (S.empS || S.empC ? '<button class="lk fclr" data-act="empClr">ล้างตัวกรอง · พบ ' + num(rows.length) + ' คน</button>' : '') + '' + (can ? '<button class="btn ghost" data-act="expEmpX">↓ ส่งออก Excel เพื่อแก้ไข</button>' : '') + '<button class="btn ghost" data-act="expEmp">↓ ส่งออก CSV</button>' + ((window.HR_CONFIG || {}).ARCHIVE_URL ? '<button class="btn ghost" data-act="openArchive">คลังสัญญาจ้าง ↗</button>' : '') + '<button class="lk" data-act="tmplEmp">ดาวน์โหลดแม่แบบ</button>' + (can ? '<button class="btn primary" data-act="addEmp">+ เพิ่มบุคลากรใหม่</button><button class="btn ghost danger" data-act="dupEmp">ลบรายการซ้ำ</button><button class="btn ghost" data-act="fixOrg">ปรับชื่อต้นสังกัดเป็นชื่อใหม่</button>' + (H.isHead() ? '<button class="btn ghost" data-act="linkCfg">⚙ ลิงก์ระบบ</button>' : '') : '') + (H.isHead() ? '<button class="btn ghost danger" data-act="wipeEmp">ลบทะเบียนทั้งหมด</button>' : '') + '</div>' +
       (can ? '' : '<div class="mu noprint" style="margin-bottom:8px">ดูและส่งออกได้ — นำเข้า/แก้ไขได้เฉพาะผู้ดูแลข้อมูลและหัวหน้า (การบันทึกเข้า-ออกทำได้ทุกคนที่หน้า "เข้า-ออก")</div>') +
       (can ? '<div class="mu noprint" style="margin-bottom:8px">คลิกที่แถวเพื่อดู/แก้ไขข้อมูลครบทุกช่อง</div>' : '') + '<div class="card scroll"><table class="tbl reg"><thead><tr><th>ต้นสังกัด</th><th>ชื่อ-สกุล / ตำแหน่ง</th><th>อายุ / อายุงาน</th><th>ประเภทการจ้าง / สัญญา</th>' + (showSal ? '<th class="r">เงินเดือน</th>' : '') + (showComp ? '<th class="r">ค่าตอบแทน</th>' : '') + (showProf ? '<th class="r">ค่าวิชาชีพ</th>' : '') + '<th>สถานะ</th></tr></thead><tbody>' + (body || '<tr><td colspan="' + (4 + nm) + '" class="empty">ไม่พบข้อมูล</td></tr>') + '</tbody></table></div>' + pager; };
   A.empT = v => { S.empT = v; S.empPage = 0; H.render(); };
@@ -885,30 +885,87 @@ H.D.task = () => { const t = S.d.tasks.find(x => x.id === S.dlg.data); if (!t) r
   const TM = [["id_card","เลขบัตรประชาชน"],["title","คำนำหน้า"],["first_name","ชื่อ"],["last_name","นามสกุล"],["birth_date","วันเกิด"],["gender","เพศ"],["emp_type","ประเภท"],["org","ต้นสังกัด"],["section","หน่วยงาน/แผนก"],["position","ตำแหน่ง"],["start_date","วันเริ่มงาน"],["contract_end","วันหมดสัญญา"],["base_salary","เงินเดือน"],["comp_allowance","ค่าตอบแทน"],["prof_allowance","ค่าวิชาชีพ"],["bank_no","เลขบัญชี"]];
   A.tmplEmp = () => { const ex = { id_card: '3 2009 00561 18 4', title: 'นาย', first_name: 'ชื่อ', last_name: 'นามสกุล', emp_type: 'เจ้าหน้าที่มูลนิธิ', org: 'โรงฝึกสถาบันสิริกิติ์ (รฝส.)', section: 'แผนกปักผ้า', position: 'ตำแหน่ง', base_salary: '37,715.00' }; H.download('แม่แบบฐานข้อมูลทะเบียน.csv', H.csv([TM.map(f => f[1]), TM.map(f => ex[f[0]] == null ? '' : ex[f[0]])])); };
   const cardKey = x => String(x == null ? '' : x).replace(/\D/g, '');
-  A.importEmp = files => H.readCsvFile(files[0], async rows => { if (rows.length < 2) return H.toast('ไฟล์ว่าง', true);
-    const ix = H.colMap(rows[0], H.EF, H.EF_ALIAS), legacy = rows[0].findIndex(x => H.norm(x) === 'ชื่อ-สกุล'), byId = new Map(S.d.emps.map(e => [e.employee_id, e])), byCard = new Map(); S.d.emps.forEach(e => { const k = cardKey(e.id_card); if (k.length >= 8) byCard.set(k, e); });
-    const byCode = new Map(S.d.emps.filter(e => e.staff_code).map(e => [String(e.staff_code), e]));
-    const byNm = new Map(); S.d.emps.forEach(e => { const k = nameKeyOf(e); if (k !== '|') byNm.set(k, byNm.has(k) ? null : e); }); // ชื่อซ้ำหลายคน = ไม่ใช้จับคู่
-    let seq = Math.max(0, ...S.d.emps.map(e => parseInt(String(e.employee_id).replace(/\D/g, '')) || 0)), add = 0, upd = 0, skip = 0, byc = 0, ren = 0; const groups = {}, drop = [], seen = new Set();
-    rows.slice(1).forEach(c => { const cell = k => ix[k] >= 0 ? String(c[ix[k]] == null ? '' : c[ix[k]]).trim() : ''; let id = cell('employee_id'); const card = cardKey(cell('id_card')); let ex = id ? byId.get(id) : null; const code = cell('staff_code'); let cardEx = (card.length >= 8 ? byCard.get(card) : null) || (code ? byCode.get(code) : null);
-      // จับคู่ด้วยเลขบัตร 13 หลัก (หรือรหัสพนักงาน) เท่านั้น · ไม่จับคู่ด้วยชื่อ-สกุล
-      const r = {}; H.EF.forEach(f => { const k = f[0]; if (k === 'employee_id' || ix[k] < 0) return; const raw = String(c[ix[k]] == null ? '' : c[ix[k]]).trim(); if (raw === '') return; r[k] = H.conv(raw, f[3]); });
-      if (legacy >= 0 && ix.first_name < 0) { const p = String(c[legacy] || '').trim().split(/\s+/); if (p[0]) { r.first_name = p[0]; r.last_name = p.slice(1).join(' '); } }
-      if (r.id_card) r.id_card = cardKey(r.id_card).length === 13 ? cardKey(r.id_card) : r.id_card;
+  // ---------- นำเข้าทะเบียน: จับคู่ด้วยเลขบัตรประชาชน 13 หลัก · ตรวจก่อนบันทึก · ไม่เพิ่มคนซ้ำ ----------
+  const EFK = new Map(H.EF.map(f => [f[0], f]));
+  const sciNo = v => /\d[.,]?\d*e\+?\d+$/i.test(String(v || '').replace(/\s/g, ''));        // 3.1E+12 จาก Excel
+  const fixPhone = v => { const t = String(v || '').replace(/[\s-]/g, ''); return /^[1-9]\d{8}$/.test(t) ? '0' + t : v; };   // Excel ตัด 0 หน้าเบอร์
+  const cmpV = (k, v) => { const f = EFK.get(k) || []; if (v == null || v === '') return ''; if (f[3] === 'num') return String(Number(v) || 0); if (k === 'id_card') return cardKey(v); return String(v).trim().replace(/\s+/g, ' '); };
+  const showV = (k, v) => { const f = EFK.get(k) || []; if (v == null || v === '') return '—'; if (f[3] === 'date') return H.isoToBE(String(v)) || String(v); if (f[3] === 'num') return mon(v); return String(v); };
+  function planImport(rows, fname) {
+    const hd = rows[0], ix = H.colMap(hd, H.EF, H.EF_ALIAS), legacy = hd.findIndex(x => H.norm(x) === 'ชื่อ-สกุล'), eidIx = hd.findIndex(x => /^(รหัสพนักงาน|employee_id)/i.test(H.norm(x)));
+    const byCard = new Map(), byId = new Map(S.d.emps.map(e => [e.employee_id, e])), byNm = new Map();
+    S.d.emps.forEach(e => { const k = cardKey(e.id_card); if (k.length === 13 && !byCard.has(k)) byCard.set(k, e); const n = nameKeyOf(e); if (n !== '|') (byNm.get(n) || byNm.set(n, []).get(n)).push(e); });
+    const P = { file: fname, add: [], upd: [], same: 0, skip: [], fixed: { sci: 0, phone: 0 } }, seen = new Set();
+    rows.slice(1).forEach((c, i) => {
+      const line = i + 2, cell = k => ix[k] >= 0 ? String(c[ix[k]] == null ? '' : c[ix[k]]).trim() : '';
+      const r = {}; H.EF.forEach(f => { const k = f[0]; if (k === 'employee_id' || !(ix[k] >= 0)) return; const raw = String(c[ix[k]] == null ? '' : c[ix[k]]).trim(); if (raw === '') return; r[k] = H.conv(raw, f[3]); });
+      if (legacy >= 0 && !(ix.first_name >= 0)) { const p = String(c[legacy] || '').trim().split(/\s+/); if (p[0]) { r.first_name = p[0]; r.last_name = p.slice(1).join(' '); } }
+      const nm = ((r.title || '') + (r.first_name || '') + ' ' + (r.last_name || '')).trim() || '(ไม่มีชื่อ)';
+      const rawCard = cell('id_card'); let card = '';
+      if (rawCard && sciNo(rawCard)) { delete r.id_card; P.fixed.sci++; }
+      else if (rawCard) { card = cardKey(rawCard); if (card.length === 13) r.id_card = card; else { delete r.id_card; } }
+      if (r.phone) { const p = fixPhone(r.phone); if (p !== r.phone) { r.phone = p; P.fixed.phone++; } }
       if (r.bank_no) r.bank_no = H.bankNo(r.bank_no);
       if (r.org) r.org = H.orgStd(r.org);
-      let base = null;
-      if (!id) { if (cardEx) { id = cardEx.employee_id; base = cardEx; byc++; } else { if (!r.first_name) { skip++; return; } id = 'E' + String(++seq).padStart(4, '0'); } }
-      else if (!ex && cardEx && cardEx.employee_id !== id) { base = cardEx; drop.push(cardEx.employee_id); ren++; }
-      if (seen.has(id)) { skip++; return; } seen.add(id);
-      const isNew = !(ex || cardEx); if (isNew && !r.first_name) { skip++; return; }
-      if (base) { const m = { ...base }; delete m.updated_by; delete m.updated_at; Object.assign(r, Object.fromEntries(Object.entries(m).filter(([k, val]) => !(k in r) && val != null))); }
-      r.employee_id = id; if (isNew) { r.status = r.status || 'ปฏิบัติงาน'; r.first_name = r.first_name || ''; add++; } else upd++;
-      if (r.id_card) byCard.set(cardKey(r.id_card), { employee_id: id, id_card: r.id_card });
-      const sig = Object.keys(r).sort().join('|'); (groups[sig] = groups[sig] || []).push(r); });
+      if (!Object.keys(r).length) return;                                  // แถวว่าง
+      if (card.length !== 13) return P.skip.push({ line, nm, why: rawCard && sciNo(rawCard) ? 'เลขบัตรถูก Excel แปลงเป็น ' + rawCard + ' — ใช้ไฟล์ Excel ที่ส่งออกจากระบบ หรือจัดรูปแบบคอลัมน์เป็นข้อความ' : rawCard ? 'เลขบัตรไม่ครบ 13 หลัก (' + rawCard + ')' : 'ไม่มีเลขบัตรประชาชน' });
+      if (seen.has(card)) return P.skip.push({ line, nm, why: 'เลขบัตรซ้ำกับแถวก่อนหน้าในไฟล์ — ใช้แถวแรกแถวเดียว' });
+      seen.add(card);
+      const ex = byCard.get(card);
+      if (ex) {                                                            // คนเดิม → ทับเฉพาะช่องที่มีค่าและเปลี่ยนจริง
+        const ch = Object.keys(r).filter(k => cmpV(k, r[k]) !== cmpV(k, ex[k]));
+        if (!ch.length) { P.same++; return; }
+        const u = { employee_id: ex.employee_id }; ch.forEach(k => { u[k] = r[k]; });
+        P.upd.push({ e: ex, u, ch: ch.map(k => [k, ex[k], r[k]]) }); return;
+      }
+      if (!r.first_name) return P.skip.push({ line, nm, why: 'คนใหม่ แต่ไม่มีชื่อ' });
+      const twins = (byNm.get(nameKeyOf(r)) || []);
+      if (twins.length) return P.skip.push({ line, nm, why: 'ชื่อ-สกุลตรงกับ ' + twins.map(e => e.employee_id + (cardKey(e.id_card) ? ' (เลขบัตร ' + cardKey(e.id_card) + ')' : ' (ไม่มีเลขบัตร)')).join(', ') + ' ในทะเบียน แต่เลขบัตรไม่ตรง — ไม่เพิ่มเพื่อกันซ้ำ ตรวจเลขบัตรแล้วแก้ในทะเบียนหรือในไฟล์' });
+      r.status = r.status || 'ปฏิบัติงาน'; P.add.push({ line, nm, r });
+    });
+    return P;
+  }
+  A.importEmp = files => { const f = files && files[0]; if (!f) return; H.readCsvFile(f, rows => { if (rows.length < 2) return H.toast('ไฟล์ว่าง', true); H.open('impEmp', planImport(rows, f.name)); }); };
+  D.impEmp = () => { const P = S.dlg.data, nCh = P.upd.reduce((s, x) => s + x.ch.length, 0), lbl = k => (EFK.get(k) || [k, k])[1];
+    const tile = (n, t, c) => '<div style="flex:1;min-width:110px;padding:10px 12px;border-radius:12px;background:' + c + '18;border:1px solid ' + c + '40"><div style="font-size:22px;font-weight:700;color:' + c + '">' + num(n) + '</div><div class="mu" style="font-size:12.5px">' + t + '</div></div>';
+    const upd = P.upd.slice(0, 150).map(x => '<tr><td><b>' + esc(H.empFull(x.e)) + '</b><div class="mu">' + esc(cardKey(x.e.id_card)) + '</div></td><td>' + x.ch.map(c => '<div><span class="mu">' + esc(lbl(c[0])) + ':</span> <s style="color:#a8446a">' + esc(showV(c[0], c[1])) + '</s> → <b style="color:#2b5640">' + esc(showV(c[0], c[2])) + '</b></div>').join('') + '</td></tr>').join('');
+    const add = P.add.slice(0, 100).map(x => '<tr><td><b>' + esc(x.nm) + '</b></td><td class="mu">' + esc(x.r.id_card) + '</td><td class="mu">' + esc([x.r.position, x.r.org].filter(Boolean).join(' · ')) + '</td></tr>').join('');
+    const skip = P.skip.slice(0, 100).map(x => '<tr><td class="mu">แถว ' + x.line + '</td><td><b>' + esc(x.nm) + '</b></td><td style="color:#8a3357">' + esc(x.why) + '</td></tr>').join('');
+    const sec = (t, body, more) => body ? '<div style="margin-top:14px;font-weight:700">' + t + '</div><div class="scroll" style="max-height:34vh"><table class="tbl"><tbody>' + body + '</tbody></table></div>' + (more > 0 ? '<div class="mu" style="margin-top:4px">… และอีก ' + num(more) + ' รายการ</div>' : '') : '';
+    const go = P.add.length + P.upd.length;
+    return H.dlgBox('ตรวจสอบก่อนนำเข้า', esc(P.file) + ' · จับคู่ด้วยเลขบัตรประชาชน 13 หลัก',
+      '<div style="display:flex;flex-wrap:wrap;gap:8px">' + tile(P.upd.length, 'คนเดิม · แก้ไข ' + num(nCh) + ' ช่อง', '#3b6fd8') + tile(P.add.length, 'เพิ่มคนใหม่', '#2f8a57') + tile(P.same, 'ข้อมูลตรงอยู่แล้ว', '#8a8a99') + tile(P.skip.length, 'ข้าม (ไม่นำเข้า)', '#c0392b') + '</div>' +
+      '<div class="mu" style="margin-top:10px;font-size:13px">• เลขบัตรตรงกับคนในทะเบียน = อัปเดตเฉพาะช่องที่เปลี่ยน · ช่องว่างในไฟล์ไม่ลบข้อมูลเดิม<br>• ไม่เพิ่มคนซ้ำ: เลขบัตรที่มีอยู่แล้ว / เลขบัตรซ้ำในไฟล์ / ชื่อตรงกับคนในทะเบียน จะไม่ถูกเพิ่มใหม่' +
+      (P.fixed.phone ? '<br>• เติม 0 หน้าเบอร์โทรที่ Excel ตัดออกให้ ' + num(P.fixed.phone) + ' แถว' : '') + '</div>' +
+      sec('✏️ แก้ไขข้อมูลคนเดิม ' + num(P.upd.length) + ' คน', upd, P.upd.length - 150) + sec('➕ เพิ่มคนใหม่ ' + num(P.add.length) + ' คน', add, P.add.length - 100) + sec('⚠ ข้าม ' + num(P.skip.length) + ' แถว', skip, P.skip.length - 100) +
+      (go ? '' : '<div class="msg" style="margin-top:12px">ไม่มีข้อมูลที่ต้องบันทึก — ทุกแถวตรงกับทะเบียนอยู่แล้ว หรือถูกข้าม</div>'),
+      '<button class="btn ghost" data-act="expEmp">↓ สำรองทะเบียนก่อน (CSV)</button><span class="g1"></span><button class="btn ghost" data-act="close">ยกเลิก</button>' + (go ? '<button class="btn primary" data-act="impEmpGo">ยืนยันนำเข้า (' + num(go) + ' คน)</button>' : ''), 860);
+  };
+  A.impEmpGo = async () => { const P = S.dlg && S.dlg.data; if (!P) return;
+    H.toast('กำลังตรวจทะเบียนล่าสุด…'); await H.load('emps');
+    const live = new Map(); S.d.emps.forEach(e => { const k = cardKey(e.id_card); if (k.length === 13) live.set(k, e); });
+    let lateDup = 0; const adds = [];
+    let seq = Math.max(0, ...S.d.emps.map(e => parseInt(String(e.employee_id).replace(/\D/g, '')) || 0));
+    P.add.forEach(x => { if (live.has(x.r.id_card)) { lateDup++; return; } adds.push(Object.assign({}, x.r, { employee_id: 'E' + String(++seq).padStart(4, '0') })); live.set(x.r.id_card, adds[adds.length - 1]); });   // มีคนเพิ่มเลขบัตรนี้ระหว่างนี้ → ไม่เพิ่ม
+    const groups = {}; P.upd.forEach(x => { const sig = Object.keys(x.u).sort().join('|'); (groups[sig] = groups[sig] || []).push(x.u); });
     for (const sig in groups) if (!(await chunk('hr_employees', groups[sig], 'employee_id'))) return;
-    for (const old of drop) await sb.from('hr_employees').delete().eq('employee_id', old);
-    S.msg.emp = 'นำเข้าสำเร็จ: เพิ่มใหม่ ' + add + ' · อัปเดต ' + upd + (byc ? ' (จับคู่ด้วยเลขบัตร ' + byc + ')' : '') + (ren ? ' · ออกรหัสพนักงานให้ ' + ren : '') + (skip ? ' · ข้าม ' + skip + ' แถว (ไม่มีชื่อ/ซ้ำในไฟล์)' : ''); await H.load('emps'); H.render(); });
+    if (adds.length) { const ag = {}; adds.forEach(r => { const sig = Object.keys(r).sort().join('|'); (ag[sig] = ag[sig] || []).push(r); }); for (const sig in ag) if (!(await chunk('hr_employees', ag[sig], 'employee_id'))) return; }
+    S.msg.emp = 'นำเข้าสำเร็จ: แก้ไขคนเดิม ' + num(P.upd.length) + ' คน · เพิ่มใหม่ ' + num(adds.length) + ' คน' + (P.same ? ' · ตรงอยู่แล้ว ' + num(P.same) : '') + (P.skip.length + lateDup ? ' · ข้าม ' + num(P.skip.length + lateDup) + ' แถว' : '');
+    S.dlg = null; await H.load('emps'); H.render(); H.toast('นำเข้าเรียบร้อย');
+  };
+  // ---------- ส่งออก Excel สำหรับแก้ไขแล้วนำเข้ากลับ (เลขบัตร/เบอร์/บัญชี เป็นข้อความ ไม่เพี้ยน) ----------
+  A.expEmpX = async () => { let X; try { X = await H.loadSheetJS(); } catch (e) { return H.toast('โหลดตัวสร้างไฟล์ Excel ไม่ได้ · ลองใหม่อีกครั้ง', true); }
+    const F = H.EF.filter(f => f[0] !== 'employee_id'), list = S.d.emps.slice().sort((a, b) => String(a.employee_id).localeCompare(String(b.employee_id)));
+    const aoa = [F.map(f => f[1]).concat(['รหัสพนักงาน (อ้างอิง ห้ามแก้)'])].concat(list.map(e => F.map(f => { const v = e[f[0]]; if (v == null || v === '') return ''; if (f[3] === 'num') return Number(v) || 0; if (f[3] === 'date') return H.isoToBE(String(v)) || String(v); if (f[0] === 'id_card') return cardKey(v).length === 13 ? cardKey(v) : String(v); return String(v); }).concat([e.employee_id])));
+    const ws = X.utils.aoa_to_sheet(aoa), rg = X.utils.decode_range(ws['!ref']);
+    for (let R = 1; R <= rg.e.r; R++) for (let C = 0; C <= rg.e.c; C++) { const c = ws[X.utils.encode_cell({ r: R, c: C })]; if (c && c.t === 's') c.z = '@'; else if (c && c.t === 'n') c.z = '#,##0.00'; }
+    ws['!cols'] = aoa[0].map((h, i) => ({ wch: Math.min(40, Math.max(10, String(h).length + 2, ...aoa.slice(1, 200).map(r => String(r[i] == null ? '' : r[i]).length + 1))) }));
+    ws['!autofilter'] = { ref: X.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: rg.e.r, c: rg.e.c } }) };
+    const how = X.utils.aoa_to_sheet([['วิธีแก้ไขแล้วนำเข้ากลับ HR Desk'], [''], ['1. แก้ข้อมูลในแผ่น "ทะเบียน" ได้ทุกช่อง แล้วบันทึกเป็น .xlsx (ไม่ต้องแปลงเป็น CSV)'], ['2. ระบบจับคู่คนด้วย "เลขบัตรประชาชน" 13 หลัก — ห้ามแก้เลขบัตรของคนเดิม'], ['3. ช่องที่เว้นว่างจะไม่ลบข้อมูลเดิม · ถ้าต้องการลบค่าให้แก้ในระบบ'], ['4. เพิ่มคนใหม่ได้ที่แถวล่างสุด ต้องมีเลขบัตร 13 หลัก + ชื่อ · เลขบัตรหรือชื่อ-สกุลที่มีอยู่แล้วจะไม่ถูกเพิ่มซ้ำ'], ['5. วันที่ใช้รูปแบบ วว/ดด/ปปปป (พ.ศ.) เช่น 01/10/2569'], ['6. HR Desk > ทะเบียนบุคลากร > เลือกไฟล์ → ระบบแสดงรายการที่จะแก้/เพิ่มให้ตรวจก่อน แล้วกด "ยืนยันนำเข้า"']]);
+    how['!cols'] = [{ wch: 100 }];
+    const wb = X.utils.book_new(); X.utils.book_append_sheet(wb, ws, 'ทะเบียน'); X.utils.book_append_sheet(wb, how, 'วิธีใช้');
+    const d = new Date(); X.writeFile(wb, 'ทะเบียนบุคลากร_สำหรับแก้ไข_' + d.getDate() + '-' + (d.getMonth() + 1) + '-' + (d.getFullYear() + 543) + '.xlsx');
+  };
 
   // ======================= เงินเดือน / ค่าตอบแทน =======================
   reg('roll', 'เงินเดือน', () => '', ['เงินเดือน / ค่าตอบแทนรายงวด', 'นำเข้า-ส่งออกตามไฟล์จ่ายเงินเดือน คลิกแถวเพื่อดูและพิมพ์ใบแจ้งยอดเงินเดือน'],
