@@ -9,7 +9,7 @@
  *
  * ตั้งค่า (ใน app-links.js หรือ config.js ของแต่ละระบบ):
  *   window.DESK_SUITE = Object.assign(window.DESK_SUITE || {}, {
- *     ADVANCE_URL: "https://script.google.com/macros/s/…/exec",   // ลิงก์เว็บแอประบบเงินยืม
+ *     ADVANCE_URL: "https://script.google.com/macros/s/AKfycbwBEd896VhoXl-DTRXiqFlzZIy2bDFSjIbUlqiuOwTOIOcL-rMEiMOwqJ-yTjVecj6XIA/exec",   // ลิงก์เว็บแอประบบเงินยืม
  *     ADVANCE_DIV: ""   // (HR Desk) กองของแผนกบุคคลฯ ถ้าว่าง ผู้ใช้จะเลือกกองเองครั้งแรก
  *   });
  *
