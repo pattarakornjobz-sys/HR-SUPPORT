@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1a5fa8">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+  });
+}
+</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ข้อมูลเจ้าหน้าที่ — HRIS - ระบบบริหารงานบุคคล มูลนิธิส่งเสริมศิลปาชีพฯ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="hris_drive.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;font-family:'Sarabun',Arial,sans-serif}
+    body{background:#f4f6f9;color:#333;overflow:hidden;height:100vh;height:100dvh}
+    .topbar{position:fixed;top:0;left:0;right:0;height:60px;background:#fff;border-bottom:1px solid #e0e0e0;display:flex;justify-content:space-between;align-items:center;padding:0 24px;z-index:1000}
+    .topbar-left{display:flex;align-items:center;gap:12px}
+    .logo-img{height:40px;width:auto;object-fit:contain}
+    .system-title{font-size:16px;font-weight:700;color:#2c3e50}
+    .topbar-divider{color:#ccc}
+    .current-time{font-size:14px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
+    .topbar-right{display:flex;align-items:center;gap:16px}
+    .user-role{font-size:14px;font-weight:600;color:#0056b3;background:#e6f0fa;padding:4px 12px;border-radius:4px}
+    .user-name{font-size:14px;font-weight:500}
+    .btn-logout{background:#fff;border:1px solid #dc3545;color:#dc3545;padding:5px 12px;font-size:13px;font-weight:500;border-radius:4px;cursor:pointer;transition:all .2s;white-space:nowrap;flex-shrink:0}
+    .btn-logout:hover{background:#dc3545;color:#fff}
+    .app-container{display:flex;padding-top:60px;height:100vh;height:100dvh}
+    .sidebar{width:260px;background:#1e293b;color:#f8fafc;height:calc(100vh - 60px);overflow-y:auto;padding:20px 0;flex-shrink:0}
+    .menu-category{font-size:12px;font-weight:700;text-transform:uppercase;color:#64748b;padding:12px 24px 6px;letter-spacing:.5px}
+    .menu-item{display:flex;align-items:center;padding:10px 24px;color:#cbd5e1;text-decoration:none;font-size:14px;border-left:4px solid transparent;cursor:pointer}
+    .menu-item:hover,.menu-item.active{background:#334155;color:#fff;border-left-color:#3b82f6}
+    .menu-item span{margin-right:10px;font-size:16px}
+    .main-content{flex-grow:1;padding:28px 30px;overflow-y:auto;background:#f8fafc}
+    .hamburger-btn{display:none;align-items:center;justify-content:center;width:36px;height:36px;border:none;background:none;cursor:pointer;font-size:22px;color:#334155;flex-shrink:0;margin-right:2px}
+    .sidebar-backdrop{display:none;position:fixed;top:60px;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:998}
+    @media (max-width:1024px){
+      .hamburger-btn{display:flex}
+      .sidebar{position:fixed;top:60px;left:0;bottom:0;height:calc(100vh - 60px);transform:translateX(-100%);transition:transform .25s ease;z-index:999;box-shadow:4px 0 20px rgba(0,0,0,.15)}
+      .sidebar.open{transform:translateX(0)}
+      .sidebar-backdrop.show{display:block}.sidebar-close-btn{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border:none;background:#334155;color:#fff;border-radius:50%;cursor:pointer;font-size:18px;position:absolute;top:12px;right:12px}
+      .system-title{display:none}
+      .topbar-divider{display:none}
+      .form-grid{grid-template-columns:1fr!important}
+    }
+    @media (max-width:640px){
+      .user-name{display:none}
+      .topbar{padding:0 10px}
+      .topbar-right{gap:8px}
+      .main-content{padding:12px}
+      h1{font-size:19px}
+      .toolbar{flex-direction:column;align-items:stretch}
+      .search-box{min-width:0}
+      .stat-strip{flex-direction:column}
+    }
+    .card{background:#fff;padding:20px 24px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.05);margin-bottom:20px}
+    h1{font-size:24px;color:#1e293b;margin-bottom:6px}
+    .page-sub{color:#64748b;font-size:14px;margin-bottom:22px}
+    .stat-strip{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+    .stat-chip{background:#fff;border-radius:8px;padding:12px 18px;box-shadow:0 1px 3px rgba(0,0,0,.05);font-size:13px;color:#475569;display:flex;align-items:center;gap:8px}
+    .stat-chip strong{font-size:20px;font-weight:700;color:#1e293b}
+    .toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+    .search-box{display:flex;align-items:center;gap:6px;border:1px solid #cbd5e1;border-radius:4px;padding:6px 10px;background:#fff;flex:1;min-width:220px}
+    .search-box input{border:none;outline:none;font-family:'Sarabun',sans-serif;font-size:14px;width:100%;background:transparent}
+    .select-box{padding:7px 10px;border:1px solid #cbd5e1;border-radius:4px;font-size:13px;background:#fff;font-family:'Sarabun',sans-serif;cursor:pointer}
+    .select-box:focus{outline:none;border-color:#3b82f6}
+    .btn{padding:7px 14px;font-size:13px;font-weight:600;border-radius:4px;border:none;cursor:pointer;font-family:'Sarabun',sans-serif;display:inline-flex;align-items:center;gap:5px;transition:all .15s;white-space:nowrap}
+    .btn-primary{background:#3b82f6;color:#fff}.btn-primary:hover{background:#2563eb}
+    .btn-success{background:#16a34a;color:#fff}.btn-success:hover{background:#15803d}
+    .btn-outline{background:#fff;border:1px solid #cbd5e1;color:#475569}.btn-outline:hover{background:#f1f5f9}
+    .btn-danger{background:#ef4444;color:#fff}.btn-danger:hover{background:#dc2626}
+    .btn-sm{padding:5px 10px;font-size:12px}
+    .bulk-bar{display:none;align-items:center;gap:8px;flex-wrap:wrap;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:10px 14px;margin-bottom:14px}
+    .bulk-bar>span{font-size:13px;font-weight:600;color:#1d4ed8}
+    .table-scroll{overflow-x:auto}
+    /* ล็อกคอลัมน์ checkbox/รหัส/เลขบัตรประชาชน/ชื่อ-สกุล ไว้ด้านซ้ายตอนเลื่อนดูตารางแนวนอน (ไม่ให้หลุดหายจนไม่รู้ว่าแถวนี้เป็นของใคร) */
+    #mainStaffTable{border-collapse:separate;border-spacing:0}
+    #mainStaffTable th:nth-child(1),#mainStaffTable td:nth-child(1){position:sticky;left:0;z-index:2;background:#fff;min-width:36px}
+    #mainStaffTable th:nth-child(2),#mainStaffTable td:nth-child(2){position:sticky;left:36px;z-index:2;background:#fff;min-width:80px}
+    #mainStaffTable th:nth-child(3),#mainStaffTable td:nth-child(3){position:sticky;left:116px;z-index:2;background:#fff;min-width:130px}
+    #mainStaffTable th:nth-child(4),#mainStaffTable td:nth-child(4){position:sticky;left:246px;z-index:2;background:#fff;min-width:150px;box-shadow:2px 0 5px rgba(0,0,0,.08)}
+    #mainStaffTable thead th{position:sticky;top:0;background:#f8fafc}
+    #mainStaffTable thead th:nth-child(1),#mainStaffTable thead th:nth-child(2),#mainStaffTable thead th:nth-child(3),#mainStaffTable thead th:nth-child(4){z-index:3}
+    /* จอมือถือแคบ: คอลัมน์ล็อกทั้ง 4 คอลัมน์กินพื้นที่เกือบเต็มจอ แทบไม่เหลือให้เลื่อนดูคอลัมน์อื่น
+       ลดเหลือล็อกแค่ checkbox+รหัส+ชื่อ-สกุล (ปลดล็อกเลขบัตรประชาชนให้เลื่อนไปกับเนื้อหาปกติ) และลดความกว้างแต่ละคอลัมน์ */
+    @media (max-width:480px){
+      #mainStaffTable th:nth-child(1),#mainStaffTable td:nth-child(1){min-width:30px}
+      #mainStaffTable th:nth-child(2),#mainStaffTable td:nth-child(2){left:30px;min-width:62px;font-size:12px}
+      #mainStaffTable th:nth-child(3),#mainStaffTable td:nth-child(3){position:static;box-shadow:none}
+      #mainStaffTable th:nth-child(4),#mainStaffTable td:nth-child(4){left:92px;min-width:108px;font-size:12.5px}
+    }
+    table.data-table{width:max-content;min-width:100%;border-collapse:collapse;font-size:13px;white-space:nowrap}
+    .data-table thead tr{background:#f1f5f9}
+    .data-table th{padding:9px 12px;text-align:left;font-weight:700;color:#475569;font-size:12px;border-bottom:2px solid #e2e8f0;white-space:nowrap}
+    .data-table td{padding:10px 12px;border-bottom:1px solid #f1f5f9;color:#334155;vertical-align:middle;white-space:nowrap;max-width:none}
+    .data-table tbody tr:hover{background:#f8fafc}
+    .data-table tbody tr:last-child td{border-bottom:none}
+    .staff-type-badge,.status-pill{display:inline-block;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:600}
+    .type-1{background:#eff6ff;color:#3b82f6}.type-2{background:#fdf4ff;color:#a855f7}.type-3{background:#fff7ed;color:#f97316}.type-4{background:#f0fdf4;color:#22c55e}
+    .status-active{background:#dcfce7;color:#16a34a}.status-inactive{background:#f1f5f9;color:#64748b}.status-resigned{background:#fee2e2;color:#dc2626}.status-retired{background:#fef9c3;color:#a16207}
+    .action-btn{padding:3px 9px;font-size:12px;border-radius:4px;cursor:pointer;border:1px solid;font-family:'Sarabun',sans-serif;font-weight:500;transition:all .15s}
+    .btn-edit{color:#3b82f6;border-color:#93c5fd;background:#fff}.btn-edit:hover{background:#eff6ff}
+    .btn-del{color:#ef4444;border-color:#fca5a5;background:#fff}.btn-del:hover{background:#fef2f2}
+    .pagination{display:flex;align-items:center;justify-content:space-between;margin-top:14px}
+    .page-info{font-size:12px;color:#64748b}
+    .page-btn{padding:4px 11px;border:1px solid #cbd5e1;border-radius:4px;background:#fff;font-size:13px;cursor:pointer;font-family:'Sarabun',sans-serif;color:#475569}
+    .page-btn:hover{background:#f1f5f9}.page-btn.active{background:#3b82f6;color:#fff;border-color:#3b82f6}.page-btn:disabled{opacity:.4;cursor:not-allowed}
+    .loading-state,.empty-state{text-align:center;padding:48px 20px;color:#94a3b8}
+    .loading-spinner{width:28px;height:28px;border:3px solid #e2e8f0;border-top-color:#3b82f6;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px}
+    .empty-state .icon{font-size:40px;margin-bottom:10px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .toast-wrap{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+    .toast{background:#1e293b;color:#fff;padding:10px 16px;border-radius:6px;font-size:13px;display:flex;align-items:center;gap:8px;box-shadow:0 4px 12px rgba(0,0,0,.2);animation:fadeIn .2s ease}
+    .toast.error{background:#dc2626}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+    .modal-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;align-items:center;justify-content:center}
+    .modal-backdrop.open{display:flex}
+    .modal{background:#fff;border-radius:10px;width:680px;max-width:96vw;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+    .modal-header{display:flex;justify-content:space-between;align-items:center;padding:18px 24px;border-bottom:1px solid #e2e8f0;position:sticky;top:0;background:#fff;z-index:1}
+    .modal-header h2{font-size:17px;font-weight:700;color:#1e293b}
+    .modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:#94a3b8}.modal-close:hover{color:#475569}
+    .modal-body{padding:20px 24px}
+    .modal-footer{padding:14px 24px;border-top:1px solid #e2e8f0;display:flex;justify-content:flex-end;gap:10px}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .form-grid .full{grid-column:1/-1}
+    .form-group{display:flex;flex-direction:column;gap:5px}
+    .form-group label{font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.3px}
+    .form-group input,.form-group select,.form-group textarea{padding:8px 10px;border:1px solid #cbd5e1;border-radius:4px;font-size:14px;font-family:'Sarabun',sans-serif}
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+    .form-group input.invalid{border-color:#ef4444}
+    .req{color:#ef4444}.field-error{font-size:11px;color:#ef4444;display:none}.field-error.show{display:block}
+    .be-date-wrap{display:flex;gap:6px}
+    .be-date-wrap>div{display:flex;flex-direction:column;gap:2px;flex:1}
+    .be-date-label{font-size:10px;color:#94a3b8;text-align:center}
+    .contract-auto-badge{background:#f0f9ff;border:1px solid #bae6fd;border-radius:4px;padding:6px 10px;font-size:12px;color:#0369a1;margin-top:4px}
+    .probation-badge{background:#fdf4ff;border:1px solid #e9d5ff;border-radius:4px;padding:8px 12px;font-size:12px;color:#7c3aed}
+    .day-row{display:flex;align-items:center;gap:10px;padding:7px 12px;border-bottom:1px solid #f1f5f9;font-size:13px}
+    .day-row:last-child{border-bottom:none}.day-row.active{background:#f0f9ff}
+    .day-label{width:60px;font-weight:600;color:#374151}
+    .day-times{display:flex;align-items:center;gap:6px;margin-left:auto}
+    .day-times input[type=time]{padding:3px 6px;border:1px solid #cbd5e1;border-radius:4px;font-size:12px;font-family:'Sarabun',sans-serif;width:88px}
+    .sep{color:#94a3b8}
+    .form-divider{height:1px;background:#f1f5f9;grid-column:1/-1;margin:2px 0}
+    .dropzone{border:2px dashed #cbd5e1;border-radius:8px;padding:32px;text-align:center;cursor:pointer;transition:all .2s;color:#64748b}
+    .dropzone:hover,.dropzone.dragover{border-color:#3b82f6;background:#eff6ff}
+    .dropzone .icon{font-size:36px;margin-bottom:8px}
+    .import-summary{display:flex;gap:12px;margin-bottom:12px;font-size:13px}
+    .sum-ok{background:#dcfce7;color:#16a34a;padding:4px 12px;border-radius:4px;font-weight:600}
+    .sum-err{background:#fee2e2;color:#dc2626;padding:4px 12px;border-radius:4px;font-weight:600}
+    .import-preview{max-height:280px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:4px}
+    .import-preview table{width:100%;border-collapse:collapse;font-size:12px}
+    .import-preview th,.import-preview td{padding:6px 10px;border-bottom:1px solid #f1f5f9;text-align:left}
+    .import-preview thead th{background:#f1f5f9;font-weight:700;color:#475569}
+    .progress-bar-bg{background:#e2e8f0;border-radius:4px;height:6px;overflow:hidden}
+    .progress-bar-fill{background:#3b82f6;height:100%;width:0;transition:width .3s}
+    .import-progress{margin-top:14px}
+    .modal-tabs{display:flex;gap:2px;border-bottom:1px solid #e2e8f0;margin-bottom:16px;overflow-x:auto}
+    .modal-tab{padding:9px 14px;font-size:12.5px;font-weight:600;color:#64748b;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;user-select:none}
+    .modal-tab:hover{color:#3b82f6}
+    .photo-upload-box{display:flex;align-items:center;gap:16px}
+    .photo-preview{width:80px;height:108px;border-radius:6px;border:1.5px dashed #cbd5e1;background:#f8fafc;display:flex;align-items:center;justify-content:center;font-size:36px;color:#cbd5e1;overflow:hidden;flex-shrink:0}
+    .photo-preview img{width:100%;height:100%;object-fit:cover}
+    .modal-tab.active{color:#3b82f6;border-bottom-color:#3b82f6}
+    .tab-panel{display:none}
+    .tab-panel.active{display:block}
+    .child-toolbar{display:flex;justify-content:flex-end;margin-bottom:10px}
+    .child-form-box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;margin-bottom:14px}
+    .locked-tab-msg{text-align:center;padding:40px 20px;color:#94a3b8;font-size:13px}
+    .ben-total{font-size:12.5px;font-weight:700;padding:8px 12px;border-radius:6px;margin-bottom:10px;display:inline-block}
+    .ben-total.ok{background:#dcfce7;color:#16a34a}
+    .ben-total.bad{background:#fee2e2;color:#dc2626}
+    .eval-block{background:#fdf4ff;border:1px solid #e9d5ff;border-radius:8px;padding:12px 14px}
+    .section-heading{font-size:14px;font-weight:700;margin-bottom:10px}
+    .check-inline{display:flex;flex-direction:row;align-items:center;gap:8px}
+    .check-inline label{text-transform:none;font-weight:500;font-size:13px;display:flex;align-items:center;gap:6px}
+  @media (max-width:640px){.current-time{display:none}.user-role{padding:4px 8px;font-size:12px}}
+.sidebar-close-btn{display:none}
+@media (min-width:1025px){.sidebar{width:300px}.menu-item{white-space:nowrap}}
+
+  /* ---------- กระดิ่งแจ้งเตือน (เพิ่มโดย Claude) ---------- */
+  .ntf-wrap{position:relative;display:inline-flex;align-items:center}
+  .ntf-bell-btn{position:relative;background:none;border:none;cursor:pointer;font-size:20px;padding:6px;line-height:1;border-radius:50%;transition:background .15s}
+  .ntf-bell-btn:hover{background:#f1f5f9}
+  .ntf-badge{position:absolute;top:-2px;right:-2px;background:#dc2626;color:#fff;font-size:10px;font-weight:700;min-width:16px;height:16px;border-radius:9px;display:none;align-items:center;justify-content:center;padding:0 4px;line-height:1;box-shadow:0 0 0 2px #fff}
+  .ntf-badge.show{display:flex}
+  .ntf-panel{display:none;position:absolute;top:calc(100% + 8px);right:0;width:360px;max-width:88vw;max-height:70vh;overflow-y:auto;background:#fff;border-radius:10px;box-shadow:0 10px 40px rgba(0,0,0,.18);z-index:5000;border:1px solid #e2e8f0}
+  .ntf-panel.open{display:block}
+  .ntf-panel-header{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid #f1f5f9;position:sticky;top:0;background:#fff}
+  .ntf-panel-header strong{font-size:14px;color:#1e293b}
+  .ntf-mark-all{background:none;border:none;color:#2563eb;font-size:12px;cursor:pointer;font-family:inherit}
+  .ntf-mark-all:hover{text-decoration:underline}
+  .ntf-item{display:block;width:100%;text-align:left;padding:11px 14px;border:none;background:none;border-bottom:1px solid #f8fafc;cursor:pointer;font-family:inherit}
+  .ntf-item:hover{background:#f8fafc}
+  .ntf-item.unread{background:#eff6ff}
+  .ntf-item.unread:hover{background:#dbeafe}
+  .ntf-item-title{font-size:13px;color:#1e293b;font-weight:600;display:flex;align-items:center;gap:6px}
+  .ntf-dot{width:7px;height:7px;border-radius:50%;background:#2563eb;flex-shrink:0}
+  .ntf-item-msg{font-size:12.5px;color:#64748b;margin-top:3px;line-height:1.4}
+  .ntf-item-time{font-size:10.5px;color:#94a3b8;margin-top:4px}
+  .ntf-empty{padding:40px 20px;text-align:center;color:#94a3b8;font-size:13px}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-left">
+    <button class="hamburger-btn" onclick="toggleSidebar()" aria-label="เมนู">☰</button>
+    <img src="https://sydijbrkbfvjrcxhfrlo.supabase.co/storage/v1/object/public/Logo/LOGO.jpg" alt="โลโก้" class="logo-img">
+    <div class="system-title">HRIS - ระบบบริหารงานบุคคล มูลนิธิส่งเสริมศิลปาชีพฯ</div>
+    <div class="topbar-divider">|</div>
+    <div class="current-time" id="live-clock">กำลังโหลด...</div>
+  </div>
+  <div class="topbar-right">
+    <div class="user-role" id="topbar-role-badge">กำลังตรวจเช็คสิทธิ์...</div>
+    <div class="user-name" id="topbar-user-name"></div>
+    <div class="ntf-wrap">
+      <button class="ntf-bell-btn" onclick="ntfToggle(event)" aria-label="การแจ้งเตือน">🔔<span class="ntf-badge" id="ntfBadge">0</span></button>
+      <div class="ntf-panel" id="ntfPanel">
+        <div class="ntf-panel-header"><strong>🔔 การแจ้งเตือน</strong><button class="ntf-mark-all" onclick="ntfMarkAllRead()">ทำเครื่องหมายว่าอ่านแล้วทั้งหมด</button></div>
+        <div id="ntfList"><div class="ntf-empty">กำลังโหลด...</div></div>
+      </div>
+    </div>
+    <button class="btn-logout" onclick="handleLogout()">ออกจากระบบ ⟳</button>
+  </div>
+</header>
+
+<div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar()"></div>
+<div class="app-container">
+  <nav class="sidebar" id="sidebar-menu">
+    <button class="sidebar-close-btn" onclick="toggleSidebar()" aria-label="ปิดเมนู">✕</button>
+    <div id="sidebar-menu-items"></div>
+  </nav>
+  <main class="main-content">
+    <h1>👥 ข้อมูลเจ้าหน้าที่</h1>
+    <p class="page-sub" id="pageSubtitle">จัดการประวัติเจ้าหน้าที่ทั้ง 4 ประเภท</p>
+
+    <div class="stat-strip">
+      <div class="stat-chip">ทั้งหมด <strong id="statTotal">—</strong></div>
+      <div class="stat-chip">เจ้าหน้าที่มูลนิธิ <strong id="statType1">—</strong></div>
+      <div class="stat-chip">ทดลองปฏิบัติงาน <strong id="statType2">—</strong></div>
+      <div class="stat-chip">ลูกจ้างชั่วคราว <strong id="statType3">—</strong></div>
+      <div class="stat-chip">ที่ปรึกษา/ผู้เชี่ยวชาญ <strong id="statType4">—</strong></div>
+    </div>
+
+    <div class="card">
+      <div class="toolbar">
+        <div class="search-box">
+          <span>🔍</span>
+          <input type="text" id="staffSearch" placeholder="ค้นหาชื่อ รหัส หรือเลขบัตรประชาชน..." oninput="debouncedSearch()">
+        </div>
+        <select class="select-box" id="deptFilter" onchange="onStaffDeptFilterChange()"><option value="">ทุกหน่วยงาน</option></select>
+        <select class="select-box" id="divisionFilter" onchange="resetAndLoad()" style="display:none"><option value="">ทุกแผนก</option></select>
+        <select class="select-box" id="typeFilter" onchange="resetAndLoad()">
+          <option value="">ทุกประเภท</option>
+          <option value="1">เจ้าหน้าที่มูลนิธิ</option>
+          <option value="2">ทดลองปฏิบัติงาน</option>
+          <option value="3">ลูกจ้างชั่วคราว</option>
+          <option value="4">ที่ปรึกษา/ผู้เชี่ยวชาญ</option>
+        </select>
+        <select class="select-box" id="statusFilter" onchange="resetAndLoad()">
+          <option value="">ทุกสถานะ</option>
+          <option value="active">ปกติ</option>
+          <option value="inactive">ไม่ใช้งาน</option>
+          <option value="resigned">ลาออก</option>
+          <option value="retired">เกษียณ</option>
+          <option value="deceased">เสียชีวิต</option>
+          <option value="terminated">เลิกจ้าง</option>
+        </select>
+        <select class="select-box" id="sortFilter" onchange="resetAndLoad()">
+          <option value="employee_code:asc">รหัส ก→ฮ</option>
+          <option value="created_at:desc">เพิ่มล่าสุด</option>
+          <option value="employee_code:desc">รหัส ฮ→ก</option>
+          <option value="first_name:asc" selected>ชื่อ ก→ฮ</option>
+          <option value="base_salary:asc">เงินเดือน น้อย→มาก</option>
+          <option value="base_salary:desc">เงินเดือน มาก→น้อย</option>
+          <option value="start_date:asc">วันเริ่มงาน เก่า→ใหม่</option>
+          <option value="start_date:desc">วันเริ่มงาน ใหม่→เก่า</option>
+        </select>
+        <button class="btn btn-success" id="btn-add" onclick="openStaffModal()" style="display:none">➕ เพิ่มเจ้าหน้าที่</button>
+        <button class="btn btn-outline" onclick="openImportModal()">⬆ Import Excel</button>
+        <button class="btn btn-outline" onclick="exportExcel()">⬇ Export Excel</button><button class="btn btn-outline" id="drivePhotoBtn" onclick="syncDrivePhotos()" style="display:none" title="คัดลอกรูปจากคลังสัญญาจ้าง (Google Drive) มาแสดงใน HRIS และ HR Desk">🖼 ดึงรูปจากคลังสัญญา</button>
+      </div>
+
+      <div class="bulk-bar" id="bulkBar">
+        <span id="bulkCount">เลือก 0 รายการ</span>
+        <select class="select-box" id="bulkStatusSelect" style="margin-left:auto">
+          <option value="">— เปลี่ยนสถานะ —</option>
+          <option value="active">ปกติ</option>
+          <option value="inactive">ไม่ใช้งาน</option>
+          <option value="resigned">ลาออก</option>
+          <option value="retired">เกษียณ</option>
+          <option value="deceased">เสียชีวิต</option>
+          <option value="terminated">เลิกจ้าง</option>
+        </select>
+        <button class="btn btn-outline btn-sm" onclick="applyBulkStatus()">✓ เปลี่ยนสถานะ</button>
+        <select class="select-box" id="bulkShiftSelect">
+          <option value="">— เลือกกะเวลา —</option>
+        </select>
+        <button class="btn btn-outline btn-sm" onclick="applyBulkShift()">🕐 ตั้งกะเวลานี้</button>
+        <button class="btn btn-outline btn-sm" onclick="bulkExportSelected()">⬇ Export ที่เลือก</button>
+        <button class="btn btn-sm btn-success" onclick="sendToSalary()">💰 ส่งข้อมูลเงินเดือน</button>
+        <button class="btn btn-sm btn-danger" id="btn-bulk-delete" onclick="openBulkDeleteModal()">🗑 ลบที่เลือก</button>
+        <button class="btn btn-outline btn-sm" onclick="clearSelection()">ยกเลิก</button>
+      </div>
+
+      <div class="table-scroll">
+        <table class="data-table" id="mainStaffTable">
+          <thead>
+            <tr>
+              <th style="width:36px"><input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)"></th>
+              <th>รหัส</th><th>เลขบัตรประชาชน</th><th>ชื่อ-สกุล</th>
+              <th>ตำแหน่ง</th><th>หน่วยงาน</th><th>แผนก</th><th>ประเภท</th>
+              <th>เงินเดือน</th><th>เลขบัญชี</th><th>วันเริ่มงาน</th>
+              <th>สถานะ</th><th>จัดการ</th>
+            </tr>
+          </thead>
+          <tbody id="staffTableBody">
+            <tr><td colspan="13"><div class="loading-state"><div class="loading-spinner"></div>กำลังโหลดข้อมูล...</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination" id="pagination" style="display:none">
+        <span class="page-info" id="pageInfo"></span>
+        <div style="display:flex;gap:6px">
+          <button class="page-btn" id="prevPageBtn" onclick="changePage(-1)">‹</button>
+          <span class="page-btn active" id="currentPageDisplay">1</span>
+          <button class="page-btn" id="nextPageBtn" onclick="changePage(1)">›</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- Modal: Add/Edit -->
+<div class="modal-backdrop" id="staffModal">
+  <div class="modal" style="width:860px">
+    <div class="modal-header">
+      <h2 id="staffModalTitle">เพิ่มเจ้าหน้าที่ใหม่</h2>
+      <button class="modal-close" onclick="closeStaffModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-tabs">
+        <div class="modal-tab active" data-tab="basic" onclick="switchTab('basic')">ข้อมูลพื้นฐาน</div>
+        <div class="modal-tab" data-tab="address" onclick="switchTab('address')">ที่อยู่</div>
+        <div class="modal-tab" data-tab="career" onclick="switchTab('career')">ทดลองงาน/เกษียณ</div>
+        <div class="modal-tab" data-tab="transfers" onclick="switchTab('transfers')">โยกย้าย/ตำแหน่ง</div>
+        <div class="modal-tab" data-tab="salary_adjustments" onclick="switchTab('salary_adjustments')">ปรับเงินเดือน</div>
+        <div class="modal-tab" data-tab="trainings" onclick="switchTab('trainings')">ฝึกอบรม</div>
+        <div class="modal-tab" data-tab="disciplinary" onclick="switchTab('disciplinary')">วินัย</div>
+        <div class="modal-tab" data-tab="beneficiaries" onclick="switchTab('beneficiaries')">ผู้รับผลประโยชน์</div>
+        <div class="modal-tab" data-tab="appraisals" onclick="switchTab('appraisals')">ผลการประเมิน</div>
+        <div class="modal-tab" data-tab="personal" onclick="switchTab('personal')">ส่วนบุคคล/รูปถ่าย</div>
+        <div class="modal-tab" data-tab="family" onclick="switchTab('family')">ครอบครัว/ติดต่อฉุกเฉิน</div>
+      </div>
+      <form id="staffForm"><input type="hidden" id="f_id">
+      <div class="tab-panel active" id="tab-basic">
+      <div class="form-grid">
+        <div class="form-group"><label>รหัสพนักงาน</label><input type="text" id="f_employee_code" placeholder="ยังไม่กำหนด — เว้นว่างได้"><span class="field-error" id="err_employee_code"></span></div>
+        <div class="form-group"><label>เลขบัตรประชาชน <span class="req">*</span></label><input type="text" id="f_id_card" placeholder="13 หลัก" maxlength="13" required><span class="field-error" id="err_id_card"></span></div>
+        <div class="form-group"><label>คำนำหน้า</label><select id="f_prefix" onchange="onPrefixChange()"><option value="นาย">นาย</option><option value="นาง">นาง</option><option value="นางสาว">นางสาว</option><option value="__other__">อื่นๆ (ยศ/ตำแหน่ง)</option></select><input type="text" id="f_prefix_custom" placeholder="เช่น ร.ต., ดร." style="display:none;margin-top:6px"></div>
+        <div class="form-group"><label>เพศ</label><select id="f_gender"><option value="M">ชาย</option><option value="F">หญิง</option></select></div>
+        <div class="form-group"><label>ชื่อ <span class="req">*</span></label><input type="text" id="f_first_name" placeholder="ชื่อ" required></div>
+        <div class="form-group"><label>นามสกุล <span class="req">*</span></label><input type="text" id="f_last_name" placeholder="นามสกุล" required></div>
+        <div class="form-group"><label>วันเกิด <span class="req">*</span></label><div id="f_birth_date_wrap"></div></div>
+        <div class="form-group"><label>ประเภทเจ้าหน้าที่ <span class="req">*</span></label><select id="f_staff_type" required onchange="onStaffTypeChange()"><option value="1">เจ้าหน้าที่มูลนิธิ</option><option value="2">ทดลองปฏิบัติงาน</option><option value="3">ลูกจ้างชั่วคราว</option><option value="4">ที่ปรึกษา/ผู้เชี่ยวชาญ</option></select></div>
+        <div class="form-group"><label>หน่วยงาน <span class="req">*</span></label><select id="f_department_id" required></select></div>
+        <div class="form-group"><label>แผนก</label><input type="text" id="f_division" placeholder="เช่น ผ้าไหม, คนสวน, แม่บ้าน, รปภ."></div>
+        <div class="form-group"><label>ตำแหน่ง <span class="req">*</span></label><input type="text" id="f_position" placeholder="ตำแหน่งงาน" required></div>
+        <div class="form-group"><label>วุฒิที่ใช้บรรจุ</label><select id="f_education_level"><option value="">— ไม่ระบุ —</option><option>ม.3 / ต่ำกว่า</option><option>ม.6 / ปวช.</option><option>ปวส.</option><option>ปริญญาตรี</option><option>ปริญญาโท</option></select></div>
+        <div class="form-group"><label>วุฒิสูงสุดปัจจุบัน <span style="font-weight:400;color:var(--gray-500);font-size:12px">(กรอกเฉพาะถ้าต่างจากตอนบรรจุ)</span></label><select id="f_education_level_current"><option value="">— เหมือนตอนบรรจุ —</option><option>ม.3 / ต่ำกว่า</option><option>ม.6 / ปวช.</option><option>ปวส.</option><option>ปริญญาตรี</option><option>ปริญญาโท</option></select></div>
+        <div class="form-group"><label>สาขาวิชา</label><input type="text" id="f_education_field" placeholder="เช่น บัญชี, นิติศาสตร์"></div>
+        <div class="form-group full"><label>สถาบันการศึกษา</label><input type="text" id="f_education_institution" placeholder="เช่น มหาวิทยาลัยธรรมศาสตร์"></div>
+        <div class="form-group"><label>วันเริ่มงาน <span class="req">*</span></label><div id="f_start_date_wrap"></div></div>
+        <div class="form-group" id="contract_date_group"><label>วันหมดสัญญา <span id="contract_date_hint" style="font-size:11px;color:#94a3b8;font-weight:400"></span></label><div id="f_contract_end_date_wrap" style="transition:opacity .2s"></div><div id="contract_auto_info" style="display:none" class="contract-auto-badge"></div></div>
+        <div id="probation_info" style="display:none" class="probation-badge full">⏱️ <strong>ทดลองปฏิบัติงาน 6 เดือน</strong> — เมื่อผ่านการประเมินให้เปลี่ยนเป็นประเภท 1 โดย <u>ไม่เปลี่ยนวันเริ่มงาน</u></div>
+        <div class="form-divider"></div>
+        <div class="form-group"><label id="lbl_base_salary">เงินเดือนฐาน (บาท) <span class="req">*</span></label><input type="number" id="f_base_salary" placeholder="0.00" step="0.01" min="0" required></div>
+        <div class="form-group"><label>ค่าวิชาชีพ (บาท/เดือน)</label><input type="number" id="f_profession_fee" placeholder="0.00" step="0.01" min="0"></div>
+        <div class="form-group"><label>กลุ่ม OT</label><select id="f_ot_group"><option value="1">กลุ่ม 1 — ปฏิบัติงานหลัก (80 บ./ชม.)</option><option value="2">กลุ่ม 2 — ปฏิบัติงานสนับสนุน (60 บ./ชม.)</option></select></div>
+        <div class="form-group"><label>สถานะ</label><select id="f_status" onchange="onStaffStatusChange()"><option value="active">ปกติ</option><option value="inactive">ไม่ใช้งาน</option><option value="resigned">ลาออก</option><option value="retired">เกษียณ</option><option value="deceased">เสียชีวิต</option><option value="terminated">เลิกจ้าง</option></select></div>
+        <div class="form-group" id="resignation_date_group" style="display:none"><label id="resignation_date_label">วันที่ออกจากงานจริง</label><div id="f_resignation_date_wrap"></div><small style="color:#94a3b8;display:block;margin-top:4px">ใช้สร้างรายการแจ้งออกประกันกลุ่มรายเดือนอัตโนมัติ</small></div>
+        <div class="form-group"><label>ประกันสังคม</label><select id="f_ss_exempt"><option value="false">หักประกันสังคมปกติ</option><option value="true">ยกเว้น (อายุเกินเกณฑ์)</option></select></div>
+        <div class="form-group"><label>รหัสสาขาประกันสังคม</label><input type="text" id="f_ss_branch_code" placeholder="6 หลัก" maxlength="6"><small style="color:#94a3b8;display:block;margin-top:4px">* ที่ปรึกษา/ผู้เชี่ยวชาญ (ประเภทที่ 4) จะยกเว้นประกันสังคมอัตโนมัติ ไม่ต้องกรอก</small></div>
+        <div class="form-group"><label>รหัส ID เครื่องสแกน</label><input type="text" id="f_device_id" placeholder="เช่น 00123"></div>
+        <div class="form-group"><label>User UID (บัญชี Login ของพนักงาน — ถ้ามี)</label><input type="text" id="f_user_id" placeholder="วาง UID จาก Supabase Auth (ถ้ายังไม่มีบัญชี เว้นว่างไว้)" style="font-family:monospace;font-size:12px">
+          <button type="button" class="btn btn-outline" id="resetPwBtn" onclick="resetStaffPasswordToDefault()" style="margin-top:6px;font-size:12px;padding:5px 10px;display:none">🔒 รีเซ็ตรหัสผ่านกลับเป็นค่าเริ่มต้น (วันเกิด)</button>
+        </div>
+        <div class="form-divider"></div>
+        <div class="form-group"><label>เบอร์โทรศัพท์</label><input type="text" id="f_phone" placeholder="0XX-XXX-XXXX"></div>
+        <div class="form-group"><label>Email</label><input type="email" id="f_email" placeholder="email@example.com"></div>
+        <div class="form-group"><label>ธนาคาร</label><select id="f_bank_name"><option value="">— เลือกธนาคาร —</option><option>ไทยพาณิชย์ (SCB)</option><option>กรุงเทพ (BBL)</option><option>กสิกรไทย (KBANK)</option><option>กรุงไทย (KTB)</option><option>กรุงศรีอยุธยา (BAY)</option><option>ทหารไทยธนชาต (TTB)</option><option>ออมสิน (GSB)</option><option>ธ.ก.ส. (BAAC)</option><option>อิสลาม (IBANK)</option><option>ยูโอบี (UOB)</option><option>ซีไอเอ็มบี (CIMB)</option></select></div>
+        <div class="form-group"><label>เลขบัญชีธนาคาร</label><input type="text" id="f_bank_account" placeholder="000-0-00000-0"></div>
+        <div class="form-divider"></div>
+        <div class="form-group full"><label>กะเวลาทำงาน</label><select id="f_shift_id"><option value="">— เลือกกะเวลา —</option></select></div>
+      </div>
+      </div><!-- /tab-basic -->
+
+      <div class="tab-panel" id="tab-address">
+        <div class="form-grid">
+          <div class="form-group full"><label>ที่อยู่ตามบัตรประชาชน/ทะเบียนบ้าน</label><textarea id="f_address" rows="2" placeholder="บ้านเลขที่ ถนน แขวง/ตำบล เขต/อำเภอ จังหวัด รหัสไปรษณีย์" oninput="if(document.getElementById('f_address_same').checked)document.getElementById('f_address_current').value=this.value;"></textarea></div>
+          <div class="form-group full check-inline"><label><input type="checkbox" id="f_address_same" onchange="onAddressSameToggle()"> ที่อยู่ปัจจุบันเหมือนกับที่อยู่ตามบัตรประชาชน/ทะเบียนบ้าน</label></div>
+          <div class="form-group full"><label>ที่อยู่ปัจจุบัน</label><textarea id="f_address_current" rows="2" placeholder="บ้านเลขที่ ถนน แขวง/ตำบล เขต/อำเภอ จังหวัด รหัสไปรษณีย์"></textarea></div>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="tab-career">
+        <div id="probationBlock" style="display:none">
+          <div class="section-heading" style="color:#7c3aed">⏱️ ข้อมูลช่วงทดลองปฏิบัติงาน (ประเภทที่ 2)</div>
+          <div id="probationDueInfo" class="probation-badge" style="margin-bottom:14px;display:block"></div>
+          <div class="eval-block">
+            <strong style="font-size:13px">ผลประเมินครั้งที่ 1 (3 เดือนแรก)</strong>
+            <div class="form-grid" style="margin-top:8px">
+              <div class="form-group"><label>วันที่ประเมิน</label><div id="f_probation_eval1_date_wrap"></div></div>
+              <div class="form-group"><label>ผลการประเมิน</label><select id="f_probation_eval1_result"><option value="pending">รอประเมิน</option><option value="pass">ผ่าน</option><option value="fail">ไม่ผ่าน</option></select></div>
+              <div class="form-group full"><label>หมายเหตุ</label><textarea id="f_probation_eval1_note" rows="2"></textarea></div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <button type="button" class="btn btn-outline btn-sm" onclick="saveProbationEval(1)">💾 บันทึกผลประเมิน</button>
+              <button type="button" class="btn btn-success btn-sm" onclick="applyProbationRaise(1)">➕ ปรับเงินเดือน +1,000 บาท</button>
+            </div>
+          </div>
+          <div class="eval-block" style="margin-top:14px">
+            <strong style="font-size:13px">ผลประเมินครั้งที่ 2 (3 เดือนหลัง)</strong>
+            <div class="form-grid" style="margin-top:8px">
+              <div class="form-group"><label>วันที่ประเมิน</label><div id="f_probation_eval2_date_wrap"></div></div>
+              <div class="form-group"><label>ผลการประเมิน</label><select id="f_probation_eval2_result"><option value="pending">รอประเมิน</option><option value="pass">ผ่าน</option><option value="fail">ไม่ผ่าน</option></select></div>
+              <div class="form-group full"><label>หมายเหตุ</label><textarea id="f_probation_eval2_note" rows="2"></textarea></div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <button type="button" class="btn btn-outline btn-sm" onclick="saveProbationEval(2)">💾 บันทึกผลประเมิน</button>
+              <button type="button" class="btn btn-success btn-sm" onclick="applyProbationRaise(2)">➕ ปรับเงินเดือน +1,000 บาท</button>
+            </div>
+          </div>
+        </div>
+        <div id="retirementBlock" style="display:none">
+          <div class="section-heading" style="color:#a16207">🎂 ข้อมูลเกษียณอายุ / ต่อสัญญาปีต่อปี</div>
+          <div id="retirementDueInfo" class="contract-auto-badge" style="margin-bottom:14px;display:block"></div>
+          <p style="font-size:12px;color:#64748b;margin-bottom:10px">เมื่อครบเกษียณ (31 ธ.ค. ปีที่อายุครบ 65 ปี) หากพิจารณาต่อสัญญา ให้บันทึกรายการด้านล่าง — <strong>ประเภทที่ 1</strong> ต่อปีต่อปีพร้อมพิจารณาปรับเงินเดือนประจำปี หรือ <strong>ประเภทที่ 4 ที่ปรึกษา/ผู้เชี่ยวชาญ</strong> รับเป็นค่าตอบแทนปีต่อปี ไม่มีการปรับ</p>
+          <div id="tab-contract_renewals-container"></div>
+        </div>
+        <div id="careerEmptyMsg" class="locked-tab-msg" style="display:none"></div>
+      </div>
+
+      <div class="tab-panel" id="tab-transfers"></div>
+      <div class="tab-panel" id="tab-salary_adjustments"></div>
+      <div class="tab-panel" id="tab-trainings"></div>
+      <div class="tab-panel" id="tab-disciplinary"></div>
+      <div class="tab-panel" id="tab-beneficiaries"></div>
+      <div class="tab-panel" id="tab-appraisals"></div>
+
+      <div class="tab-panel" id="tab-personal">
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>รูปถ่ายเจ้าหน้าที่</label>
+            <div class="photo-upload-box">
+              <div class="photo-preview" id="photoPreview">👤</div>
+              <div>
+                <input type="file" id="f_photo_file" accept="image/*" onchange="handlePhotoSelect(event)" style="display:none">
+                <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('f_photo_file').click()">📷 เลือกรูป</button>
+                <button type="button" class="btn btn-outline btn-sm" id="removePhotoBtn" style="display:none" onclick="removePhoto()">ลบรูป</button>
+                <div style="font-size:11px;color:#94a3b8;margin-top:6px">ระบบจะย่อรูปให้อัตโนมัติเป็นขนาด ~450×600px (คุณภาพเทียบเท่ารูป 1 นิ้วสำหรับพิมพ์เอกสาร) และไฟล์ไม่เกิน 2MB</div>
+                <div id="photoUploadStatus" style="font-size:12px;color:#3b82f6;margin-top:4px"></div>
+              </div>
+            </div>
+            <input type="hidden" id="f_photo_url">
+          </div>
+          <div class="form-divider"></div>
+          <div class="form-group"><label>กรุ๊ปเลือด</label><select id="f_blood_type"><option value="">— ไม่ระบุ —</option><option>A</option><option>B</option><option>AB</option><option>O</option></select></div>
+          <div class="form-group"><label>สัญชาติ</label><input type="text" id="f_nationality" placeholder="ไทย" value="ไทย"></div>
+          <div class="form-group"><label>เชื้อชาติ</label><input type="text" id="f_ethnicity" placeholder="ไทย" value="ไทย"></div>
+          <div class="form-group"><label>ศาสนา</label><select id="f_religion"><option value="">— ไม่ระบุ —</option><option>พุทธ</option><option>อิสลาม</option><option>คริสต์</option><option>อื่นๆ</option></select></div>
+          <div class="form-group full"><label>โรคประจำตัว</label><textarea id="f_chronic_disease" rows="2" placeholder="ไม่มี (หากไม่มีให้เว้นว่างไว้)"></textarea></div>
+        </div>
+      </div><!-- /tab-personal -->
+
+      <div class="tab-panel" id="tab-family">
+        <div class="form-grid">
+          <div class="form-group"><label>สถานภาพสมรส</label><select id="f_marital_status" onchange="onMaritalChange()"><option value="โสด">โสด</option><option value="สมรส">สมรส</option><option value="หย่าร้าง">หย่าร้าง</option><option value="หม้าย">หม้าย (คู่สมรสถึงแก่กรรม)</option></select></div>
+          <div></div>
+          <div class="form-group" id="spouseNameGroup" style="display:none"><label>ชื่อ-สกุล คู่สมรส</label><input type="text" id="f_spouse_name"></div>
+          <div class="form-group" id="spousePhoneGroup" style="display:none"><label>เบอร์ติดต่อคู่สมรส</label><input type="text" id="f_spouse_phone"></div>
+          <div class="form-divider"></div>
+          <div class="form-group full" style="font-weight:700;color:#334155;margin-bottom:-6px">ข้อมูลบิดา</div>
+          <div class="form-group"><label>ชื่อ-สกุลบิดา</label><input type="text" id="f_father_name"></div>
+          <div class="form-group"><label>เบอร์ติดต่อบิดา</label><input type="text" id="f_father_phone"></div>
+          <div class="form-group"><label>สถานภาพบิดา</label><select id="f_father_status"><option value="">— ไม่ระบุ —</option><option>มีชีวิตอยู่</option><option>ถึงแก่กรรม</option></select></div>
+          <div class="form-group"><label>ที่อยู่บิดา</label><input type="text" id="f_father_address"></div>
+          <div class="form-divider"></div>
+          <div class="form-group full" style="font-weight:700;color:#334155;margin-bottom:-6px">ข้อมูลมารดา</div>
+          <div class="form-group"><label>ชื่อ-สกุลมารดา</label><input type="text" id="f_mother_name"></div>
+          <div class="form-group"><label>เบอร์ติดต่อมารดา</label><input type="text" id="f_mother_phone"></div>
+          <div class="form-group"><label>สถานภาพมารดา</label><select id="f_mother_status"><option value="">— ไม่ระบุ —</option><option>มีชีวิตอยู่</option><option>ถึงแก่กรรม</option></select></div>
+          <div class="form-group"><label>ที่อยู่มารดา</label><input type="text" id="f_mother_address"></div>
+          <div class="form-divider"></div>
+          <div class="form-group full" style="font-weight:700;color:#334155;margin-bottom:-6px">ผู้ติดต่อฉุกเฉิน (2 ราย)</div>
+          <div class="form-group"><label>ชื่อ-สกุล ผู้ติดต่อฉุกเฉิน 1</label><input type="text" id="f_emergency_contact1_name"></div>
+          <div class="form-group"><label>เบอร์โทร</label><input type="text" id="f_emergency_contact1_phone"></div>
+          <div class="form-group full"><label>ความสัมพันธ์</label><input type="text" id="f_emergency_contact1_relation" placeholder="เช่น บิดา, มารดา, พี่, เพื่อน"></div>
+          <div class="form-group"><label>ชื่อ-สกุล ผู้ติดต่อฉุกเฉิน 2</label><input type="text" id="f_emergency_contact2_name"></div>
+          <div class="form-group"><label>เบอร์โทร</label><input type="text" id="f_emergency_contact2_phone"></div>
+          <div class="form-group full"><label>ความสัมพันธ์</label><input type="text" id="f_emergency_contact2_relation" placeholder="เช่น บิดา, มารดา, พี่, เพื่อน"></div>
+          <div class="form-divider"></div>
+          <div class="form-group full" style="font-weight:700;color:#334155;margin-bottom:-6px">ข้อมูลบุตร</div>
+        </div>
+        <div id="tab-family-children-container"></div>
+      </div><!-- /tab-family -->
+
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeStaffModal()">ยกเลิก</button>
+      <button class="btn btn-primary" id="saveStaffBtn" onclick="saveStaff()">💾 บันทึกข้อมูล</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Delete -->
+<div class="modal-backdrop" id="deleteModal">
+  <div class="modal" style="width:400px">
+    <div class="modal-header"><h2>ยืนยันการลบ</h2><button class="modal-close" onclick="closeDeleteModal()">✕</button></div>
+    <div class="modal-body"><p style="font-size:14px;color:#475569">ต้องการลบ <strong id="deleteStaffName"></strong> ออกจากระบบใช่หรือไม่?<br><span style="color:#ef4444;font-size:12px">การลบนี้ไม่สามารถย้อนกลับได้</span></p></div>
+    <div class="modal-footer"><button class="btn btn-outline" onclick="closeDeleteModal()">ยกเลิก</button><button class="btn btn-danger" onclick="confirmDelete()">ลบข้อมูล</button></div>
+  </div>
+</div>
+
+<!-- Modal: Bulk Delete -->
+<div class="modal-backdrop" id="bulkDeleteModal">
+  <div class="modal" style="width:420px">
+    <div class="modal-header"><h2>ยืนยันการลบหลายรายการ</h2><button class="modal-close" onclick="document.getElementById('bulkDeleteModal').classList.remove('open')">✕</button></div>
+    <div class="modal-body"><p style="font-size:14px;color:#475569">ต้องการลบเจ้าหน้าที่ <strong id="bulkDeleteCount">0</strong> รายการที่เลือกใช่หรือไม่?<br><span style="color:#ef4444;font-size:12px">การลบนี้ไม่สามารถย้อนกลับได้</span></p></div>
+    <div class="modal-footer"><button class="btn btn-outline" onclick="document.getElementById('bulkDeleteModal').classList.remove('open')">ยกเลิก</button><button class="btn btn-danger" onclick="confirmBulkDelete()">ลบทั้งหมด</button></div>
+  </div>
+</div>
+
+<!-- Modal: Import -->
+<div class="modal-backdrop" id="importModal">
+  <div class="modal" style="width:700px">
+    <div class="modal-header"><h2>📥 Import ข้อมูลเจ้าหน้าที่จาก Excel</h2><button class="modal-close" onclick="closeImportModal()">✕</button></div>
+    <div class="modal-body">
+      <div id="importStep1">
+        <p style="font-size:13px;color:#475569;margin-bottom:12px">ดาวน์โหลด<b>เทมเพลตด้านล่าง</b>ก่อนกรอกข้อมูล — รองรับข้อมูลครบทุกส่วน (ข้อมูลพื้นฐาน, การศึกษา, ธนาคาร, ที่อยู่ปัจจุบัน, ครอบครัว/บิดามารดา, ผู้ติดต่อฉุกเฉิน 2 ราย, ข้อมูลสุขภาพ) ในไฟล์เทมเพลตมีชีตที่ 2 อธิบายค่าที่ใช้ได้ของแต่ละคอลัมน์ให้ครบ<br><span style="color:#f59e0b;font-size:11.5px">⚠ วันที่ใช้รูปแบบ DD/MM/YYYY <strong>ปี พ.ศ.</strong></span> — <span style="color:#94a3b8;font-size:11.5px">รูปถ่ายและการผูกบัญชี Login ต้องทำแยกเป็นรายคนหลัง import เสร็จ ไม่รองรับผ่านไฟล์</span><br><span style="color:#16a34a;font-size:11.5px">✓ ไฟล์ที่ Export ออกจากหน้านี้ (⬇ Export Excel) สามารถลากมา Import กลับได้ทันที ระบบจะแปลงหัวคอลัมน์และค่าให้อัตโนมัติ</span></p>
+        <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()"><div class="icon">📄</div><p><strong>คลิกเพื่อเลือกไฟล์</strong> หรือลากไฟล์มาวางที่นี่</p><p style="margin-top:4px;font-size:12px">รองรับ .xlsx, .xls, .csv</p></div>
+        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleFileSelect(event)">
+        <div style="margin-top:10px"><a href="#" onclick="downloadTemplate(event)" style="font-size:12.5px;color:#3b82f6;font-weight:600">⬇ ดาวน์โหลด Template ตัวอย่าง</a></div>
+      </div>
+      <div id="importStep2" style="display:none">
+        <div class="import-summary" id="importSummary"></div>
+        <div class="import-preview"><table id="previewTable"></table></div>
+        <div class="import-progress" id="importProgressWrap" style="display:none"><div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div><p style="font-size:12px;color:#94a3b8;margin-top:6px" id="progressText"></p></div>
+      </div>
+    </div>
+    <div class="modal-footer" id="importFooter" style="display:none">
+      <button class="btn btn-outline" onclick="closeImportModal()">ยกเลิก</button>
+      <button class="btn btn-success" id="confirmImportBtn" onclick="confirmImport()">นำเข้าข้อมูล</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL='https://sydijbrkbfvjrcxhfrlo.supabase.co';
+const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5ZGlqYnJrYmZ2anJjeGhmcmxvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MTEwMTQsImV4cCI6MjA5ODI4NzAxNH0.vm6s9R6Lig8DKz41rRfBnvaXqu4QdoH0MGx0BS77ZRA';
+const{createClient}=supabase;const sb=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+const PAGE_SIZE=100;
+const typeLabel={1:'เจ้าหน้าที่มูลนิธิ',2:'ทดลองปฏิบัติงาน',3:'ลูกจ้างชั่วคราว',4:'ที่ปรึกษา/ผู้เชี่ยวชาญ'};
+const typeClass={1:'type-1',2:'type-2',3:'type-3',4:'type-4'};
+const statusLabel={active:'ปกติ',inactive:'ไม่ใช้งาน',resigned:'ลาออก',retired:'เกษียณ',deceased:'เสียชีวิต',terminated:'เลิกจ้าง'};
+const statusClass={active:'status-active',inactive:'status-inactive',resigned:'status-resigned',retired:'status-retired',deceased:'status-resigned',terminated:'status-resigned'};
+const THAI_EXPORT_HEADER_MAP={'รหัสพนักงาน':'employee_code','เลขบัตรประชาชน':'id_card','คำนำหน้า':'prefix','ชื่อ':'first_name','นามสกุล':'last_name','วันเกิด':'birth_date','เพศ':'gender','ประเภท':'staff_type','หน่วยงาน':'department_code','แผนก':'division','ตำแหน่ง':'position','วุฒิที่ใช้บรรจุ':'education_level','วุฒิสูงสุดปัจจุบัน':'education_level_current','สาขาวิชา':'education_field','สถาบันการศึกษา':'education_institution','วันเริ่มงาน':'start_date','วันหมดสัญญา':'contract_end_date','เงินเดือนฐาน':'base_salary','ค่าวิชาชีพ':'profession_fee','สถานะ':'status','วันที่ออกจากงานจริง':'resignation_date','ที่อยู่ตามบัตรประชาชน/ทะเบียนบ้าน':'address','ที่อยู่ปัจจุบัน':'address_current','เบอร์โทร':'phone','Email':'email','ธนาคาร':'bank_name','เลขบัญชี':'bank_account','กลุ่ม OT':'ot_group','รหัสสาขา SS':'ss_branch_code','ยกเว้น SS':'ss_exempt','รหัสเครื่องสแกน':'device_id','กรุ๊ปเลือด':'blood_type','สัญชาติ':'nationality','เชื้อชาติ':'ethnicity','ศาสนา':'religion','โรคประจำตัว':'chronic_disease','สถานภาพสมรส':'marital_status','ชื่อคู่สมรส':'spouse_name','เบอร์โทรคู่สมรส':'spouse_phone','ชื่อบิดา':'father_name','เบอร์โทรบิดา':'father_phone','ที่อยู่บิดา':'father_address','สถานภาพบิดา':'father_status','ชื่อมารดา':'mother_name','เบอร์โทรมารดา':'mother_phone','ที่อยู่มารดา':'mother_address','สถานภาพมารดา':'mother_status','ผู้ติดต่อฉุกเฉิน1 ชื่อ':'emergency_contact1_name','ผู้ติดต่อฉุกเฉิน1 เบอร์โทร':'emergency_contact1_phone','ผู้ติดต่อฉุกเฉิน1 ความสัมพันธ์':'emergency_contact1_relation','ผู้ติดต่อฉุกเฉิน2 ชื่อ':'emergency_contact2_name','ผู้ติดต่อฉุกเฉิน2 เบอร์โทร':'emergency_contact2_phone','ผู้ติดต่อฉุกเฉิน2 ความสัมพันธ์':'emergency_contact2_relation'};
+let currentUser=null,currentProfile=null,departments=[],deptMap={},deptCodeMap={},ssConfig=[];
+let currentPage=0,totalCount=0,searchTimer=null,pendingDeleteId=null,parsedImportRows=[];
+let originalStaffStatus=null;
+
+const superAdminMenu=[
+  {type:'category',name:'ภาพรวม'},{type:'item',name:'Dashboard',icon:'📊',link:'dashboard.html'},
+  {type:'category',name:'บุคลากร'},{type:'item',name:'ข้อมูลเจ้าหน้าที่',icon:'👥',link:'staff.html',active:true},{type:'item',name:'อนุมัติแก้ไขข้อมูล',icon:'📝',link:'approve_edit_requests.html'},
+  {type:'category',name:'การเวลา'},{type:'item',name:'จัดการ Shift',icon:'🕐',link:'shift.html'},{type:'item',name:'บันทึกเวลา',icon:'📋',link:'timesheet.html'},{type:'item',name:'คำขอ OT',icon:'⏰',link:'ot.html'},{type:'item',name:'อนุมัติคำขอปรับปรุงเวลา',icon:'⏱️',link:'approve_time_correction.html'},
+  {type:'category',name:'การเงิน'},{type:'item',name:'เงินเดือน',icon:'💰',link:'salary.html'},{type:'item',name:'นำเข้าเงินเดือนย้อนหลัง',icon:'📥',link:'salary_history_import.html'},{type:'item',name:'Payslip',icon:'📄',link:'payslip.html'},{type:'item',name:'ส่งข้อมูลธนาคาร',icon:'🏦',link:'bank_transfer.html'},{type:'item',name:'หนังสือรับรอง 50ทวิ',icon:'📄',link:'tax50twi.html'},{type:'item',name:'ประกันสังคม',icon:'🏛️',link:'social_security.html'},{type:'item',name:'รายงานภาษีกรมสรรพากร',icon:'📄',link:'tax_report.html'},
+  {type:'category',name:'สวัสดิการ'},{type:'item',name:'ประกันสุขภาพและอุบัติเหตุกลุ่ม',icon:'🏥',link:'group_insurance.html'},{type:'item',name:'ค่าตอบแทนเงินบำเหน็จ',icon:'🎖️',link:'gratuity.html'},
+  {type:'category',name:'ระบบ'},{type:'item',name:'แชทกับเจ้าหน้าที่',icon:'💬',link:'manage_chat.html'},{type:'item',name:'ประกาศคำสั่ง (จัดการ)',icon:'📜',link:'manage_announcements.html'},{type:'item',name:'หนังสือรับรอง (อนุมัติขอ)',icon:'📝',link:'approve_cert.html'},{type:'item',name:'50 ทวิ (อนุมัติขอ)',icon:'📜',link:'approve_50twi.html'},{type:'item',name:'อนุมัติคำขอลา',icon:'🗓️',link:'approve_leave.html'},{type:'item',name:'คุมเลขที่คำสั่ง/เอกสาร',icon:'📑',link:'document_control.html'},{type:'item',name:'สำรอง/กู้คืนข้อมูล',icon:'🗄️',link:'system_backup.html'},{type:'item',name:'ตั้งค่าระบบ',icon:'⚙️',link:'settings.html'},
+];
+const unitAdminMenu=[
+  {type:'category',name:'ภาพรวม'},{type:'item',name:'Dashboard',icon:'📊',link:'dashboard.html'},
+  {type:'category',name:'บุคลากร'},{type:'item',name:'ข้อมูลเจ้าหน้าที่',icon:'👥',link:'staff.html',active:true},{type:'item',name:'อนุมัติแก้ไขข้อมูล',icon:'📝',link:'approve_edit_requests.html'},
+  {type:'category',name:'การเวลา'},{type:'item',name:'จัดการ Shift',icon:'🕐',link:'shift.html'},{type:'item',name:'บันทึกเวลา',icon:'📋',link:'timesheet.html'},{type:'item',name:'คำขอ OT',icon:'⏰',link:'ot.html'},{type:'item',name:'อนุมัติคำขอปรับปรุงเวลา',icon:'⏱️',link:'approve_time_correction.html'},
+  {type:'category',name:'การเงิน'},{type:'item',name:'เงินเดือน',icon:'💰',link:'salary.html'},{type:'item',name:'Payslip',icon:'📄',link:'payslip.html'},{type:'item',name:'ส่งข้อมูลธนาคาร',icon:'🏦',link:'bank_transfer.html'},{type:'item',name:'ประกันสังคม / กยศ',icon:'🏛️',link:'social_security.html'},
+  {type:'category',name:'ระบบ'},{type:'item',name:'แชทกับเจ้าหน้าที่',icon:'💬',link:'manage_chat.html'},{type:'item',name:'หนังสือรับรอง (กดขอ)',icon:'📝',link:'request_cert.html'},{type:'item',name:'50 ทวิ (กดขอ)',icon:'📜',link:'request_50twi.html'},{type:'item',name:'ขอลา (พนักงาน)',icon:'🗓️',link:'request_leave.html'},{type:'item',name:'อนุมัติคำขอลา',icon:'✅',link:'approve_leave.html'},
+];
+
+function renderSidebar(m){const c=document.getElementById('sidebar-menu-items');c.innerHTML='';m.forEach(x=>{if(x.type==='category'){const d=document.createElement('div');d.className='menu-category';d.innerText=x.name;c.appendChild(d);}else{const a=document.createElement('a');a.href=x.link||'#';a.className='menu-item'+(x.active?' active':'');a.innerHTML=`<span>${x.icon}</span> ${x.name}`;c.appendChild(a);}});}
+function toggleSidebar(){document.getElementById('sidebar-menu').classList.toggle('open');document.getElementById('sidebarBackdrop').classList.toggle('show');}
+
+async function authGuard(){const{data}=await sb.auth.getSession();if(!data.session){window.location.href='login.html';return false;}currentUser=data.session.user;const{data:p,error}=await sb.from('profiles').select('display_name,role,department,admin_group_code').eq('id',currentUser.id).single();if(error||!p||(p.role!=='super'&&p.role!=='unit')){window.location.href='login.html';return false;}currentProfile=p;
+  // ถ้าเป็นแอดมินระดับกลุ่ม (เช่น Unit01 ของ กศช.) ให้ดึงรายชื่อหน่วยงานย่อยทั้งหมดในกลุ่มมาด้วย
+  if(currentProfile.role==='unit'&&currentProfile.admin_group_code){
+    const{data:groupDepts}=await sb.from('departments').select('name').eq('group_code',currentProfile.admin_group_code);
+    currentProfile.effectiveDepartments=(groupDepts||[]).map(d=>d.name);
+  }else if(currentProfile.department){
+    currentProfile.effectiveDepartments=[currentProfile.department];
+  }else{
+    currentProfile.effectiveDepartments=[];
+  }
+  const isSuper=currentProfile.role==='super';document.getElementById('topbar-role-badge').innerText=isSuper?'⬡ Super Admin':'⬡ Unit Admin';document.getElementById('topbar-user-name').innerText=currentProfile.display_name||currentUser.email;renderSidebar(isSuper?superAdminMenu:unitAdminMenu);document.getElementById('btn-add').style.display='inline-flex';if(!isSuper){const uidEl=document.getElementById('f_user_id');if(uidEl){uidEl.readOnly=true;uidEl.style.background='#f1f5f9';uidEl.title='การผูกบัญชีผู้ใช้ทำได้เฉพาะ Super Admin';}document.getElementById('pageSubtitle').textContent=`จัดการประวัติเจ้าหน้าที่ — ${currentProfile.admin_group_code?('กลุ่ม '+currentProfile.admin_group_code+' ('+currentProfile.effectiveDepartments.length+' หน่วยงาน)'):(currentProfile.department||'')}`;document.getElementById('btn-bulk-delete').style.display='none';}return true;}
+async function handleLogout(){await sb.auth.signOut();window.location.href='login.html';}
+
+function startLiveClock(){function t(){const n=new Date();const days=['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];const months=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];document.getElementById('live-clock').innerText=`วัน${days[n.getDay()]}ที่ ${n.getDate()} ${months[n.getMonth()]} ${n.getFullYear()+543} ${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')} น.`;}setInterval(t,1000);t();}
+
+function calcSS(salary,yearBE){const c=ssConfig.find(x=>yearBE>=x.year_start_be&&(x.year_end_be===null||yearBE<=x.year_end_be));if(!c)return 0;const wage=Number(salary||0);if(wage<=0)return 0;const MIN_WAGE_BASE=1650;const base=Math.min(Math.max(wage,MIN_WAGE_BASE),Number(c.wage_ceiling));return Math.round(base*Number(c.rate_pct)/100);}
+function calcTax(monthly,ss,months){months=months||12;const a=monthly*months;const t=Math.max(a-Math.min(a*.5,100000)-60000-ss*months,0);const b=[[150000,0],[300000,.05],[500000,.1],[750000,.15],[1000000,.2],[2000000,.25],[5000000,.3],[Infinity,.35]];let tax=0,prev=0;for(const[max,rate]of b){if(t<=prev)break;tax+=(Math.min(t,max)-prev)*rate;prev=max;}return Math.round(tax/months);}
+
+async function loadDepartments(){const{data,error}=await sb.from('departments').select('name').eq('is_active',true).order('name');if(error){showToast('โหลดหน่วยงานไม่สำเร็จ: '+error.message,true);return;}const uniq=(data||[]).map(r=>r.name);departments=uniq;const df=document.getElementById('deptFilter'),fd=document.getElementById('f_department_id');uniq.forEach(d=>{df.appendChild(new Option(d,d));fd.appendChild(new Option(d,d));});
+  if(currentProfile.role!=='super'&&currentProfile.admin_group_code){
+    // แอดมินระดับกลุ่ม — จำกัดตัวเลือกเฉพาะหน่วยงานในกลุ่ม แต่เลือกได้มากกว่า 1 หน่วยงาน (ไม่ล็อกค่าเดียว)
+    [df,fd].forEach(sel=>{[...sel.options].forEach(o=>{if(o.value&&!currentProfile.effectiveDepartments.includes(o.value))o.remove();});});
+  }else if(currentProfile.role!=='super'&&currentProfile.department){if(![...fd.options].some(o=>o.value===currentProfile.department))fd.appendChild(new Option(currentProfile.department,currentProfile.department));df.value=currentProfile.department;df.disabled=true;fd.value=currentProfile.department;fd.disabled=true;}
+  document.getElementById('divisionFilter').style.display='inline-block';
+  await populateDivisionFilterStaff();
+}
+
+async function populateDivisionFilterStaff(){
+  let q=sb.from('staff').select('division').not('division','is',null);
+  if(currentProfile.role!=='super'&&currentProfile.effectiveDepartments.length)q=q.in('department',currentProfile.effectiveDepartments);
+  const deptVal=document.getElementById('deptFilter').value;
+  if(deptVal)q=q.eq('department',deptVal);
+  const{data}=await q;
+  const uniqDivisions=[...new Set((data||[]).map(r=>r.division).filter(Boolean))].sort();
+  const divFilter=document.getElementById('divisionFilter');
+  const prevVal=divFilter.value;
+  divFilter.innerHTML='<option value="">ทุกแผนก</option>'+uniqDivisions.map(d=>`<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('');
+  if(uniqDivisions.includes(prevVal))divFilter.value=prevVal;
+}
+
+function onStaffDeptFilterChange(){populateDivisionFilterStaff();resetAndLoad();}
+
+async function loadStats(){let q=sb.from('staff').select('staff_type');if(currentProfile.role!=='super'&&currentProfile.effectiveDepartments.length)q=q.in('department',currentProfile.effectiveDepartments);const{data}=await q;const c={1:0,2:0,3:0,4:0};(data||[]).forEach(r=>c[r.staff_type]=(c[r.staff_type]||0)+1);document.getElementById('statTotal').textContent=(data||[]).length.toLocaleString();[1,2,3,4].forEach(t=>document.getElementById('statType'+t).textContent=c[t].toLocaleString());}
+
+async function loadStaff(){const tbody=document.getElementById('staffTableBody');tbody.innerHTML=`<tr><td colspan="13"><div class="loading-state"><div class="loading-spinner"></div>กำลังโหลดข้อมูล...</div></td></tr>`;let q=sb.from('staff').select('*',{count:'exact'});
+// ★ unit_admin เห็นเฉพาะหน่วยตัวเอง
+if(currentProfile.role!=='super'&&currentProfile.admin_group_code){const dv=document.getElementById('deptFilter').value;q=dv?q.eq('department',dv):q.in('department',currentProfile.effectiveDepartments);}else if(currentProfile.role!=='super'&&currentProfile.department){q=q.eq('department',currentProfile.department);}else{const dv=document.getElementById('deptFilter').value;if(dv)q=q.eq('department',dv);}
+const tv=document.getElementById('typeFilter').value;const sv=document.getElementById('statusFilter').value;const sr=document.getElementById('staffSearch').value.trim();const dvv=document.getElementById('divisionFilter').value;if(tv)q=q.eq('staff_type',tv);if(sv)q=q.eq('status',sv);if(dvv)q=q.eq('division',dvv);if(sr)q=q.or(`first_name.ilike.%${sr}%,last_name.ilike.%${sr}%,employee_code.ilike.%${sr}%,id_card.ilike.%${sr}%`);
+const from=currentPage*PAGE_SIZE;const[sc,sd]=(document.getElementById('sortFilter').value||'first_name:asc').split(':');q=q.order(sc,{ascending:sd==='asc'}).range(from,from+PAGE_SIZE-1);
+const{data,error,count}=await q;if(error){tbody.innerHTML=`<tr><td colspan="13"><div class="empty-state">⚠️ โหลดไม่สำเร็จ: ${error.message}</div></td></tr>`;return;}totalCount=count||0;
+if(!data||data.length===0){tbody.innerHTML=`<tr><td colspan="13"><div class="empty-state"><div class="icon">📭</div>ไม่พบข้อมูลเจ้าหน้าที่</div></td></tr>`;}
+else{tbody.innerHTML=data.map(s=>{const eb=`<button class="action-btn btn-edit" onclick='editStaff(${JSON.stringify(s).replace(/'/g,"&#39;")})'>แก้ไข</button>`;const db=currentProfile.role==='super'?`<button class="action-btn btn-del" onclick="openDeleteModal('${s.id}','${escapeHtml(s.prefix||'')}${escapeHtml(s.first_name)} ${escapeHtml(s.last_name)}')">ลบ</button>`:'';return`<tr><td><input type="checkbox" class="rowCheckbox" value="${s.id}" onchange="onRowCheckChange()"></td><td>${s.employee_code?`<code style="font-size:11px;background:#f1f5f9;padding:2px 6px;border-radius:4px">${escapeHtml(s.employee_code)}</code>`:'<span style="color:#cbd5e1">—</span>'}</td><td style="font-family:monospace;font-size:11px">${formatIdCard(s.id_card)}</td><td><strong>${escapeHtml(s.prefix||'')}${escapeHtml(s.first_name)} ${escapeHtml(s.last_name)}</strong></td><td>${escapeHtml(s.position||'')}</td><td>${escapeHtml(s.department||'—')}</td><td>${escapeHtml(s.division||'—')}</td><td><span class="staff-type-badge ${typeClass[s.staff_type]||''}">${typeLabel[s.staff_type]||'?'}</span></td><td style="text-align:right">${Number(s.base_salary||0).toLocaleString(undefined,{minimumFractionDigits:2})}</td><td style="font-family:monospace;font-size:11px">${escapeHtml(s.bank_account||'—')}</td><td>${formatDateTH(s.start_date)}</td><td><span class="status-pill ${statusClass[s.status]||''}">${statusLabel[s.status]||s.status}</span></td><td style="white-space:nowrap">${eb} ${db}</td></tr>`;}).join('');}
+renderPagination();}
+
+function renderPagination(){const pag=document.getElementById('pagination');if(totalCount<=PAGE_SIZE){pag.style.display='none';return;}pag.style.display='flex';const tp=Math.ceil(totalCount/PAGE_SIZE);const from=currentPage*PAGE_SIZE+1,to=Math.min((currentPage+1)*PAGE_SIZE,totalCount);document.getElementById('pageInfo').textContent=`แสดง ${from}–${to} จาก ${totalCount.toLocaleString()} รายการ`;document.getElementById('currentPageDisplay').textContent=`${currentPage+1} / ${tp}`;document.getElementById('prevPageBtn').disabled=currentPage===0;document.getElementById('nextPageBtn').disabled=currentPage>=tp-1;}
+function changePage(d){currentPage=Math.max(0,currentPage+d);loadStaff();}
+function resetAndLoad(){currentPage=0;loadStaff();}
+function debouncedSearch(){clearTimeout(searchTimer);searchTimer=setTimeout(resetAndLoad,350);}
+
+function escapeHtml(s){if(s==null)return'';return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function formatIdCard(id){if(!id||id.length!==13)return id||'—';return`${id[0]}-${id.slice(1,5)}-${id.slice(5,10)}-${id.slice(10,12)}-${id[12]}`;}
+function formatDateTH(d){if(!d)return'—';const dt=new Date(d);const m=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];return`${dt.getDate()} ${m[dt.getMonth()]} ${dt.getFullYear()+543}`;}
+function showToast(msg,isError=false){const w=document.getElementById('toastWrap');const t=document.createElement('div');t.className='toast'+(isError?' error':'');t.innerHTML=`<span>${isError?'⚠️':'✅'}</span><span>${escapeHtml(msg)}</span>`;w.appendChild(t);setTimeout(()=>t.remove(),4000);}
+
+let shiftsList=[];
+async function loadShifts(){const{data,error}=await sb.from('shifts').select('id,shift_name').order('shift_name');if(error){showToast('โหลดกะเวลาไม่สำเร็จ',true);return;}shiftsList=data||[];const sel=document.getElementById('f_shift_id');[...sel.options].slice(1).forEach(o=>o.remove());shiftsList.forEach(s=>sel.appendChild(new Option(s.shift_name,s.id)));const bulkSel=document.getElementById('bulkShiftSelect');[...bulkSel.options].slice(1).forEach(o=>o.remove());shiftsList.forEach(s=>bulkSel.appendChild(new Option(s.shift_name,s.id)));}
+
+function ceToBeObj(iso){if(!iso)return{d:'',m:'',y:''};const[y,m,d]=iso.split('-').map(Number);return{d,m,y:y+543};}
+function beToIso(d,m,yBE){if(!d||!m||!yBE)return'';const yC=Number(yBE)-543;return`${yC}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;}
+function getBEDate(p){return beToIso(document.getElementById(p+'_d')?.value,document.getElementById(p+'_m')?.value,document.getElementById(p+'_y')?.value);}
+function setBEDate(p,iso){const{d,m,y}=ceToBeObj(iso);['_d','_m','_y'].forEach((s,i)=>{const el=document.getElementById(p+s);if(el)el.value=[d,m,y][i]||'';});}
+function onStaffStatusChange(){const st=document.getElementById('f_status').value,grp=document.getElementById('resignation_date_group'),lbl=document.getElementById('resignation_date_label');const needsDate=st==='resigned'||st==='retired'||st==='deceased'||st==='terminated';grp.style.display=needsDate?'block':'none';if(needsDate){document.getElementById('f_resignation_date_wrap').innerHTML=beDateHTML('f_resignation_date',true);lbl.textContent=st==='resigned'?'วันที่ลาออก':st==='retired'?'วันที่เกษียณ (วันสุดท้ายที่ทำงาน)':st==='terminated'?'วันที่เลิกจ้าง':'วันที่เสียชีวิต';}}
+function beDateHTML(p,req=false,onChange=''){const r=req?'required':'',oc=onChange?`oninput="${onChange}"`:'';;return`<div class="be-date-wrap"><div><input type="number" id="${p}_d" class="be-day" placeholder="วัน" min="1" max="31" ${r} ${oc}><div class="be-date-label">วัน</div></div><div><input type="number" id="${p}_m" class="be-month" placeholder="เดือน" min="1" max="12" ${r} ${oc}><div class="be-date-label">เดือน</div></div><div><input type="number" id="${p}_y" class="be-year" placeholder="ปี พ.ศ." min="2400" max="2700" ${r} ${oc}><div class="be-date-label">ปี พ.ศ.</div></div></div>`;}
+
+function onStaffTypeChange(){const t=parseInt(document.getElementById('f_staff_type').value);updateContractDateUI(t,getBEDate('f_birth_date'),getBEDate('f_start_date'));document.getElementById('lbl_base_salary').innerHTML=t===4?'ค่าตอบแทน (บาท) <span class="req">*</span>':'เงินเดือนฐาน (บาท) <span class="req">*</span>';const isConsultant=t===4;const ssExemptEl=document.getElementById('f_ss_exempt'),ssBranchEl=document.getElementById('f_ss_branch_code');if(isConsultant){ssExemptEl.value='true';ssBranchEl.value='';}ssExemptEl.disabled=isConsultant;ssBranchEl.disabled=isConsultant;if(document.getElementById('f_id').value)renderCareerTab();}
+function updateContractDateUI(type,bISO,sISO){const ai=document.getElementById('contract_auto_info'),hint=document.getElementById('contract_date_hint'),prob=document.getElementById('probation_info'),wrap=document.getElementById('f_contract_end_date_wrap');ai.style.display='none';prob.style.display='none';wrap.style.opacity='1';const months=['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];if(type===1){hint.textContent='(คำนวณอัตโนมัติ อายุ 65 ปี)';wrap.style.opacity='.6';if(bISO){const y=parseInt(bISO.split('-')[0])+65;setBEDate('f_contract_end_date',`${y}-12-31`);ai.style.display='block';ai.innerHTML=`🎂 เกษียณอายุ: <strong>31 ธ.ค. ${y+543}</strong> (อายุครบ 65 ปี)`;}else{ai.style.display='block';ai.innerHTML='💡 กรุณากรอกวันเกิดก่อน';}}else if(type===2){hint.textContent='(คำนวณอัตโนมัติ 6 เดือน)';prob.style.display='block';wrap.style.opacity='.6';if(sISO){const e=new Date(sISO);e.setMonth(e.getMonth()+6);const iso=e.toISOString().slice(0,10);setBEDate('f_contract_end_date',iso);ai.style.display='block';ai.innerHTML=`⏱️ สิ้นสุดทดลองงาน: <strong>${e.getDate()} ${months[e.getMonth()+1]} ${e.getFullYear()+543}</strong>`;}else{ai.style.display='block';ai.innerHTML='💡 กรุณากรอกวันเริ่มงานก่อน';}}else if(type===3){hint.textContent='(ไม่มี)';wrap.style.opacity='.4';setBEDate('f_contract_end_date','');ai.style.display='block';ai.innerHTML='📋 ลูกจ้างชั่วคราว ไม่มีกำหนดวันหมดสัญญา';}else{hint.textContent='(กรอกตามสัญญา)';ai.style.display='block';ai.innerHTML='📝 กรอกวันหมดสัญญาตามที่ตกลงกันไว้';}}
+function onBirthDateChange(){if(parseInt(document.getElementById('f_staff_type').value)===1)onStaffTypeChange();}
+function onStartDateChange(){if(parseInt(document.getElementById('f_staff_type').value)===2)onStaffTypeChange();}
+function onPrefixChange(){const v=document.getElementById('f_prefix').value,c=document.getElementById('f_prefix_custom');c.style.display=v==='__other__'?'block':'none';if(v!=='__other__')c.value='';}
+
+async function resetStaffPasswordToDefault(){
+  const userId=document.getElementById('f_user_id').value.trim();
+  if(!userId){showToast('ไม่พบ User UID',true);return;}
+  if(!confirm('ยืนยันรีเซ็ตรหัสผ่านของเจ้าหน้าที่คนนี้กลับเป็นค่าเริ่มต้น (วันเกิดของเขา)?\nรหัสผ่านเดิมที่เขาตั้งเองจะถูกแทนที่ทันที')) return;
+
+  const btn=document.getElementById('resetPwBtn');
+  btn.disabled=true;btn.textContent='กำลังรีเซ็ต...';
+  try{
+    const{data:{session}}=await sb.auth.getSession();
+    const resp=await fetch('/api/reset-staff-password',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({targetUserId:userId, requesterToken:session.access_token})
+    });
+    const result=await resp.json();
+    if(!resp.ok){showToast('รีเซ็ตไม่สำเร็จ: '+(result.error||'เกิดข้อผิดพลาด'),true);return;}
+    alert(`รีเซ็ตรหัสผ่านสำเร็จ!\n\nรหัสผ่านใหม่ของ ${result.staffName}: ${result.newPassword}\n\nกรุณาแจ้งรหัสนี้ให้เจ้าหน้าที่ทราบด้วยตนเอง (ไม่ได้ส่งอีเมลอัตโนมัติ)`);
+  }catch(err){
+    showToast('เกิดข้อผิดพลาด: '+err.message,true);
+  }finally{
+    btn.disabled=false;btn.textContent='🔒 รีเซ็ตรหัสผ่านกลับเป็นค่าเริ่มต้น (วันเกิด)';
+  }
+}
+
+function openStaffModal(){pendingDrivePhoto=null;originalStaffStatus=null;document.getElementById('resetPwBtn').style.display='none';document.getElementById('f_id').value='';document.getElementById('staffModalTitle').textContent='เพิ่มเจ้าหน้าที่ใหม่';document.getElementById('staffForm').reset();document.getElementById('f_birth_date_wrap').innerHTML=beDateHTML('f_birth_date',true,'onBirthDateChange()');document.getElementById('f_start_date_wrap').innerHTML=beDateHTML('f_start_date',true,'onStartDateChange()');document.getElementById('f_contract_end_date_wrap').innerHTML=beDateHTML('f_contract_end_date',false);document.getElementById('f_status').value='active';document.getElementById('resignation_date_group').style.display='none';document.getElementById('f_resignation_date_wrap').innerHTML='';document.getElementById('f_shift_id').value='';if(currentProfile.role!=='super'&&!currentProfile.admin_group_code&&currentProfile.department)document.getElementById('f_department_id').value=currentProfile.department;document.getElementById('f_address_current').disabled=false;document.getElementById('f_address_same').checked=false;document.getElementById('f_photo_url').value='';document.getElementById('photoPreview').innerHTML='👤';document.getElementById('removePhotoBtn').style.display='none';document.getElementById('photoUploadStatus').textContent='';document.getElementById('f_nationality').value='ไทย';document.getElementById('f_ethnicity').value='ไทย';document.getElementById('f_marital_status').value='โสด';onMaritalChange();clearFieldErrors();switchTab('basic');initExtraTabs('');document.getElementById('staffModal').classList.add('open');}
+
+function editStaff(s){pendingDrivePhoto=null;originalStaffStatus=s.status||'active';document.getElementById('resetPwBtn').style.display=(currentProfile.role==='super'&&s.user_id)?'inline-block':'none';document.getElementById('f_id').value=s.id;document.getElementById('staffModalTitle').textContent='แก้ไขข้อมูลเจ้าหน้าที่';document.getElementById('f_employee_code').value=s.employee_code||'';document.getElementById('f_id_card').value=s.id_card||'';const kp=['นาย','นาง','นางสาว'];if(kp.includes(s.prefix||'นาย')){document.getElementById('f_prefix').value=s.prefix||'นาย';document.getElementById('f_prefix_custom').style.display='none';}else{document.getElementById('f_prefix').value='__other__';document.getElementById('f_prefix_custom').value=s.prefix||'';document.getElementById('f_prefix_custom').style.display='block';}document.getElementById('f_gender').value=s.gender||'M';document.getElementById('f_first_name').value=s.first_name||'';document.getElementById('f_last_name').value=s.last_name||'';document.getElementById('f_staff_type').value=s.staff_type||1;document.getElementById('f_department_id').value=s.department||'';document.getElementById('f_division').value=s.division||'';document.getElementById('f_position').value=s.position||'';document.getElementById('f_education_level').value=s.education_level||'';document.getElementById('f_education_level_current').value=s.education_level_current||'';document.getElementById('f_education_field').value=s.education_field||'';document.getElementById('f_education_institution').value=s.education_institution||'';document.getElementById('f_base_salary').value=s.base_salary||'';document.getElementById('f_profession_fee').value=s.profession_fee||'';document.getElementById('f_ot_group').value=s.ot_group||1;document.getElementById('f_status').value=s.status||'active';document.getElementById('f_address').value=s.address||'';document.getElementById('f_address_current').value=s.address_current||'';document.getElementById('f_address_current').disabled=false;document.getElementById('f_address_same').checked=!!(s.address_current&&s.address_current===s.address);onAddressSameToggle();document.getElementById('f_phone').value=s.phone||'';document.getElementById('f_email').value=s.email||'';document.getElementById('f_bank_name').value=s.bank_name||'';document.getElementById('f_bank_account').value=s.bank_account||'';document.getElementById('f_device_id').value=s.device_id||'';document.getElementById('f_user_id').value=s.user_id||'';document.getElementById('f_ss_branch_code').value=s.ss_branch_code||'';document.getElementById('f_ss_exempt').value=s.ss_exempt?'true':'false';document.getElementById('f_blood_type').value=s.blood_type||'';document.getElementById('f_nationality').value=s.nationality||'ไทย';document.getElementById('f_ethnicity').value=s.ethnicity||'ไทย';document.getElementById('f_religion').value=s.religion||'';document.getElementById('f_chronic_disease').value=s.chronic_disease||'';document.getElementById('f_photo_url').value=s.photo_url||'';document.getElementById('photoPreview').innerHTML=s.photo_url?`<img src="${s.photo_url}">`:'👤';document.getElementById('removePhotoBtn').style.display=s.photo_url?'inline-flex':'none';document.getElementById('photoUploadStatus').textContent='';document.getElementById('f_marital_status').value=s.marital_status||'โสด';document.getElementById('f_spouse_name').value=s.spouse_name||'';document.getElementById('f_spouse_phone').value=s.spouse_phone||'';onMaritalChange();document.getElementById('f_father_name').value=s.father_name||'';document.getElementById('f_father_phone').value=s.father_phone||'';document.getElementById('f_father_address').value=s.father_address||'';document.getElementById('f_father_status').value=s.father_status||'';document.getElementById('f_mother_name').value=s.mother_name||'';document.getElementById('f_mother_phone').value=s.mother_phone||'';document.getElementById('f_mother_address').value=s.mother_address||'';document.getElementById('f_mother_status').value=s.mother_status||'';document.getElementById('f_emergency_contact1_name').value=s.emergency_contact1_name||'';document.getElementById('f_emergency_contact1_phone').value=s.emergency_contact1_phone||'';document.getElementById('f_emergency_contact1_relation').value=s.emergency_contact1_relation||'';document.getElementById('f_emergency_contact2_name').value=s.emergency_contact2_name||'';document.getElementById('f_emergency_contact2_phone').value=s.emergency_contact2_phone||'';document.getElementById('f_emergency_contact2_relation').value=s.emergency_contact2_relation||'';document.getElementById('f_birth_date_wrap').innerHTML=beDateHTML('f_birth_date',true,'onBirthDateChange()');document.getElementById('f_start_date_wrap').innerHTML=beDateHTML('f_start_date',true,'onStartDateChange()');document.getElementById('f_contract_end_date_wrap').innerHTML=beDateHTML('f_contract_end_date',false);setBEDate('f_birth_date',s.birth_date||'');setBEDate('f_start_date',s.start_date||'');setBEDate('f_contract_end_date',s.contract_end_date||'');onStaffStatusChange();setBEDate('f_resignation_date',s.resignation_date||'');document.getElementById('f_shift_id').value=s.shift_id||'';document.getElementById('f_probation_eval1_date_wrap').innerHTML=beDateHTML('f_probation_eval1_date',false);document.getElementById('f_probation_eval2_date_wrap').innerHTML=beDateHTML('f_probation_eval2_date',false);setBEDate('f_probation_eval1_date',s.probation_eval1_date||'');setBEDate('f_probation_eval2_date',s.probation_eval2_date||'');document.getElementById('f_probation_eval1_result').value=s.probation_eval1_result||'pending';document.getElementById('f_probation_eval2_result').value=s.probation_eval2_result||'pending';document.getElementById('f_probation_eval1_note').value=s.probation_eval1_note||'';document.getElementById('f_probation_eval2_note').value=s.probation_eval2_note||'';clearFieldErrors();onStaffTypeChange();switchTab('basic');initExtraTabs(s.id);document.getElementById('staffModal').classList.add('open');}
+
+function closeStaffModal(){document.getElementById('staffModal').classList.remove('open');}
+function clearFieldErrors(){document.querySelectorAll('.field-error').forEach(e=>{e.classList.remove('show');e.textContent='';});document.querySelectorAll('.form-group input.invalid').forEach(e=>e.classList.remove('invalid'));}
+function setFieldError(fid,msg){const err=document.getElementById('err_'+fid),inp=document.getElementById('f_'+fid);if(err){err.textContent=msg;err.classList.add('show');}if(inp)inp.classList.add('invalid');}
+
+async function saveStaff(){clearFieldErrors();const id=document.getElementById('f_id').value;const idCard=document.getElementById('f_id_card').value.trim();const empCode=document.getElementById('f_employee_code').value.trim();const userIdVal=document.getElementById('f_user_id').value.trim();let hasErr=false;if(!/^[0-9]{13}$/.test(idCard)){setFieldError('id_card','เลขบัตรต้องเป็นตัวเลข 13 หลัก');hasErr=true;}if(userIdVal&&!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userIdVal)){showToast('รูปแบบ User UID ไม่ถูกต้อง (ต้องเป็น UUID จาก Supabase Auth) หรือเว้นว่างไว้ถ้ายังไม่มีบัญชี',true);hasErr=true;}if(hasErr)return;const staffTypeVal=parseInt(document.getElementById('f_staff_type').value);const isConsultantType=staffTypeVal===4;const payload={employee_code:empCode||null,id_card:idCard,prefix:document.getElementById('f_prefix').value==='__other__'?(document.getElementById('f_prefix_custom').value.trim()||''):document.getElementById('f_prefix').value,gender:document.getElementById('f_gender').value,first_name:document.getElementById('f_first_name').value.trim(),last_name:document.getElementById('f_last_name').value.trim(),birth_date:getBEDate('f_birth_date'),staff_type:staffTypeVal,ot_group:parseInt(document.getElementById('f_ot_group').value)||1,shift_id:document.getElementById('f_shift_id').value||null,department:document.getElementById('f_department_id').value,division:document.getElementById('f_division').value.trim()||null,position:document.getElementById('f_position').value.trim(),education_level:document.getElementById('f_education_level').value||null,education_level_current:document.getElementById('f_education_level_current').value||null,education_field:document.getElementById('f_education_field').value.trim()||null,education_institution:document.getElementById('f_education_institution').value.trim()||null,start_date:getBEDate('f_start_date'),contract_end_date:getBEDate('f_contract_end_date')||null,base_salary:parseFloat(document.getElementById('f_base_salary').value)||0,profession_fee:parseFloat(document.getElementById('f_profession_fee').value)||0,status:document.getElementById('f_status').value,resignation_date:(['resigned','retired','deceased'].includes(document.getElementById('f_status').value))?(getBEDate('f_resignation_date')||null):null,address:document.getElementById('f_address').value.trim()||null,address_current:document.getElementById('f_address_current').value.trim()||null,phone:document.getElementById('f_phone').value.trim()||null,email:document.getElementById('f_email').value.trim()||null,bank_name:document.getElementById('f_bank_name').value||null,bank_account:document.getElementById('f_bank_account').value.trim()||null,device_id:document.getElementById('f_device_id').value.trim()||null,user_id:userIdVal||null,ss_branch_code:isConsultantType?null:(document.getElementById('f_ss_branch_code').value.trim()||null),ss_exempt:isConsultantType?true:document.getElementById('f_ss_exempt').value==='true',blood_type:document.getElementById('f_blood_type').value||null,nationality:document.getElementById('f_nationality').value.trim()||null,ethnicity:document.getElementById('f_ethnicity').value.trim()||null,religion:document.getElementById('f_religion').value||null,chronic_disease:document.getElementById('f_chronic_disease').value.trim()||null,photo_url:document.getElementById('f_photo_url').value||null,marital_status:document.getElementById('f_marital_status').value||null,spouse_name:document.getElementById('f_spouse_name').value.trim()||null,spouse_phone:document.getElementById('f_spouse_phone').value.trim()||null,father_name:document.getElementById('f_father_name').value.trim()||null,father_phone:document.getElementById('f_father_phone').value.trim()||null,father_address:document.getElementById('f_father_address').value.trim()||null,father_status:document.getElementById('f_father_status').value||null,mother_name:document.getElementById('f_mother_name').value.trim()||null,mother_phone:document.getElementById('f_mother_phone').value.trim()||null,mother_address:document.getElementById('f_mother_address').value.trim()||null,mother_status:document.getElementById('f_mother_status').value||null,emergency_contact1_name:document.getElementById('f_emergency_contact1_name').value.trim()||null,emergency_contact1_phone:document.getElementById('f_emergency_contact1_phone').value.trim()||null,emergency_contact1_relation:document.getElementById('f_emergency_contact1_relation').value.trim()||null,emergency_contact2_name:document.getElementById('f_emergency_contact2_name').value.trim()||null,emergency_contact2_phone:document.getElementById('f_emergency_contact2_phone').value.trim()||null,emergency_contact2_relation:document.getElementById('f_emergency_contact2_relation').value.trim()||null};
+if(currentProfile.role!=='super'){
+  if(!currentProfile.effectiveDepartments.includes(payload.department)){showToast('ไม่มีสิทธิ์บันทึกข้อมูลในหน่วยงานนี้',true);return;}
+  if(id){
+    const{data:existingRow}=await sb.from('staff').select('department').eq('id',id).maybeSingle();
+    if(!existingRow||!currentProfile.effectiveDepartments.includes(existingRow.department)){showToast('ไม่มีสิทธิ์แก้ไขข้อมูลของหน่วยงานอื่น',true);return;}
+  }
+}
+const btn=document.getElementById('saveStaffBtn');btn.disabled=true;btn.textContent='กำลังบันทึก...';try{let error;if(id){({error}=await sb.from('staff').update(payload).eq('id',id));}else{payload.created_by=currentUser.id;({error}=await sb.from('staff').insert(payload));}if(error){if(error.code==='23505'){if(error.message.includes('employee_code'))setFieldError('employee_code','รหัสพนักงานนี้มีอยู่แล้ว');else if(error.message.includes('id_card'))setFieldError('id_card','เลขบัตรนี้มีอยู่แล้ว');else showToast('ข้อมูลซ้ำในระบบ',true);}else showToast('บันทึกไม่สำเร็จ: '+error.message,true);return;}
+    // การปิด/คืนสิทธิ์เข้าระบบเมื่อสถานะเป็น ลาออก/เกษียณ/เสียชีวิต ทำอัตโนมัติที่ฐานข้อมูลแล้ว
+    // (trigger hris_staff_status_sync — ครอบคลุมทั้งฟอร์มนี้ การเปลี่ยนสถานะหลายคน และการ Import)
+    // หน้าเว็บจึงไม่ต้องแก้ตาราง profiles เอง (และ Unit Admin ก็แก้ profiles ไม่ได้แล้ว)
+    const EXIT_STATUSES=['resigned','retired','deceased','terminated'];
+    if(payload.user_id && EXIT_STATUSES.includes(originalStaffStatus)!==EXIT_STATUSES.includes(payload.status)){
+      showToast(EXIT_STATUSES.includes(payload.status)?'ระบบปิดสิทธิ์เข้าระบบของบัญชีผู้ใช้คนนี้ให้อัตโนมัติแล้ว (สถานะ: '+payload.status+')':'ระบบคืนสิทธิ์เข้าระบบให้บัญชีผู้ใช้คนนี้อัตโนมัติแล้ว');
+    }
+    if(pendingDrivePhoto){const b=pendingDrivePhoto;pendingDrivePhoto=null;pushPhotoToDrive(payload,b);}
+    showToast(id?'แก้ไขข้อมูลสำเร็จ':'เพิ่มเจ้าหน้าที่สำเร็จ');closeStaffModal();loadStaff();loadStats();sb.from('audit_logs').insert({user_id:currentUser.id,action:id?'UPDATE':'INSERT',table_name:'staff',new_data:payload});}catch(err){showToast('เกิดข้อผิดพลาด: '+err.message,true);}finally{btn.disabled=false;btn.textContent='💾 บันทึกข้อมูล';}}
+
+function openDeleteModal(id,name){pendingDeleteId=id;document.getElementById('deleteStaffName').textContent=name;document.getElementById('deleteModal').classList.add('open');}
+function closeDeleteModal(){document.getElementById('deleteModal').classList.remove('open');pendingDeleteId=null;}
+async function confirmDelete(){if(!pendingDeleteId)return;if(currentProfile.role!=='super'){showToast('การลบข้อมูลเจ้าหน้าที่ทำได้เฉพาะ Super Admin เท่านั้น กรุณาแจ้ง Super Admin หากต้องการลบ',true);closeDeleteModal();return;}const{error,count}=await sb.from('staff').delete({count:'exact'}).eq('id',pendingDeleteId);if(error)showToast('ลบไม่สำเร็จ: '+error.message,true);else if(!count)showToast('ไม่สามารถลบได้',true);else{showToast('ลบข้อมูลสำเร็จ');sb.from('audit_logs').insert({user_id:currentUser.id,action:'DELETE',table_name:'staff',record_id:pendingDeleteId});loadStaff();loadStats();}closeDeleteModal();}
+
+function getSelectedIds(){return[...document.querySelectorAll('.rowCheckbox:checked')].map(cb=>cb.value);}
+function toggleSelectAll(cb){document.querySelectorAll('.rowCheckbox').forEach(r=>r.checked=cb.checked);onRowCheckChange();}
+function onRowCheckChange(){const ids=getSelectedIds();const total=document.querySelectorAll('.rowCheckbox').length;const allCb=document.getElementById('selectAllCheckbox');allCb.checked=total>0&&ids.length===total;allCb.indeterminate=ids.length>0&&ids.length<total;document.getElementById('bulkBar').style.display=ids.length>0?'flex':'none';document.getElementById('bulkCount').textContent=`เลือก ${ids.length} รายการ`;}
+function clearSelection(){document.querySelectorAll('.rowCheckbox').forEach(cb=>cb.checked=false);const a=document.getElementById('selectAllCheckbox');a.checked=false;a.indeterminate=false;document.getElementById('bulkBar').style.display='none';}
+async function staffIdsOutOfScope(ids){
+  if(currentProfile.role==='super')return false;
+  const{data:chk}=await sb.from('staff').select('id,department').in('id',ids);
+  return(chk||[]).some(r=>!currentProfile.effectiveDepartments.includes(r.department));
+}
+async function applyBulkStatus(){const ids=getSelectedIds(),s=document.getElementById('bulkStatusSelect').value;if(!ids.length||!s){showToast('กรุณาเลือกสถานะ',true);return;}if(await staffIdsOutOfScope(ids)){showToast('มีบางรายการอยู่นอกหน่วยงานที่ท่านดูแล',true);return;}const{error}=await sb.from('staff').update({status:s}).in('id',ids);if(error)showToast('เปลี่ยนสถานะไม่สำเร็จ: '+error.message,true);else{showToast(`เปลี่ยนสถานะ ${ids.length} รายการสำเร็จ`);clearSelection();loadStaff();loadStats();}}
+async function applyBulkShift(){const ids=getSelectedIds(),shiftId=document.getElementById('bulkShiftSelect').value;if(!ids.length||!shiftId){showToast('กรุณาเลือกกะเวลาก่อน',true);return;}if(!confirm(`ตั้งกะเวลานี้ให้เจ้าหน้าที่ที่เลือกไว้ ${ids.length} คน?`))return;if(await staffIdsOutOfScope(ids)){showToast('มีบางรายการอยู่นอกหน่วยงานที่ท่านดูแล',true);return;}const{error}=await sb.from('staff').update({shift_id:shiftId}).in('id',ids);if(error)showToast('ตั้งกะเวลาไม่สำเร็จ: '+error.message,true);else{showToast(`ตั้งกะเวลาให้ ${ids.length} รายการสำเร็จ`);clearSelection();loadStaff();loadStats();}}
+function openBulkDeleteModal(){if(currentProfile.role!=='super'){showToast('การลบข้อมูลเจ้าหน้าที่ทำได้เฉพาะ Super Admin เท่านั้น กรุณาแจ้ง Super Admin หากต้องการลบ',true);return;}const ids=getSelectedIds();if(!ids.length)return;document.getElementById('bulkDeleteCount').textContent=ids.length;document.getElementById('bulkDeleteModal').classList.add('open');}
+async function confirmBulkDelete(){if(currentProfile.role!=='super'){showToast('การลบข้อมูลเจ้าหน้าที่ทำได้เฉพาะ Super Admin เท่านั้น',true);document.getElementById('bulkDeleteModal').classList.remove('open');return;}const ids=getSelectedIds();const{error,count}=await sb.from('staff').delete({count:'exact'}).in('id',ids);document.getElementById('bulkDeleteModal').classList.remove('open');if(error)showToast('ลบไม่สำเร็จ: '+error.message,true);else{showToast(`ลบสำเร็จ ${count} รายการ`);clearSelection();loadStaff();loadStats();}}
+async function bulkExportSelected(){const ids=getSelectedIds();if(!ids.length)return;const{data,error}=await sb.from('staff').select('*').in('id',ids).order('first_name');if(error){showToast('Export ไม่สำเร็จ',true);return;}exportRows(data||[],`เจ้าหน้าที่ที่เลือก_${new Date().toISOString().slice(0,10)}.xlsx`);showToast(`Export สำเร็จ ${(data||[]).length} รายการ`);}
+async function exportExcel(){let q=sb.from('staff').select('*');if(currentProfile.role!=='super'&&currentProfile.effectiveDepartments.length)q=q.in('department',currentProfile.effectiveDepartments);const{data,error}=await q.order('first_name');if(error){showToast('Export ไม่สำเร็จ',true);return;}exportRows(data||[],`เจ้าหน้าที่_${new Date().toISOString().slice(0,10)}.xlsx`);showToast(`Export สำเร็จ ${(data||[]).length} รายการ`);}
+function toBEDateSlash(d){if(!d)return'';const s=String(d).trim();const m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);if(!m)return s;const[,y,mo,da]=m;return`${da}/${mo}/${parseInt(y)+543}`;}
+function exportRows(data,filename){const rows=data.map(s=>({
+  'รหัสพนักงาน':(s.employee_code||''),'เลขบัตรประชาชน':s.id_card,'คำนำหน้า':s.prefix,'ชื่อ':s.first_name,'นามสกุล':s.last_name,'วันเกิด':toBEDateSlash(s.birth_date),'เพศ':s.gender==='M'?'ชาย':'หญิง',
+  'ประเภท':typeLabel[s.staff_type],'หน่วยงาน':s.department,'แผนก':s.division,'ตำแหน่ง':s.position,
+  'วุฒิที่ใช้บรรจุ':s.education_level||'','วุฒิสูงสุดปัจจุบัน':s.education_level_current||'','สาขาวิชา':s.education_field||'','สถาบันการศึกษา':s.education_institution||'',
+  'วันเริ่มงาน':toBEDateSlash(s.start_date),'วันหมดสัญญา':toBEDateSlash(s.contract_end_date),'เงินเดือนฐาน':s.base_salary,'ค่าวิชาชีพ':s.profession_fee||0,'สถานะ':statusLabel[s.status],'วันที่ออกจากงานจริง':toBEDateSlash(s.resignation_date),
+  'ที่อยู่ตามบัตรประชาชน/ทะเบียนบ้าน':s.address||'','ที่อยู่ปัจจุบัน':s.address_current||'','เบอร์โทร':s.phone||'','Email':s.email||'',
+  'ธนาคาร':s.bank_name||'','เลขบัญชี':s.bank_account||'','กลุ่ม OT':s.ot_group===2?'กลุ่ม 2':'กลุ่ม 1','รหัสสาขา SS':s.ss_branch_code||'','ยกเว้น SS':s.ss_exempt?'ใช่':'ไม่','รหัสเครื่องสแกน':s.device_id||'',
+  'กรุ๊ปเลือด':s.blood_type||'','สัญชาติ':s.nationality||'','เชื้อชาติ':s.ethnicity||'','ศาสนา':s.religion||'','โรคประจำตัว':s.chronic_disease||'',
+  'สถานภาพสมรส':s.marital_status||'','ชื่อคู่สมรส':s.spouse_name||'','เบอร์โทรคู่สมรส':s.spouse_phone||'',
+  'ชื่อบิดา':s.father_name||'','เบอร์โทรบิดา':s.father_phone||'','ที่อยู่บิดา':s.father_address||'','สถานภาพบิดา':s.father_status||'',
+  'ชื่อมารดา':s.mother_name||'','เบอร์โทรมารดา':s.mother_phone||'','ที่อยู่มารดา':s.mother_address||'','สถานภาพมารดา':s.mother_status||'',
+  'ผู้ติดต่อฉุกเฉิน1 ชื่อ':s.emergency_contact1_name||'','ผู้ติดต่อฉุกเฉิน1 เบอร์โทร':s.emergency_contact1_phone||'','ผู้ติดต่อฉุกเฉิน1 ความสัมพันธ์':s.emergency_contact1_relation||'',
+  'ผู้ติดต่อฉุกเฉิน2 ชื่อ':s.emergency_contact2_name||'','ผู้ติดต่อฉุกเฉิน2 เบอร์โทร':s.emergency_contact2_phone||'','ผู้ติดต่อฉุกเฉิน2 ความสัมพันธ์':s.emergency_contact2_relation||'',
+}));const ws=XLSX.utils.json_to_sheet(rows);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'เจ้าหน้าที่');XLSX.writeFile(wb,filename);}
+
+async function sendToSalary(){const ids=getSelectedIds();if(!ids.length)return;const now=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Bangkok'}));const month=now.getMonth()+1,yearBE=now.getFullYear()+543;const{data:ex}=await sb.from('salary_records').select('staff_id').eq('year_be',yearBE).eq('month',month).in('staff_id',ids);const exSet=new Set((ex||[]).map(r=>r.staff_id));const newIds=ids.filter(id=>!exSet.has(id));if(!newIds.length){showToast('มีข้อมูลเงินเดือนเดือนนี้อยู่แล้วทุกคน');return;}const{data:sd,error:sErr}=await sb.from('staff').select('id,base_salary,staff_type,ss_exempt,profession_fee,start_date').in('id',newIds);if(sErr){showToast('โหลดข้อมูลไม่สำเร็จ',true);return;}const sm=Object.fromEntries((sd||[]).map(s=>[s.id,s]));const rows=newIds.map(sid=>{const s=sm[sid]||{};const isCon=Number(s.staff_type)===4;const base=isCon?0:Number(s.base_salary||0),wage=isCon?Number(s.base_salary||0):0;const ss=s.ss_exempt?0:calcSS(base,yearBE);const profFee=Number(s.profession_fee||0);const sdp=String(s.start_date||'').split('-').map(Number);const months=(sdp[0]&&sdp[0]+543===yearBE&&sdp[1])?(12-sdp[1]+1):12;const tax=calcTax(base+wage+profFee,ss,months);return{staff_id:sid,year_be:yearBE,month,base_salary:base,wage,ot_pay:0,per_diem:0,travel_fee:0,phochokho:0,backpay:0,commission:0,profession_fee:profFee,tax_withheld:tax,social_security:ss,leave_deduct:0,other_deduct:0,gsf_deduct:0,created_by:currentUser.id};});const{error}=await sb.from('salary_records').insert(rows);if(error){showToast('เกิดข้อผิดพลาด: '+error.message,true);return;}const skip=ids.length-newIds.length;showToast(`ส่งข้อมูลเงินเดือนสำเร็จ ${newIds.length} คน${skip?` (ข้าม ${skip} คน)`:''}`);clearSelection();}
+
+function openImportModal(){document.getElementById('importStep1').style.display='block';document.getElementById('importStep2').style.display='none';document.getElementById('importFooter').style.display='none';document.getElementById('fileInput').value='';parsedImportRows=[];document.getElementById('importModal').classList.add('open');}
+function closeImportModal(){document.getElementById('importModal').classList.remove('open');}
+function downloadTemplate(e){e.preventDefault();const s=[{
+  'รหัสพนักงาน':'SF-0099','เลขบัตรประชาชน':'1234567890123','คำนำหน้า':'นาย','ชื่อ':'ตัวอย่าง','นามสกุล':'ทดสอบ','วันเกิด':'15/01/2533','เพศ':'ชาย',
+  'ประเภท':'เจ้าหน้าที่มูลนิธิ','หน่วยงาน':'UNIT01','แผนก':'สนง.','ตำแหน่ง':'เจ้าหน้าที่',
+  'วุฒิที่ใช้บรรจุ':'ปวส.','วุฒิสูงสุดปัจจุบัน':'ปริญญาตรี','สาขาวิชา':'บริหารธุรกิจ','สถาบันการศึกษา':'มหาวิทยาลัยตัวอย่าง',
+  'วันเริ่มงาน':'01/01/2566','วันหมดสัญญา':'','เงินเดือนฐาน':15000,'ค่าวิชาชีพ':0,'สถานะ':'ปกติ','วันที่ออกจากงานจริง':'',
+  'ที่อยู่ตามบัตรประชาชน/ทะเบียนบ้าน':'','ที่อยู่ปัจจุบัน':'','เบอร์โทร':'0812345678','Email':'test@example.com',
+  'ธนาคาร':'ไทยพาณิชย์ (SCB)','เลขบัญชี':'111-2-34567-8','กลุ่ม OT':'กลุ่ม 1','รหัสสาขา SS':'140023','ยกเว้น SS':'ไม่','รหัสเครื่องสแกน':'00123',
+  'กรุ๊ปเลือด':'O','สัญชาติ':'ไทย','เชื้อชาติ':'ไทย','ศาสนา':'พุทธ','โรคประจำตัว':'',
+  'สถานภาพสมรส':'โสด','ชื่อคู่สมรส':'','เบอร์โทรคู่สมรส':'',
+  'ชื่อบิดา':'','เบอร์โทรบิดา':'','ที่อยู่บิดา':'','สถานภาพบิดา':'มีชีวิตอยู่',
+  'ชื่อมารดา':'','เบอร์โทรมารดา':'','ที่อยู่มารดา':'','สถานภาพมารดา':'มีชีวิตอยู่',
+  'ผู้ติดต่อฉุกเฉิน1 ชื่อ':'','ผู้ติดต่อฉุกเฉิน1 เบอร์โทร':'','ผู้ติดต่อฉุกเฉิน1 ความสัมพันธ์':'',
+  'ผู้ติดต่อฉุกเฉิน2 ชื่อ':'','ผู้ติดต่อฉุกเฉิน2 เบอร์โทร':'','ผู้ติดต่อฉุกเฉิน2 ความสัมพันธ์':'',
+}];
+  const ws=XLSX.utils.json_to_sheet(s);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Template');
+  const notesWs=XLSX.utils.aoa_to_sheet([
+    ['คอลัมน์','ค่าที่ใช้ได้ / หมายเหตุ'],
+    ['คำนำหน้า','นาย / นาง / นางสาว / หรือระบุยศ-ตำแหน่งอื่นๆ เอง'],
+    ['เพศ','ชาย หรือ หญิง'],
+    ['ประเภท','เจ้าหน้าที่มูลนิธิ / ทดลองปฏิบัติงาน / ลูกจ้างชั่วคราว / ที่ปรึกษา-ผู้เชี่ยวชาญ'],
+    ['หน่วยงาน','ต้องตรงกับชื่อหน่วยงานที่มีอยู่แล้วในหน้าตั้งค่าระบบ (settings.html) เป๊ะ'],
+    ['แผนก','แผนกภายในหน่วยงาน เช่น สนง., ผ้าไหม, คนสวน, แม่บ้าน, รปภ. — เว้นว่างได้ถ้าไม่มีการแบ่งแผนกย่อย'],
+    ['ค่าวิชาชีพ','บาท/เดือน — ถ้าไม่มีใส่ 0 หรือเว้นว่างได้ ระบบจะดึงไปใส่ในข้อมูลเงินเดือนอัตโนมัติทุกเดือน ไม่ต้องกรอกซ้ำตอนทำเงินเดือน'],
+    ['วุฒิที่ใช้บรรจุ','ม.3 / ต่ำกว่า / ม.6 / ปวช. / ปวส. / ปริญญาตรี / ปริญญาโท (เว้นว่างได้) — วุฒิที่ใช้ตอนรับเข้าทำงาน'],
+    ['วุฒิสูงสุดปัจจุบัน','ใช้ตัวเลือกชุดเดียวกัน — กรอกเฉพาะกรณีเรียนต่อจบสูงกว่าตอนบรรจุ เว้นว่างได้ถ้าวุฒิเหมือนเดิม'],
+    ['วันที่ทุกช่อง','รูปแบบ DD/MM/YYYY ปี พ.ศ. เท่านั้น (เช่น 01/01/2566)'],
+    ['สถานะ','ปกติ / ไม่ใช้งาน / ลาออก / เกษียณ / เสียชีวิต / เลิกจ้าง (เว้นว่าง = ปกติ)'],
+    ['วันที่ออกจากงานจริง','ต้องกรอกถ้าสถานะเป็น ลาออก/เกษียณ/เสียชีวิต รูปแบบ DD/MM/YYYY ปี พ.ศ. เหมือนช่องวันที่อื่น (ใช้สร้างรายการแจ้งออกประกันกลุ่มอัตโนมัติ)'],
+    ['กลุ่ม OT','กลุ่ม 1 หรือ กลุ่ม 2'],
+    ['ยกเว้น SS','ใช่ (ยกเว้นประกันสังคม) หรือ ไม่'],
+    ['กรุ๊ปเลือด','A / B / AB / O (เว้นว่างได้)'],
+    ['ศาสนา','พุทธ / อิสลาม / คริสต์ / อื่นๆ (เว้นว่างได้)'],
+    ['สถานภาพสมรส','โสด / สมรส / หย่าร้าง / หม้าย (เว้นว่างได้)'],
+    ['สถานภาพบิดา / สถานภาพมารดา','มีชีวิตอยู่ / ถึงแก่กรรม (เว้นว่างได้)'],
+    ['รหัสเครื่องสแกน','รหัส ID เครื่องสแกนลายนิ้วมือ/ใบหน้า (เว้นว่างได้)'],
+    ['รูปถ่าย / User UID (บัญชี login)','ไม่รองรับผ่านไฟล์นำเข้า ต้องอัปโหลด/ผูกจากในระบบโดยตรงเป็นรายคน'],
+  ]);
+  XLSX.utils.book_append_sheet(wb,notesWs,'คำอธิบายคอลัมน์');
+  XLSX.writeFile(wb,'staff_import_template.xlsx');
+}
+const dz=document.getElementById('dropzone');dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('dragover');});dz.addEventListener('dragleave',()=>dz.classList.remove('dragover'));dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('dragover');if(e.dataTransfer.files.length)handleFile(e.dataTransfer.files[0]);});
+function handleFileSelect(e){if(e.target.files.length)handleFile(e.target.files[0]);}
+function handleFile(f){const r=new FileReader();r.onload=e=>{const wb=XLSX.read(e.target.result,{type:'array',cellDates:false});const ws=wb.Sheets[wb.SheetNames[0]];validateAndPreview(normalizeImportRows(XLSX.utils.sheet_to_json(ws,{defval:''})));};r.readAsArrayBuffer(f);}
+function normalizeImportRows(rows){
+  if(!rows.length)return rows;
+  const isThaiExportFile=Object.keys(rows[0]).some(k=>THAI_EXPORT_HEADER_MAP[k]);
+  if(!isThaiExportFile)return rows;
+  const staffTypeThToCode=Object.fromEntries(Object.entries(typeLabel).map(([k,v])=>[v,k]));
+  const statusThToCode=Object.fromEntries(Object.entries(statusLabel).map(([k,v])=>[v,k]));
+  return rows.map(r=>{
+    const nr={};
+    Object.entries(r).forEach(([k,v])=>{const nk=THAI_EXPORT_HEADER_MAP[k];if(nk)nr[nk]=v;});
+    if(nr.gender==='ชาย')nr.gender='M';else if(nr.gender==='หญิง')nr.gender='F';
+    if(nr.staff_type!==undefined&&staffTypeThToCode[nr.staff_type]!==undefined)nr.staff_type=staffTypeThToCode[nr.staff_type];
+    if(nr.status!==undefined&&statusThToCode[nr.status]!==undefined)nr.status=statusThToCode[nr.status];
+    if(nr.ot_group!==undefined)nr.ot_group=String(nr.ot_group).includes('2')?2:1;
+    return nr;
+  });
+}
+function validateAndPreview(rows){const _codeCount={};rows.forEach(r=>{const c=String(r.employee_code||'').trim();if(c)_codeCount[c]=(_codeCount[c]||0)+1;});const req=['id_card','first_name','last_name','staff_type','department_code'];let ok=0,err=0;parsedImportRows=rows.map((r,i)=>{const errors=[];req.forEach(f=>{if(r[f]===''||r[f]===undefined||r[f]===null)errors.push((IMPORT_FIELD_TH[f]||f)+' ว่าง');});if(r.id_card&&!/^[0-9]{13}$/.test(String(r.id_card)))errors.push('เลขบัตรไม่ถูกต้อง');{const c=String(r.employee_code||'').trim();if(c&&_codeCount[c]>1)errors.push('รหัส '+c+' ซ้ำในไฟล์');}if(r.staff_type&&![1,2,3,4].includes(parseInt(r.staff_type)))errors.push('ประเภทไม่ถูกต้อง');if(['resigned','retired','deceased'].includes(r.status)&&!r.resignation_date)errors.push('สถานะ '+r.status+' ต้องกรอกวันที่ออกจากงานจริง (resignation_date)');if(currentProfile.role!=='super'&&currentProfile.effectiveDepartments.length&&r.department_code&&!currentProfile.effectiveDepartments.includes(r.department_code))errors.push('หน่วยงานไม่ตรงกับสิทธิ์ของท่าน');if(r.department_code&&departments.length&&!departments.includes(String(r.department_code).trim()))errors.push('ไม่พบหน่วยงานนี้ในระบบ (ตรวจสอบการสะกด หรือเพิ่มหน่วยงานที่หน้าตั้งค่าระบบก่อน)');if(errors.length===0)ok++;else err++;return{...r,_row:i+2,_errors:errors};});importFilter=err?'err':'all';renderImportPreview();document.getElementById('importStep1').style.display='none';document.getElementById('importStep2').style.display='block';document.getElementById('importFooter').style.display='flex';document.getElementById('confirmImportBtn').disabled=ok===0;document.getElementById('confirmImportBtn').textContent=`นำเข้า ${ok} รายการ`;}
+// ---- แสดงผลตรวจไฟล์นำเข้า: กดเลือกดูทั้งหมด / พร้อม / มีปัญหา · สรุปปัญหาแยกประเภท · ดาวน์โหลดรายการที่มีปัญหา ----
+const IMPORT_FIELD_TH={id_card:'เลขบัตรประชาชน',first_name:'ชื่อ',last_name:'นามสกุล',birth_date:'วันเกิด',staff_type:'ประเภท',department_code:'หน่วยงาน',position:'ตำแหน่ง',start_date:'วันเริ่มงาน',base_salary:'เงินเดือน'};
+let importFilter='all';
+function setImportFilter(f){importFilter=f;renderImportPreview();}
+function importErrKey(e){return e.replace(/^รหัส .+ ซ้ำในไฟล์$/,'รหัสซ้ำในไฟล์').replace(/^สถานะ \S+ ต้องกรอก.*/,'สถานะออกจากงาน แต่ไม่มีวันที่ออก');}
+function renderImportPreview(){
+  const rows=parsedImportRows||[],okN=rows.filter(r=>!r._errors.length).length,errN=rows.length-okN;
+  const chip=(k,cls,label,extra)=>`<span class="${cls}" style="cursor:pointer;${extra||''}${importFilter===k?'outline:2px solid currentColor;outline-offset:1px;':''}" onclick="setImportFilter('${k}')">${label}</span>`;
+  let sum=chip('all','sum-ok','ทั้งหมด: '+rows.length+' แถว','background:#f1f5f9;color:#334155;')+chip('ok','sum-ok','✓ พร้อม Import: '+okN+' แถว')+chip('err','sum-err','⚠ มีปัญหา: '+errN+' แถว (กดดู)');
+  if(errN){
+    const cnt={};rows.forEach(r=>r._errors.forEach(e=>{const k=importErrKey(e);cnt[k]=(cnt[k]||0)+1;}));
+    sum+=`<div style="margin-top:10px;padding:10px 12px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;font-size:13px;color:#991b1b"><b>สรุปปัญหา</b> (1 แถวอาจมีหลายปัญหา)<ul style="margin:6px 0 0 18px;padding:0">`+
+      Object.entries(cnt).sort((a,b)=>b[1]-a[1]).map(([k,n])=>`<li>${escapeHtml(k)} — ${n} แถว</li>`).join('')+
+      `</ul><button type="button" class="btn btn-outline" style="margin-top:8px;padding:4px 10px;font-size:12px" onclick="downloadImportErrors()">⬇ ดาวน์โหลดรายการที่มีปัญหา (.xlsx)</button></div>`;
+  }
+  document.getElementById('importSummary').innerHTML=sum;
+  const list=rows.filter(r=>importFilter==='all'||(importFilter==='ok'?!r._errors.length:r._errors.length));
+  let html=`<thead><tr><th>แถวในไฟล์</th><th>รหัส</th><th>เลขบัตรประชาชน</th><th>ชื่อ-สกุล</th><th>หน่วยงาน</th><th>ประเภท</th><th>สถานะ / ปัญหา</th></tr></thead><tbody>`;
+  list.forEach(r=>{html+=`<tr style="${r._errors.length?'background:#fef2f2':''}"><td>${r._row}</td><td>${escapeHtml(r.employee_code||'')}</td><td style="white-space:nowrap">${escapeHtml(r.id_card||'')}</td><td>${escapeHtml(r.first_name||'')} ${escapeHtml(r.last_name||'')}</td><td>${escapeHtml(r.department_code||'')}</td><td>${typeLabel[parseInt(r.staff_type)]||escapeHtml(r.staff_type||'')}</td><td style="${r._errors.length?'color:#b91c1c':''}">${r._errors.length?'⚠ '+r._errors.map(escapeHtml).join('<br>⚠ '):'✓ พร้อม'}</td></tr>`;});
+  if(!list.length)html+=`<tr><td colspan="7" style="text-align:center;color:#94a3b8">ไม่มีแถวในกลุ่มนี้</td></tr>`;
+  html+=`</tbody>`;
+  document.getElementById('previewTable').innerHTML=html;
+}
+function downloadImportErrors(){
+  const rows=(parsedImportRows||[]).filter(r=>r._errors.length).map(r=>({'แถวในไฟล์':r._row,'รหัส':r.employee_code||'','เลขบัตรประชาชน':r.id_card||'','ชื่อ':r.first_name||'','นามสกุล':r.last_name||'','หน่วยงาน':r.department_code||'','ปัญหา':r._errors.join(' / ')}));
+  const ws=XLSX.utils.json_to_sheet(rows),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'มีปัญหา');
+  XLSX.writeFile(wb,'นำเข้าเจ้าหน้าที่_รายการที่มีปัญหา.xlsx');
+}
+async function confirmImport(){const valid=parsedImportRows.filter(r=>r._errors.length===0);if(!valid.length)return;const btn=document.getElementById('confirmImportBtn');btn.disabled=true;document.getElementById('importProgressWrap').style.display='block';const BATCH=50;let success=0,fail=0;for(let i=0;i<valid.length;i+=BATCH){const batch=valid.slice(i,i+BATCH).map(r=>({
+      employee_code:String((r.employee_code||'')).trim()||null,id_card:String(r.id_card).trim(),
+      prefix:r.prefix||'นาย',gender:r.gender||'M',first_name:String(r.first_name).trim(),last_name:String(r.last_name).trim(),
+      birth_date:formatDateForDB(r.birth_date)||null,staff_type:parseInt(r.staff_type),ot_group:r.ot_group?parseInt(r.ot_group):1,
+      department:r.department_code,division:r.division?String(r.division).trim():null,position:String(r.position??'').trim(),
+      education_level:r.education_level||null,education_level_current:r.education_level_current||null,education_field:r.education_field?String(r.education_field).trim():null,education_institution:r.education_institution?String(r.education_institution).trim():null,
+      start_date:formatDateForDB(r.start_date)||null,contract_end_date:r.contract_end_date?formatDateForDB(r.contract_end_date):null,
+      base_salary:parseFloat(r.base_salary)||0,profession_fee:parseFloat(r.profession_fee)||0,status:r.status||'active',
+      resignation_date:r.resignation_date?formatDateForDB(r.resignation_date):null,
+      address:r.address||null,address_current:r.address_current||null,phone:r.phone?String(r.phone):null,email:r.email||null,
+      bank_name:r.bank_name||null,bank_account:r.bank_account?String(r.bank_account).trim().replace(/\.0+$/,''):null,
+      device_id:r.device_id?String(r.device_id).trim():null,ss_branch_code:r.ss_branch_code?String(r.ss_branch_code).trim():null,ss_exempt:r.ss_exempt==='ใช่'||r.ss_exempt===true,
+      blood_type:r.blood_type||null,nationality:r.nationality?String(r.nationality).trim():null,ethnicity:r.ethnicity?String(r.ethnicity).trim():null,religion:r.religion||null,chronic_disease:r.chronic_disease?String(r.chronic_disease).trim():null,
+      marital_status:r.marital_status||null,spouse_name:r.spouse_name?String(r.spouse_name).trim():null,spouse_phone:r.spouse_phone?String(r.spouse_phone).trim():null,
+      father_name:r.father_name?String(r.father_name).trim():null,father_phone:r.father_phone?String(r.father_phone).trim():null,father_address:r.father_address?String(r.father_address).trim():null,father_status:r.father_status||null,
+      mother_name:r.mother_name?String(r.mother_name).trim():null,mother_phone:r.mother_phone?String(r.mother_phone).trim():null,mother_address:r.mother_address?String(r.mother_address).trim():null,mother_status:r.mother_status||null,
+      emergency_contact1_name:r.emergency_contact1_name?String(r.emergency_contact1_name).trim():null,emergency_contact1_phone:r.emergency_contact1_phone?String(r.emergency_contact1_phone).trim():null,emergency_contact1_relation:r.emergency_contact1_relation?String(r.emergency_contact1_relation).trim():null,
+      emergency_contact2_name:r.emergency_contact2_name?String(r.emergency_contact2_name).trim():null,emergency_contact2_phone:r.emergency_contact2_phone?String(r.emergency_contact2_phone).trim():null,emergency_contact2_relation:r.emergency_contact2_relation?String(r.emergency_contact2_relation).trim():null,
+      created_by:currentUser.id,
+    }));const{error}=await sb.from('staff').upsert(batch,{onConflict:'id_card'});if(error){fail+=batch.length;showToast('Import บางส่วนล้มเหลว: '+error.message,true);}else success+=batch.length;const pct=Math.round(((i+batch.length)/valid.length)*100);document.getElementById('progressFill').style.width=pct+'%';document.getElementById('progressText').textContent=`กำลังนำเข้า... ${i+batch.length} / ${valid.length}`;}document.getElementById('progressText').textContent=`เสร็จสิ้น: สำเร็จ ${success}${fail?`, ล้มเหลว ${fail}`:''}`;showToast(`นำเข้าสำเร็จ ${success} รายการ${fail?`, ล้มเหลว ${fail}`:''}`,fail>0&&success===0);setTimeout(()=>{closeImportModal();resetAndLoad();loadStats();},1500);}
+function formatDateForDB(val){if(!val)return'';if(val instanceof Date){const y=val.getUTCFullYear(),m=val.getUTCMonth()+1,d=val.getUTCDate(),yr=y>2400?y-543:y;return`${yr}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;}if(typeof val==='number'){const p=XLSX.SSF.parse_date_code(val);let y=p.y>2400?p.y-543:p.y;return`${y}-${String(p.m).padStart(2,'0')}-${String(p.d).padStart(2,'0')}`;}const s=String(val).trim();if(s.match(/^[A-Z][a-z]{2}\s/)){const dt=new Date(s);if(!isNaN(dt)){let y=dt.getUTCFullYear();if(y>2400)y-=543;return`${y}-${String(dt.getUTCMonth()+1).padStart(2,'0')}-${String(dt.getUTCDate()).padStart(2,'0')}`;}}const sl=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(sl){let[,d,m,y]=sl.map(Number);if(y>2400)y-=543;return`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;}const iso=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);if(iso){let[,y,m,d]=iso;if(parseInt(y)>2400)y=String(parseInt(y)-543);return`${y}-${m}-${d}`;}return s.slice(0,10);}
+
+// ============ Tabs & extra staff data (address / career / child records) ============
+function switchTab(name){document.querySelectorAll('.modal-tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));document.querySelectorAll('#staffModal .tab-panel').forEach(p=>p.classList.toggle('active',p.id==='tab-'+name));}
+
+function onAddressSameToggle(){const chk=document.getElementById('f_address_same'),cur=document.getElementById('f_address_current');if(chk.checked){cur.value=document.getElementById('f_address').value;cur.disabled=true;}else{cur.disabled=false;}}
+
+const childSections={
+  transfers:{table:'staff_transfers',order:'effective_date',asc:false,
+    fields:[
+      {id:'effective_date',label:'วันที่มีผล',type:'date_be',required:true},
+      {id:'transfer_type',label:'ประเภทการปรับ',type:'select',options:['โยกย้ายหน่วยงาน','เลื่อนตำแหน่ง','ปรับระดับ/ปรับตำแหน่ง','เปลี่ยนตำแหน่ง','อื่นๆ'],required:true},
+      {id:'from_department',label:'จากหน่วยงาน',type:'text'},{id:'to_department',label:'ไปหน่วยงาน',type:'text'},
+      {id:'from_position',label:'จากตำแหน่ง',type:'text'},{id:'to_position',label:'ไปตำแหน่ง',type:'text'},
+      {id:'note',label:'หมายเหตุ',type:'textarea'}],
+    cols:[{k:'effective_date',label:'วันที่',date:true},{k:'transfer_type',label:'ประเภท'},{k:'from_position',label:'จากตำแหน่ง'},{k:'to_position',label:'ไปตำแหน่ง'},{k:'from_department',label:'จากหน่วยงาน'},{k:'to_department',label:'ไปหน่วยงาน'}]},
+  salary_adjustments:{table:'staff_salary_adjustments',order:'effective_date',asc:false,
+    fields:[
+      {id:'effective_date',label:'วันที่มีผล',type:'date_be',required:true},
+      {id:'adjustment_type',label:'ประเภทการปรับ',type:'select',options:['ปรับประจำปี','ปรับตามผลประเมินทดลองงาน','ต่อสัญญาปีต่อปี','ปรับกรณีพิเศษ','อื่นๆ'],required:true},
+      {id:'grade',label:'เกรดผลประเมิน',type:'text'},
+      {id:'adjustment_amount',label:'จำนวนเงินที่ปรับ (+เพิ่ม / -ลด)',type:'number'},
+      {id:'old_salary',label:'เงินเดือนเดิม (บาท)',type:'number'},{id:'new_salary',label:'เงินเดือนใหม่ (คำนวณอัตโนมัติ)',type:'number',required:true},
+      {id:'note',label:'หมายเหตุ',type:'textarea'}],
+    cols:[{k:'effective_date',label:'วันที่',date:true},{k:'adjustment_type',label:'ประเภท'},{k:'grade',label:'เกรด'},{k:'old_salary',label:'เดิม',money:true},{k:'new_salary',label:'ใหม่',money:true}]},
+  trainings:{table:'staff_trainings',order:'start_date',asc:false,
+    fields:[
+      {id:'training_name',label:'ชื่อหลักสูตร/หัวข้อ',type:'text',required:true},{id:'institution',label:'หน่วยงาน/สถาบันผู้จัด',type:'text'},
+      {id:'start_date',label:'วันที่เริ่ม',type:'date_be'},{id:'end_date',label:'วันที่สิ้นสุด',type:'date_be'},
+      {id:'hours',label:'จำนวนชั่วโมง',type:'number'},{id:'certificate_no',label:'เลขที่ใบรับรอง',type:'text'},
+      {id:'note',label:'หมายเหตุ',type:'textarea'}],
+    cols:[{k:'start_date',label:'วันที่',date:true},{k:'training_name',label:'หลักสูตร'},{k:'institution',label:'หน่วยงานผู้จัด'},{k:'hours',label:'ชม.'}]},
+  disciplinary:{table:'staff_disciplinary',order:'action_date',asc:false,
+    fields:[
+      {id:'action_date',label:'วันที่',type:'date_be',required:true},
+      {id:'action_type',label:'ประเภทการลงโทษ',type:'select',options:['ตักเตือนด้วยวาจา','ตักเตือนเป็นหนังสือ','ตัดเงินเดือน','พักงาน','ไล่ออก','อื่นๆ'],required:true},
+      {id:'document_no',label:'เลขที่หนังสือ',type:'text'},{id:'reason',label:'เหตุผล/ความผิด',type:'textarea'},
+      {id:'note',label:'หมายเหตุ',type:'textarea'}],
+    cols:[{k:'action_date',label:'วันที่',date:true},{k:'action_type',label:'ประเภท'},{k:'document_no',label:'เลขที่หนังสือ'},{k:'reason',label:'เหตุผล'}]},
+  beneficiaries:{table:'staff_beneficiaries',order:'order_no',asc:true,
+    fields:[
+      {id:'name',label:'ชื่อ-สกุล',type:'text',required:true},{id:'relationship',label:'ความสัมพันธ์',type:'text'},
+      {id:'id_card',label:'เลขบัตรประชาชน',type:'text'},{id:'phone',label:'เบอร์โทรศัพท์',type:'text'},
+      {id:'percentage',label:'สัดส่วน (%)',type:'number'},{id:'order_no',label:'ลำดับ',type:'number'},
+      {id:'address',label:'ที่อยู่',type:'textarea'},{id:'note',label:'หมายเหตุ',type:'textarea'}],
+    cols:[{k:'order_no',label:'ลำดับ'},{k:'name',label:'ชื่อ-สกุล'},{k:'relationship',label:'ความสัมพันธ์'},{k:'percentage',label:'สัดส่วน%'},{k:'phone',label:'โทร'}]},
+  contract_renewals:{table:'staff_contract_renewals',order:'renewal_date',asc:false,
+    fields:[
+      {id:'renewal_date',label:'วันที่ต่อสัญญา',type:'date_be',required:true},
+      {id:'contract_type',label:'ประเภทสัญญาที่ต่อ',type:'select',options:['ประเภทที่ 1 เจ้าหน้าที่มูลนิธิ (ปีต่อปี มีปรับเงินเดือนประจำปี)','ประเภทที่ 4 ที่ปรึกษา/ผู้เชี่ยวชาญ (ปีต่อปี ไม่มีปรับ)'],required:true},
+      {id:'new_contract_end_date',label:'วันหมดสัญญาใหม่',type:'date_be'},{id:'salary_at_renewal',label:'เงินเดือน/ค่าตอบแทน ณ วันต่อสัญญา',type:'number'},
+      {id:'note',label:'หมายเหตุ',type:'textarea'}],
+    cols:[{k:'renewal_date',label:'วันที่ต่อสัญญา',date:true},{k:'contract_type',label:'ประเภทสัญญา'},{k:'new_contract_end_date',label:'หมดสัญญาใหม่',date:true},{k:'salary_at_renewal',label:'เงินเดือน',money:true}]},
+  children:{table:'staff_children',order:'created_at',asc:true,
+    fields:[
+      {id:'name',label:'ชื่อ-สกุลบุตร',type:'text',required:true},
+      {id:'phone',label:'เบอร์ติดต่อ',type:'text'}],
+    cols:[{k:'name',label:'ชื่อ-สกุล'},{k:'phone',label:'เบอร์ติดต่อ'}]},
+  appraisals:{table:'staff_appraisals',order:'year_be',asc:false,
+    fields:[
+      {id:'year_be',label:'ปี พ.ศ.',type:'number',required:true},
+      {id:'rating',label:'ผลการประเมิน',type:'select',options:['ดีเยี่ยม','ดีมาก','ดี','พอใช้','ต้องปรับปรุง'],required:true},
+      {id:'score',label:'คะแนน',type:'number'},
+      {id:'evaluator_name',label:'ผู้ประเมิน',type:'text'},
+      {id:'comments',label:'ความเห็น/หมายเหตุ',type:'textarea'}],
+    cols:[{k:'year_be',label:'ปี พ.ศ.'},{k:'rating',label:'ผลประเมิน'},{k:'score',label:'คะแนน'},{k:'evaluator_name',label:'ผู้ประเมิน'}]}
+};
+let childEditingId=null;
+
+function childFieldHTML(section,f){const pid=`c_${section}_${f.id}`;if(f.type==='date_be')return`<div class="form-group"><label>${f.label}${f.required?' <span class="req">*</span>':''}</label><div id="${pid}_wrap"></div><div id="${pid}_hint" style="font-size:11px;color:#0369a1;margin-top:3px"></div></div>`;if(f.type==='select')return`<div class="form-group"><label>${f.label}${f.required?' <span class="req">*</span>':''}</label><select id="${pid}">${f.options.map(o=>`<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join('')}</select></div>`;if(f.type==='textarea')return`<div class="form-group full"><label>${f.label}</label><textarea id="${pid}" rows="2"></textarea></div>`;if(f.type==='number')return`<div class="form-group"><label>${f.label}${f.required?' <span class="req">*</span>':''}</label><input type="number" id="${pid}" step="0.01"></div>`;return`<div class="form-group"><label>${f.label}${f.required?' <span class="req">*</span>':''}</label><input type="text" id="${pid}"></div>`;}
+
+function renderChildTabPanel(section){const cfg=childSections[section];const totalBar=section==='beneficiaries'?`<div class="ben-total" id="benTotal_${section}"></div>`:'';const salaryNote=section==='salary_adjustments'?`<div style="font-size:11.5px;color:#0369a1;background:#eff6ff;border-radius:6px;padding:8px 10px;margin-bottom:10px">💡 "เงินเดือนใหม่" คำนวณอัตโนมัติจากเงินเดือนเดิม + จำนวนเงินที่ปรับ (ใส่ติดลบได้ถ้าเป็นการปรับลด) — กด "บันทึก" แล้วจะปรับเงินเดือนจริงในฐานข้อมูลเจ้าหน้าที่ทันที (เฉพาะตอนเพิ่มรายการใหม่ ถ้าแก้ไขประวัติเก่าจะแก้แค่รายการในตารางนี้ ไม่กระทบเงินเดือนปัจจุบัน)</div>`:'';return`<div class="child-toolbar"><button type="button" class="btn btn-success btn-sm" onclick="openChildAdd('${section}')">➕ เพิ่มรายการ</button></div>${totalBar}${salaryNote}<div id="childForm_${section}" style="display:none" class="child-form-box"><div class="form-grid">${cfg.fields.map(f=>childFieldHTML(section,f)).join('')}</div><div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end"><button type="button" class="btn btn-outline btn-sm" onclick="cancelChildForm('${section}')">ยกเลิก</button><button type="button" class="btn btn-primary btn-sm" onclick="saveChildRecord('${section}')">💾 บันทึก</button></div></div><div class="table-scroll"><table class="data-table" id="childTable_${section}"><thead><tr>${cfg.cols.map(c=>`<th>${c.label}</th>`).join('')}<th>จัดการ</th></tr></thead><tbody><tr><td colspan="${cfg.cols.length+1}" style="text-align:center;color:#94a3b8;padding:16px">— ยังไม่มีข้อมูล —</td></tr></tbody></table></div>`;}
+
+function clearChildForm(section){const cfg=childSections[section];cfg.fields.forEach(f=>{const pid=`c_${section}_${f.id}`;if(f.type==='date_be'){const w=document.getElementById(pid+'_wrap');const oc=(section==='contract_renewals'&&f.id==='renewal_date')?'onRenewalDateAutoCalc()':'';if(w)w.innerHTML=beDateHTML(pid,f.required,oc);const h=document.getElementById(pid+'_hint');if(h)h.textContent='';}else{const el=document.getElementById(pid);if(el)el.value='';}});}
+function openChildAdd(section){childEditingId=null;clearChildForm(section);if(section==='contract_renewals'){const sEl=document.getElementById('c_contract_renewals_salary_at_renewal'),base=document.getElementById('f_base_salary').value;if(sEl&&base)sEl.value=base;}if(section==='salary_adjustments'){const oEl=document.getElementById('c_salary_adjustments_old_salary'),base=document.getElementById('f_base_salary').value;if(oEl&&base)oEl.value=base;const hint=document.getElementById('c_salary_adjustments_grade_hint');if(hint)hint.textContent='';salaryAdjToggle();}document.getElementById('childForm_'+section).style.display='block';}
+function onRenewalDateAutoCalc(){const rISO=getBEDate('c_contract_renewals_renewal_date');if(!rISO)return;const e=new Date(rISO);e.setFullYear(e.getFullYear()+1);e.setDate(e.getDate()-1);const iso=e.toISOString().slice(0,10);setBEDate('c_contract_renewals_new_contract_end_date',iso);const h=document.getElementById('c_contract_renewals_new_contract_end_date_hint');if(h)h.textContent=`คำนวณอัตโนมัติ: ต่อสัญญา 1 ปี ถึงวันที่ ${formatDateTH(iso)} (แก้ไขได้หากตกลงกันไว้ต่างจากนี้)`;}
+function cancelChildForm(section){const f=document.getElementById('childForm_'+section);if(f)f.style.display='none';childEditingId=null;}
+
+async function saveChildRecord(section){const cfg=childSections[section];const staffId=document.getElementById('f_id').value;if(!staffId){showToast('กรุณาบันทึกข้อมูลพื้นฐานก่อน',true);return;}const payload={staff_id:staffId};let hasErr=false;cfg.fields.forEach(f=>{const pid=`c_${section}_${f.id}`;let val;if(f.type==='date_be'){val=getBEDate(pid)||null;if(f.required&&!val)hasErr=true;}else if(f.type==='number'){const raw=document.getElementById(pid).value;val=raw===''?null:parseFloat(raw);}else{val=document.getElementById(pid).value.trim();if(f.required&&!val)hasErr=true;if(val==='')val=null;}payload[f.id]=val;});if(hasErr){showToast('กรุณากรอกข้อมูลที่จำเป็นให้ครบ',true);return;}
+  if(section==='beneficiaries'){
+    const{data:existing}=await sb.from('staff_beneficiaries').select('id,percentage').eq('staff_id',staffId);
+    const otherTotal=(existing||[]).filter(r=>r.id!==childEditingId).reduce((sum,r)=>sum+(parseFloat(r.percentage)||0),0);
+    const newPct=parseFloat(payload.percentage)||0;
+    if(otherTotal+newPct>100){showToast(`บันทึกไม่สำเร็จ: สัดส่วนรวมจะเกิน 100% (ผู้รับผลประโยชน์คนอื่นรวมกันแล้ว ${otherTotal}% + รายการนี้ ${newPct}% = ${otherTotal+newPct}%)`,true);return;}
+  }
+  let error;if(childEditingId){({error}=await sb.from(cfg.table).update(payload).eq('id',childEditingId));}else{payload.created_by=currentUser.id;({error}=await sb.from(cfg.table).insert(payload));}if(error){showToast('บันทึกไม่สำเร็จ: '+error.message,true);return;}
+  if(section==='salary_adjustments'&&!childEditingId){
+    const{error:e2}=await sb.from('staff').update({base_salary:payload.new_salary}).eq('id',staffId);
+    if(e2){showToast('บันทึกประวัติสำเร็จ แต่ปรับเงินเดือนจริงไม่สำเร็จ: '+e2.message,true);}
+    else{document.getElementById('f_base_salary').value=payload.new_salary;showToast(`บันทึกสำเร็จ — ปรับเงินเดือนเป็น ${Number(payload.new_salary).toLocaleString()} บาท แล้ว`);}
+  }else{showToast('บันทึกสำเร็จ');}
+  cancelChildForm(section);loadChildRecords(section);if(section==='contract_renewals')await syncRetirementRenewal(payload);}
+
+async function loadChildRecords(section){const cfg=childSections[section];const staffId=document.getElementById('f_id').value;const tbl=document.querySelector(`#childTable_${section} tbody`);if(!staffId||!tbl)return;const{data,error}=await sb.from(cfg.table).select('*').eq('staff_id',staffId).order(cfg.order,{ascending:cfg.asc});if(error){tbl.innerHTML=`<tr><td colspan="${cfg.cols.length+1}">โหลดไม่สำเร็จ</td></tr>`;return;}if(!data||!data.length){tbl.innerHTML=`<tr><td colspan="${cfg.cols.length+1}" style="text-align:center;color:#94a3b8;padding:16px">— ยังไม่มีข้อมูล —</td></tr>`;}else{tbl.innerHTML=data.map(r=>{const tds=cfg.cols.map(c=>{let v=r[c.k];if(c.date)v=formatDateTH(v);else if(c.money)v=v!=null?Number(v).toLocaleString(undefined,{minimumFractionDigits:2}):'—';else v=v??'—';return`<td>${escapeHtml(String(v))}</td>`;}).join('');return`<tr>${tds}<td style="white-space:nowrap"><button type="button" class="action-btn btn-edit" onclick='editChildRecord("${section}",${JSON.stringify(r).replace(/'/g,"&#39;")})'>แก้ไข</button> <button type="button" class="action-btn btn-del" onclick="deleteChildRecord('${section}','${r.id}')">ลบ</button></td>`;}).join('');}if(section==='beneficiaries')updateBeneficiaryTotal(data||[]);}
+
+function updateBeneficiaryTotal(rows){const el=document.getElementById('benTotal_beneficiaries');if(!el)return;const total=rows.reduce((sum,r)=>sum+(parseFloat(r.percentage)||0),0);el.textContent=`รวมสัดส่วนที่บันทึกแล้ว: ${total}% ${total===100?'✓':(total>100?'(เกิน 100% — กรุณาแก้ไข)':'(ยังไม่ครบ 100%)')}`;el.className='ben-total '+(total>100?'bad':(total===100?'ok':'bad'));}
+
+function editChildRecord(section,r){childEditingId=r.id;clearChildForm(section);const cfg=childSections[section];cfg.fields.forEach(f=>{const pid=`c_${section}_${f.id}`;if(f.type==='date_be'){setBEDate(pid,r[f.id]||'');}else{const el=document.getElementById(pid);if(el)el.value=r[f.id]??'';}});if(section==='salary_adjustments')salaryAdjToggle();document.getElementById('childForm_'+section).style.display='block';}
+
+async function deleteChildRecord(section,id){if(!confirm('ต้องการลบรายการนี้ใช่หรือไม่?'))return;const cfg=childSections[section];const{error}=await sb.from(cfg.table).delete().eq('id',id);if(error){showToast('ลบไม่สำเร็จ: '+error.message,true);return;}showToast('ลบสำเร็จ');loadChildRecords(section);}
+
+function initExtraTabs(staffId){const sections=['transfers','salary_adjustments','trainings','disciplinary','beneficiaries','appraisals'];sections.forEach(s=>{const el=document.getElementById('tab-'+s);if(!staffId){el.innerHTML='<div class="locked-tab-msg">💡 กรุณาบันทึกข้อมูลพื้นฐานก่อน จึงจะสามารถเพิ่มประวัติส่วนนี้ได้</div>';}else{el.innerHTML=renderChildTabPanel(s);loadChildRecords(s);if(s==='salary_adjustments')setupSalaryAdjustmentsForm();}});const cc=document.getElementById('tab-family-children-container');if(!staffId){cc.innerHTML='<div class="locked-tab-msg">💡 กรุณาบันทึกข้อมูลพื้นฐานก่อน จึงจะสามารถเพิ่มข้อมูลบุตรได้</div>';}else{cc.innerHTML=renderChildTabPanel('children');loadChildRecords('children');}if(staffId){renderCareerTab();}else{document.getElementById('probationBlock').style.display='none';document.getElementById('retirementBlock').style.display='none';const em=document.getElementById('careerEmptyMsg');em.style.display='block';em.textContent='กรุณาบันทึกข้อมูลพื้นฐานก่อน จึงจะสามารถกรอกข้อมูลทดลองงาน/เกษียณ/ต่อสัญญาได้';}}
+
+function salaryAdjRecalc(){const oldEl=document.getElementById('c_salary_adjustments_old_salary'),amtEl=document.getElementById('c_salary_adjustments_adjustment_amount'),newEl=document.getElementById('c_salary_adjustments_new_salary');if(!oldEl||!amtEl||!newEl)return;const oldV=parseFloat(oldEl.value)||0,amtV=parseFloat(amtEl.value)||0;newEl.value=(oldV+amtV)||'';}
+async function salaryAdjAutofillGrade(){if(childEditingId)return;const typeSel=document.getElementById('c_salary_adjustments_adjustment_type');if(!typeSel||typeSel.value!=='ปรับประจำปี')return;const staffId=document.getElementById('f_id').value;if(!staffId)return;const{data}=await sb.from('staff_appraisals').select('year_be,rating').eq('staff_id',staffId).order('year_be',{ascending:false}).limit(1);const gradeEl=document.getElementById('c_salary_adjustments_grade');if(!gradeEl||!data||!data.length)return;gradeEl.value=data[0].rating||'';let hint=document.getElementById('c_salary_adjustments_grade_hint');if(!hint){hint=document.createElement('div');hint.id='c_salary_adjustments_grade_hint';hint.style.cssText='font-size:11px;color:#0369a1;margin-top:3px';gradeEl.parentElement.appendChild(hint);}hint.textContent=`(ดึงจากผลประเมินปี ${data[0].year_be})`;}
+function salaryAdjToggle(){const typeSel=document.getElementById('c_salary_adjustments_adjustment_type');if(!typeSel)return;const isAnnual=typeSel.value==='ปรับประจำปี';const gradeEl=document.getElementById('c_salary_adjustments_grade'),amtEl=document.getElementById('c_salary_adjustments_adjustment_amount'),newEl=document.getElementById('c_salary_adjustments_new_salary');const gradeGroup=gradeEl&&gradeEl.closest('.form-group');if(gradeGroup)gradeGroup.style.display=isAnnual?'':'none';if(newEl){newEl.readOnly=true;newEl.style.background='#f1f5f9';}salaryAdjRecalc();if(isAnnual)salaryAdjAutofillGrade();}
+function setupSalaryAdjustmentsForm(){const typeSel=document.getElementById('c_salary_adjustments_adjustment_type'),oldEl=document.getElementById('c_salary_adjustments_old_salary'),amtEl=document.getElementById('c_salary_adjustments_adjustment_amount');if(!typeSel||typeSel.dataset.wired)return;typeSel.dataset.wired='1';typeSel.addEventListener('change',salaryAdjToggle);oldEl.addEventListener('input',salaryAdjRecalc);amtEl.addEventListener('input',salaryAdjRecalc);salaryAdjToggle();}
+
+function onMaritalChange(){const married=document.getElementById('f_marital_status').value==='สมรส';document.getElementById('spouseNameGroup').style.display=married?'flex':'none';document.getElementById('spousePhoneGroup').style.display=married?'flex':'none';}
+
+function handlePhotoSelect(e){const file=e.target.files[0];if(!file)return;const status=document.getElementById('photoUploadStatus');status.textContent='กำลังย่อรูป...';const img=new Image();const reader=new FileReader();reader.onload=ev=>{img.onload=async()=>{const targetW=450,targetH=600;const canvas=document.createElement('canvas');canvas.width=targetW;canvas.height=targetH;const ctx=canvas.getContext('2d');const scale=Math.max(targetW/img.width,targetH/img.height);const sw=targetW/scale,sh=targetH/scale;const sx=(img.width-sw)/2,sy=(img.height-sh)/2;ctx.drawImage(img,sx,sy,sw,sh,0,0,targetW,targetH);let quality=0.9;let blob=await new Promise(res=>canvas.toBlob(res,'image/jpeg',quality));while(blob&&blob.size>2*1024*1024&&quality>0.3){quality-=0.1;blob=await new Promise(res=>canvas.toBlob(res,'image/jpeg',quality));}if(!blob){status.textContent='ย่อรูปไม่สำเร็จ';return;}pendingDrivePhoto=blob;status.textContent=`กำลังอัปโหลด... (${Math.round(blob.size/1024)}KB)`;const empCode=document.getElementById('f_employee_code').value.trim()||('temp_'+Date.now());const staffId=document.getElementById('f_id').value;const safeKey=staffId||empCode.normalize('NFKD').replace(/[^\x00-\x7F]/g,'').replace(/[^a-zA-Z0-9_-]/g,'_').replace(/^[_-]+|[_-]+$/g,'')||('temp_'+Date.now());const path=`${safeKey}.jpg`;const{error}=await sb.storage.from('staff-photos').upload(path,blob,{upsert:true,contentType:'image/jpeg'});if(error){status.textContent='อัปโหลดไม่สำเร็จ: '+error.message;showToast('อัปโหลดรูปไม่สำเร็จ: '+error.message,true);return;}const{data:pub}=sb.storage.from('staff-photos').getPublicUrl(path);const url=pub.publicUrl+'?t='+Date.now();document.getElementById('f_photo_url').value=url;document.getElementById('photoPreview').innerHTML=`<img src="${url}">`;document.getElementById('removePhotoBtn').style.display='inline-flex';status.textContent=`✓ อัปโหลดสำเร็จ (${Math.round(blob.size/1024)}KB)`;};img.src=ev.target.result;};reader.readAsDataURL(file);}
+
+// ============ รูปเจ้าหน้าที่: รูปในคลังสัญญาจ้าง (Google Drive) เป็นหลัก ============
+// - อัปโหลดรูปในหน้านี้ → เก็บใน HRIS และส่งเข้า Drive (แฟ้มเจ้าหน้าที่ในคลังสัญญา) ด้วย ผ่าน HRIS File Gateway
+// - ปุ่ม "ดึงรูปจากคลังสัญญา" → คัดลอกรูปที่คลังสัญญามีแต่ HRIS ยังไม่มี/ยังเป็นรูปเก่า
+// - HR Desk แสดงรูปจากลิงก์ของ HRIS (ซิงค์อัตโนมัติ)
+let pendingDrivePhoto=null,drivePhotoTodo=[],drivePhotoBusy=false;
+function drivePhotoReady(){return currentProfile&&currentProfile.role==='super'&&window.HRISDrive&&HRISDrive.ready();}
+async function fetchAllRows(table,cols,filterFn){let all=[],from=0;for(;;){let q=sb.from(table).select(cols).range(from,from+999);if(filterFn)q=filterFn(q);const{data,error}=await q;if(error)throw error;all=all.concat(data||[]);if(!data||data.length<1000)break;from+=1000;}return all;}
+async function checkDrivePhotos(){
+  const btn=document.getElementById('drivePhotoBtn');if(!btn||!drivePhotoReady())return;
+  try{
+    const cons=await fetchAllRows('staff_contracts','id_card,photo_file_id',q=>q.not('photo_file_id','is',null));
+    const st=await fetchAllRows('staff','id,id_card,photo_source_id');
+    const byCard=new Map(st.map(x=>[String(x.id_card||''),x]));
+    drivePhotoTodo=cons.filter(c=>c.photo_file_id).map(c=>({c,s:byCard.get(String(c.id_card||''))})).filter(x=>x.s&&x.s.photo_source_id!==x.c.photo_file_id);
+    btn.style.display='inline-flex';btn.textContent=drivePhotoTodo.length?`🖼 ดึงรูปจากคลังสัญญา (${drivePhotoTodo.length})`:'🖼 รูปตรงกับคลังสัญญาแล้ว';btn.disabled=!drivePhotoTodo.length;
+  }catch(e){console.warn('ตรวจรูปจากคลังสัญญาไม่สำเร็จ',e);}
+}
+function resizePhotoBlob(blob){return new Promise((resolve,reject)=>{const img=new Image(),url=URL.createObjectURL(blob);img.onload=async()=>{URL.revokeObjectURL(url);const W=450,H=600,cv=document.createElement('canvas');cv.width=W;cv.height=H;const sc=Math.max(W/img.width,H/img.height),sw=W/sc,sh=H/sc;cv.getContext('2d').drawImage(img,(img.width-sw)/2,(img.height-sh)/2,sw,sh,0,0,W,H);let q=0.9,out=await new Promise(r=>cv.toBlob(r,'image/jpeg',q));while(out&&out.size>2*1024*1024&&q>0.3){q-=0.1;out=await new Promise(r=>cv.toBlob(r,'image/jpeg',q));}out?resolve(out):reject(new Error('ย่อรูปไม่สำเร็จ'));};img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('ไฟล์รูปเสีย'));};img.src=url;});}
+async function syncDrivePhotos(){
+  if(drivePhotoBusy||!drivePhotoTodo.length)return;
+  if(!confirm(`ดึงรูปจากคลังสัญญาจ้างมาเก็บใน HRIS ${drivePhotoTodo.length} คน?\nใช้เวลาประมาณ 1–2 วินาทีต่อคน · ปิดหน้านี้กลางคันได้ กดใหม่จะทำต่อจากที่ค้าง`))return;
+  drivePhotoBusy=true;const btn=document.getElementById('drivePhotoBtn');btn.disabled=true;
+  let ok=0,fail=0,lastErr='';const list=drivePhotoTodo.slice(),total=list.length;
+  const work=async()=>{for(;;){const x=list.shift();if(!x)return;
+    try{
+      const raw=await HRISDrive.fetchBlob(sb,x.c.photo_file_id,x.s.id_card);
+      const jpg=await resizePhotoBlob(raw),path=`${x.s.id}.jpg`;
+      const{error:upErr}=await sb.storage.from('staff-photos').upload(path,jpg,{upsert:true,contentType:'image/jpeg'});if(upErr)throw upErr;
+      const url=sb.storage.from('staff-photos').getPublicUrl(path).data.publicUrl+'?v='+x.c.photo_file_id.slice(-8);
+      const{error}=await sb.from('staff').update({photo_url:url,photo_source_id:x.c.photo_file_id}).eq('id',x.s.id);if(error)throw error;
+      ok++;
+    }catch(e){fail++;lastErr=e.message||String(e);}
+    btn.textContent=`🖼 กำลังดึงรูป ${ok+fail} / ${total}`;
+  }};
+  await Promise.all([work(),work(),work()]);
+  drivePhotoBusy=false;
+  showToast(`ดึงรูปสำเร็จ ${ok} คน`+(fail?` · ไม่สำเร็จ ${fail} คน (${lastErr})`:''),fail>0);
+  await checkDrivePhotos();loadStaff();
+}
+async function pushPhotoToDrive(payload,blob){
+  if(!drivePhotoReady())return;
+  const card=String(payload.id_card||'');if(!/^\d{13}$/.test(card))return;
+  try{
+    const{data:con}=await sb.from('staff_contracts').select('photo_file_id,folder_id').eq('id_card',card).maybeSingle();
+    const file=new File([blob],'photo.jpg',{type:'image/jpeg'});
+    const r=await HRISDrive.upload(sb,file,{kind:'photo',id_card:card,meta:{code:payload.employee_code||'',first_name:payload.first_name,last_name:payload.last_name,folder_id:con&&con.folder_id||null},replace_file_id:con&&con.photo_file_id||null});
+    const{error}=await sb.from('staff_contracts').upsert({id_card:card,photo_file_id:r.file_id,folder_id:r.folder_id},{onConflict:'id_card'});if(error)throw error;
+    await sb.from('staff').update({photo_source_id:r.file_id}).eq('id_card',card);
+    showToast('ส่งรูปเข้าคลังสัญญาจ้าง (Google Drive) แล้ว');
+  }catch(e){showToast('บันทึกรูปใน HRIS แล้ว แต่ส่งเข้าคลังสัญญาไม่สำเร็จ: '+(e.message||e),true);}
+}
+function removePhoto(){pendingDrivePhoto=null;document.getElementById('f_photo_url').value='';document.getElementById('photoPreview').innerHTML='👤';document.getElementById('removePhotoBtn').style.display='none';document.getElementById('photoUploadStatus').textContent='';document.getElementById('f_photo_file').value='';}
+
+function renderCareerTab(){const type=parseInt(document.getElementById('f_staff_type').value);const pb=document.getElementById('probationBlock'),rb=document.getElementById('retirementBlock'),em=document.getElementById('careerEmptyMsg');pb.style.display=type===2?'block':'none';rb.style.display=(type===1||type===4)?'block':'none';em.style.display=(type===2||type===1||type===4)?'none':'block';if(type===2){const sISO=getBEDate('f_start_date');if(sISO){const e=new Date(sISO);e.setMonth(e.getMonth()+6);document.getElementById('probationDueInfo').innerHTML=`ครบกำหนดทดลองงาน 6 เดือน: <strong>${formatDateTH(e.toISOString().slice(0,10))}</strong> — ประเมินทุก 3 เดือน หากผ่านแต่ละครั้งปรับเงินเดือนเพิ่ม 1,000 บาท`;}else{document.getElementById('probationDueInfo').innerHTML='💡 กรุณากรอกวันเริ่มงานในแท็บข้อมูลพื้นฐานก่อน';}}if(type===1){const bISO=getBEDate('f_birth_date');if(bISO){const y=parseInt(bISO.split('-')[0])+65;document.getElementById('retirementDueInfo').innerHTML=`🎂 กำหนดเกษียณอายุ: <strong>31 ธ.ค. ${y+543}</strong> (อายุครบ 65 ปี)`;}else{document.getElementById('retirementDueInfo').innerHTML='💡 กรุณากรอกวันเกิดในแท็บข้อมูลพื้นฐานก่อน';}}else if(type===4){document.getElementById('retirementDueInfo').innerHTML='📋 ที่ปรึกษา/ผู้เชี่ยวชาญ — สัญญาปีต่อปี รับเป็นค่าตอบแทน ไม่มีการปรับเงินเดือนประจำปี';}const cont=document.getElementById('tab-contract_renewals-container');if((type===1||type===4)&&document.getElementById('f_id').value){cont.innerHTML=renderChildTabPanel('contract_renewals');loadChildRecords('contract_renewals');}}
+
+async function saveProbationEval(n){const staffId=document.getElementById('f_id').value;if(!staffId){showToast('กรุณาบันทึกข้อมูลพื้นฐานก่อน',true);return;}const payload={};payload['probation_eval'+n+'_date']=getBEDate('f_probation_eval'+n+'_date')||null;payload['probation_eval'+n+'_result']=document.getElementById('f_probation_eval'+n+'_result').value;payload['probation_eval'+n+'_note']=document.getElementById('f_probation_eval'+n+'_note').value.trim()||null;const{error}=await sb.from('staff').update(payload).eq('id',staffId);if(error){showToast('บันทึกไม่สำเร็จ: '+error.message,true);return;}showToast('บันทึกผลประเมินสำเร็จ');}
+
+async function applyProbationRaise(n){const staffId=document.getElementById('f_id').value;if(!staffId){showToast('กรุณาบันทึกข้อมูลพื้นฐานก่อน',true);return;}if(!confirm(`ยืนยันปรับเงินเดือนเพิ่ม 1,000 บาท (ผลประเมิน${n===1?' 3 เดือนแรก':' 3 เดือนหลัง'})?`))return;const{data:s,error:e1}=await sb.from('staff').select('base_salary').eq('id',staffId).single();if(e1){showToast('โหลดข้อมูลไม่สำเร็จ',true);return;}const oldSalary=Number(s.base_salary||0),newSalary=oldSalary+1000;const{error:e2}=await sb.from('staff').update({base_salary:newSalary}).eq('id',staffId);if(e2){showToast('ปรับเงินเดือนไม่สำเร็จ: '+e2.message,true);return;}const effDate=getBEDate('f_probation_eval'+n+'_date')||new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Bangkok'})).toISOString().slice(0,10);await sb.from('staff_salary_adjustments').insert({staff_id:staffId,effective_date:effDate,old_salary:oldSalary,new_salary:newSalary,adjustment_type:'ปรับตามผลประเมินทดลองงาน',note:`ผลประเมิน${n===1?' 3 เดือนแรก':' 3 เดือนหลัง'} (ทดลองปฏิบัติงาน)`,created_by:currentUser.id});document.getElementById('f_base_salary').value=newSalary;showToast(`ปรับเงินเดือนเป็น ${newSalary.toLocaleString()} บาท สำเร็จ`);loadChildRecords('salary_adjustments');}
+
+async function syncRetirementRenewal(payload){const staffId=document.getElementById('f_id').value;const updates={is_post_retirement:true};if(payload.new_contract_end_date)updates.contract_end_date=payload.new_contract_end_date;if(payload.contract_type&&payload.contract_type.includes('ประเภทที่ 4')){updates.staff_type=4;updates.post_retirement_contract_type='type4';}else if(payload.contract_type){updates.staff_type=1;updates.post_retirement_contract_type='type1';}await sb.from('staff').update(updates).eq('id',staffId);showToast('อัปเดตสถานะการต่อสัญญาในข้อมูลหลักแล้ว — ปิดและเปิดแก้ไขใหม่เพื่อดูผลล่าสุด');}
+
+(async function init(){startLiveClock();const ok=await authGuard();if(!ok)return;await loadDepartments();await loadShifts();const{data:ss}=await sb.from('social_security_config').select('*').order('phase');ssConfig=ss||[];await loadStats();await loadStaff();checkDrivePhotos();})();
+
+// ============================================================
+// กระดิ่งแจ้งเตือนรวมศูนย์ (เพิ่มโดย Claude)
+// ทำงานแบบอิสระ ไม่พึ่งชื่อตัวแปรของแต่ละหน้า (เพราะแต่ละไฟล์ตั้งชื่อตัวแปร currentUser/currentProfile ไม่ตรงกัน
+// บางไฟล์ถึงกับไม่มีตัวแปรเหล่านี้เลย เช่น dashboard.html) — ดึง session/role/department ของตัวเองโดยตรง
+// ============================================================
+let ntfUser = null, ntfRole = null, ntfDept = null, ntfList = [], ntfChannel = null;
+
+function ntfSb() {
+  if (typeof sb !== 'undefined' && sb) return sb;
+  if (typeof supabaseClient !== 'undefined' && supabaseClient) return supabaseClient;
+  return null;
+}
+
+async function ntfWaitForAuth() {
+  const client = ntfSb();
+  if (!client) { setTimeout(ntfWaitForAuth, 400); return; }
+  try {
+    const { data } = await client.auth.getSession();
+    if (!data || !data.session) { setTimeout(ntfWaitForAuth, 400); return; }
+    ntfUser = data.session.user;
+    const { data: profile } = await client.from('profiles').select('role,department').eq('id', ntfUser.id).maybeSingle();
+    if (profile) { ntfRole = profile.role; ntfDept = profile.department; }
+  } catch (e) { setTimeout(ntfWaitForAuth, 800); return; }
+  ntfInit();
+}
+
+async function ntfInit() {
+  const client = ntfSb();
+  if (!client || !ntfUser) return;
+  await ntfLoad();
+  if (ntfChannel) return; // กันสมัคร realtime ซ้ำ
+  ntfChannel = client.channel('ntf-bell-' + ntfUser.id)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, () => ntfLoad())
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'notifications' }, () => ntfLoad())
+    .subscribe();
+  setInterval(ntfLoad, 60000); // รีเฟรชสำรองทุก 1 นาที เผื่อ realtime หลุดหรือพลาดไป
+}
+
+async function ntfLoad() {
+  const client = ntfSb();
+  if (!client || !ntfUser) return;
+  // ระบบเดิมเคยใช้ชื่อคอลัมน์ recipient_department/recipient_user_id มาก่อน ส่วนที่เพิ่มใหม่ใช้ department/recipient_id
+  // ดึงแบบครอบคลุมทั้ง 2 แบบไว้ก่อน แล้วค่อยกรองซ้ำอีกทีฝั่ง JS ให้แม่นยำ
+  const orParts = [`recipient_id.eq.${ntfUser.id}`, `recipient_user_id.eq.${ntfUser.id}`];
+  if (ntfRole) orParts.push(`recipient_role.eq.${ntfRole}`);
+  if (ntfDept) orParts.push(`recipient_department.eq.${encodeURIComponent(ntfDept)}`);
+  const { data, error } = await client.from('notifications').select('*').or(orParts.join(',')).order('created_at', { ascending: false }).limit(40);
+  if (error) return; // เงียบไว้ ไม่รบกวนผู้ใช้ถ้าตารางยังไม่พร้อม (เช่น ยังไม่ได้รัน migration)
+  ntfList = (data || []).filter(n => {
+    if (n.recipient_id === ntfUser.id || n.recipient_user_id === ntfUser.id) return true;
+    const scopedDept = n.department || n.recipient_department || null;
+    if (n.recipient_role) {
+      if (n.recipient_role !== ntfRole) return false;
+      if (scopedDept && ntfRole !== 'super' && scopedDept !== ntfDept) return false;
+      return true;
+    }
+    if (scopedDept && (ntfRole === 'unit' || ntfRole === 'super')) {
+      return ntfRole === 'super' || scopedDept === ntfDept;
+    }
+    return false;
+  });
+  ntfRenderBadge();
+  if (document.getElementById('ntfPanel')?.classList.contains('open')) ntfRenderList();
+}
+
+function ntfRenderBadge() {
+  const unread = ntfList.filter(n => !n.is_read).length;
+  document.querySelectorAll('.ntf-badge').forEach(b => {
+    b.textContent = unread > 99 ? '99+' : unread;
+    b.classList.toggle('show', unread > 0);
+  });
+}
+
+function ntfTimeAgo(iso) {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const min = Math.floor(diffMs / 60000);
+  if (min < 1) return 'เมื่อสักครู่';
+  if (min < 60) return `${min} นาทีที่แล้ว`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr} ชั่วโมงที่แล้ว`;
+  const d = Math.floor(hr / 24);
+  if (d < 7) return `${d} วันที่แล้ว`;
+  return new Date(iso).toLocaleDateString('th-TH');
+}
+
+function ntfEsc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m])); }
+
+function ntfRenderList() {
+  const wrap = document.getElementById('ntfList');
+  if (!wrap) return;
+  if (!ntfList.length) { wrap.innerHTML = '<div class="ntf-empty">📭 ไม่มีการแจ้งเตือน</div>'; return; }
+  wrap.innerHTML = ntfList.slice(0, 30).map(n => `
+    <button class="ntf-item ${n.is_read ? '' : 'unread'}" onclick="ntfClickItem('${n.id}', ${n.link ? `'${ntfEsc(n.link)}'` : 'null'})">
+      <div class="ntf-item-title">${n.is_read ? '' : '<span class="ntf-dot"></span>'}${ntfEsc(n.title || 'แจ้งเตือน')}</div>
+      <div class="ntf-item-msg">${ntfEsc(n.message || '')}</div>
+      <div class="ntf-item-time">${ntfTimeAgo(n.created_at)}</div>
+    </button>
+  `).join('');
+}
+
+function ntfToggle(e) {
+  e && e.stopPropagation();
+  const panel = document.getElementById('ntfPanel');
+  if (!panel) return;
+  const willOpen = !panel.classList.contains('open');
+  document.querySelectorAll('.ntf-panel.open').forEach(p => p.classList.remove('open'));
+  if (willOpen) { panel.classList.add('open'); ntfRenderList(); }
+}
+document.addEventListener('click', (e) => {
+  const panel = document.getElementById('ntfPanel');
+  if (panel && panel.classList.contains('open') && !e.target.closest('.ntf-wrap')) panel.classList.remove('open');
+});
+
+async function ntfClickItem(id, link) {
+  const client = ntfSb();
+  const item = ntfList.find(n => n.id === id);
+  if (item && !item.is_read && client) {
+    item.is_read = true;
+    await client.from('notifications').update({ is_read: true, read_at: new Date().toISOString() }).eq('id', id);
+    ntfRenderBadge();
+  }
+  if (link) window.location.href = link;
+}
+
+async function ntfMarkAllRead() {
+  const client = ntfSb();
+  if (!client || !ntfUser) return;
+  const unreadIds = ntfList.filter(n => !n.is_read).map(n => n.id);
+  if (!unreadIds.length) return;
+  ntfList.forEach(n => n.is_read = true);
+  ntfRenderBadge(); ntfRenderList();
+  await client.from('notifications').update({ is_read: true, read_at: new Date().toISOString() }).in('id', unreadIds);
+}
+
+ntfWaitForAuth();
+</script>
+</body>
+</html>
