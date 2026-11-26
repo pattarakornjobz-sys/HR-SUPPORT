@@ -1267,7 +1267,9 @@ H.D.task = () => { const t = S.d.tasks.find(x => x.id === S.dlg.data); if (!t) r
   const ini2 = e => (Array.from(String(e.first_name || '').replace(/^[เแโใไ]/, ''))[0] || '') + (Array.from(String(e.last_name || '').replace(/^[เแโใไ]/, ''))[0] || '');
   const TONES = ['#b8436d', '#6b3f8f', '#9a6a12', '#2f7a76', '#4b6fa6'];
   const toneOf = e => TONES[(parseInt(String(e.employee_id).replace(/\D/g, '')) || 0) % TONES.length];
-  const pAv = (e, n) => '<span class="pav" style="width:' + n + 'px;height:' + n + 'px;font-size:' + Math.round(n / 2.6) + 'px;background:' + toneOf(e) + '">' + esc(ini2(e) || '?') + '</span>';
+  const pAv = (e, n) => /^https:\/\/[\w.-]+\.supabase\.co\//.test(String(e.photo_url || ''))  // รูปจาก HRIS (ต้นฉบับอยู่ในคลังสัญญาจ้าง)
+    ? '<span class="pav" style="width:' + n + 'px;height:' + n + 'px;background:#eee url(\'' + esc(e.photo_url) + '\') center/cover"></span>'
+    : '<span class="pav" style="width:' + n + 'px;height:' + n + 'px;font-size:' + Math.round(n / 2.6) + 'px;background:' + toneOf(e) + '">' + esc(ini2(e) || '?') + '</span>';
 
   V.home = () => { const act = active(), cm = conMap(), rc = regCards(), cy = new Date().getFullYear();
     if (S.chg === undefined) { S.chg = null; H.refreshChg(); }
